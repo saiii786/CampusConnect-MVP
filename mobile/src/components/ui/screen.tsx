@@ -22,7 +22,9 @@ export function Screen({ children, scroll = true, maxWidth = 560 }: ScreenProps)
   return (
     <SafeAreaView style={[styles.flex, { backgroundColor: colors.background }]}>
       {scroll ? (
-        <ScrollView contentContainerStyle={styles.grow} keyboardShouldPersistTaps="handled">
+        // automaticallyAdjustKeyboardInsets: the keyboard never covers the field being typed in (iOS;
+        // Android resizes the window itself).
+        <ScrollView contentContainerStyle={styles.grow} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
           {content}
         </ScrollView>
       ) : (

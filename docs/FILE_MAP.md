@@ -28,7 +28,7 @@ _Last updated: 2026-11-19 (end of Phase 8)._
 | `docs/PRD.md` | Product requirements: problem, users, three matching modes, requirement IDs (FR/NFR), open questions Q1–Q7 |
 | `docs/ROADMAP.md` | Phased plan, task IDs and status, exit criteria, Definition of Done, parking lot |
 | `docs/ARCHITECTURE.md` | Technical design: stack, modules, data model, order state machine, money design, API & socket contracts, security, config, testing, deployment |
-| `docs/DECISIONS.md` | Decision log ADR-001…027, with reasons; how to change a decision |
+| `docs/DECISIONS.md` | Decision log ADR-001…028, with reasons; how to change a decision |
 | `docs/DEV_LOG.md` | Dated record of each work session: done, tests run, gaps, next |
 | `docs/FILE_MAP.md` | This file |
 
@@ -274,6 +274,14 @@ _Last updated: 2026-11-19 (end of Phase 8)._
 | `src/app/(app)/report.tsx` | Report screen (reason + details) |
 | `src/app/legal/[doc].tsx` | Terms / Privacy / Guidelines (always reachable) |
 | `src/content/legal.ts` | Legal texts (drafts — lawyer review before launch) |
+| `src/components/ui/offline-banner.tsx` | "You're offline" banner + `useIsOnline()` (ADR-028) |
+| `src/components/ui/page-footer.tsx` | Endless-list footer: loading more / error with Try again |
+| `src/theme/tokens.test.ts` | Contrast tests: every text pair ≥ 4.5:1, control outlines ≥ 3:1, light + dark |
+| `src/tests/components/offline-and-paging.test.tsx` | Offline banner + page footer tests |
+| `e2e/README.md` | Maestro setup and how to run (flows NOT yet executed) |
+| `e2e/flows/01-post-and-find-service.yaml` | E2E: seller posts a service, buyer finds it |
+| `e2e/flows/02-book-complete-review.yaml` | E2E: book → accept → done → approve → review |
+| `e2e/flows/subflows/*.yaml` | Open app (Expo Go), sign in, sign out |
 | `src/content/legal.test.ts` | Legal docs exist and state key promises |
 | `src/components/reviews/review-card.tsx` | Review with stars and reply |
 | `src/components/reviews/review-form.tsx` | Star picker + comment |

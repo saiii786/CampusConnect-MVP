@@ -5,7 +5,7 @@ import { formatPaise } from '@cc/shared';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { FlatList, Pressable, RefreshControl, View } from 'react-native';
-import { AppText, Avatar, Chip, EmptyState, ErrorState, LoadingState, Screen, Segmented } from '@/components/ui';
+import { AppText, Avatar, Chip, EmptyState, ErrorState, LoadingState, PageFooter, Screen, Segmented } from '@/components/ui';
 import { useOrders } from '@/lib/orders/orders-api';
 import { isActiveStatus, ORDER_STATUS_LABEL } from '@/lib/orders/format';
 import { useTheme } from '@/theme/use-theme';
@@ -14,9 +14,8 @@ export default function OrdersScreen() {
   const { colors, radius, spacing } = useTheme();
   const [role, setRole] = useState<'buyer' | 'seller'>('buyer');
   const [scope, setScope] = useState<'active' | 'all'>('active');
-  const query = useOrders(role, null);
-  const all = query.data?.pages.flatMap((p) => p.items) ?? [];
-  const items = scope === 'active' ? all.filter((o) => isActiveStatus(o.status)) : all;
+  const query = useOrders(role, scope);
+  const items = query.data?.pages.flatMap((p) => p.items) ?? [];
 
   return (
     <Screen scroll={false}>
@@ -58,7 +57,7 @@ export default function OrdersScreen() {
             })}
           >
             <Avatar name={o.other.displayName} url={o.other.avatarUrl} size={44} />
-            <View style={{ flex: 1, gap: 2 }}>
+            <View style={{ flex: 1, gap: spacing.xxs }}>
               <AppText variant="label" numberOfLines={2}>
                 {o.title}
               </AppText>
@@ -79,11 +78,20 @@ export default function OrdersScreen() {
             <ErrorState error={query.error} onRetry={() => query.refetch()} />
           ) : (
             <EmptyState
-              title={role === 'buyer' ? 'No orders yet' : 'No jobs yet'}
-              message={role === 'buyer' ? 'Book a service or accept a quote on your job request.' : 'Send quotes on job requests, or post a service.'}
+              title={
+                scope === 'active'
+                  ? role === 'buyer' ? 'No active orders' : 'No active jobs'
+                  : role === 'buyer' ? 'No orders yet' : 'No jobs yet'
+              }
+              message={
+                scope === 'active'
+                  ? 'Finished and cancelled ones are under "All".'
+                  : role === 'buyer' ? 'Book a service or accept a quote on your job request.' : 'Send quotes on job requests, or post a service.'
+              }
             />
           )
         }
+        ListFooterComponent={<PageFooter query={query} />}
         onEndReached={() => {
           if (query.hasNextPage && !query.isFetchingNextPage) void query.fetchNextPage();
         }}

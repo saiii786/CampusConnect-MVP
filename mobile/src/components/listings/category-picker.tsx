@@ -5,6 +5,7 @@
 import { Pressable, View } from 'react-native';
 import { AppText, ErrorState, LoadingState } from '@/components/ui';
 import { useCategories } from '@/lib/users/users-api';
+import { MIN_TOUCH_SIZE } from '@/theme/tokens';
 import { useTheme } from '@/theme/use-theme';
 
 export interface CategoryPickerProps {
@@ -40,12 +41,12 @@ export function CategoryPicker({ value, onChange, allowClear, error }: CategoryP
                   accessibilityLabel={c.name}
                   onPress={() => onChange(selected && allowClear ? null : { id: c.id, name: c.name })}
                   style={{
-                    minHeight: 40,
+                    minHeight: MIN_TOUCH_SIZE,
                     justifyContent: 'center',
                     paddingHorizontal: spacing.md,
                     borderRadius: radius.pill,
                     borderWidth: 1,
-                    borderColor: selected ? colors.primary : colors.border,
+                    borderColor: selected ? colors.primary : colors.borderStrong,
                     backgroundColor: selected ? colors.primarySoft : 'transparent',
                   }}
                 >

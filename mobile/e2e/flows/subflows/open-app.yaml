@@ -1,0 +1,9 @@
+# Open the development app inside Expo Go.
+appId: host.exp.exponent
+---
+- launchApp:
+    clearState: false
+- openLink: ${EXPO_URL}
+- extendedWaitUntil:
+    visible: "CampusConnect"
+    timeout: 60000

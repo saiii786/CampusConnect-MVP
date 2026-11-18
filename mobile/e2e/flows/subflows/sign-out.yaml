@@ -1,0 +1,16 @@
+# From anywhere in the signed-in app: go home, open My profile, sign out.
+appId: host.exp.exponent
+---
+- repeat:
+    times: 5
+    while:
+      notVisible: "+ Post"
+    commands:
+      - back
+- tapOn: "Profile"
+- scrollUntilVisible:
+    element: "Sign out"
+- tapOn: "Sign out"
+- extendedWaitUntil:
+    visible: "I already have an account"
+    timeout: 10000

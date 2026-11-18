@@ -23,6 +23,8 @@ function ReviewsSection({ userId }: { userId: string }) {
       <AppText variant="heading">Reviews</AppText>
       {reviews.isPending ? (
         <LoadingState />
+      ) : reviews.isError ? (
+        <ErrorState error={reviews.error} onRetry={() => void reviews.refetch()} />
       ) : items.length === 0 ? (
         <EmptyState title="No reviews yet" />
       ) : (
@@ -38,7 +40,7 @@ export default function PublicProfileScreen() {
   const myId = useSession((s) => s.user?.id);
   const query = usePublicProfile(id);
 
-  if (query.isPending) return <LoadingState />;
+  if (query.isPending) return <Screen><LoadingState /></Screen>;
   if (query.isError) {
     if (query.error instanceof ApiError && query.error.status === 404) {
       return (

@@ -5,8 +5,10 @@
 import type { NotificationDto } from '@cc/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { FlatList, Pressable, RefreshControl, View } from 'react-native';
-import { AppText, Button, EmptyState, ErrorState, LoadingState, Screen } from '@/components/ui';
+import { useState } from 'react';
+import { Alert, FlatList, Pressable, RefreshControl, View } from 'react-native';
+import { AppText, Button, EmptyState, ErrorState, LoadingState, PageFooter, Screen } from '@/components/ui';
+import { describeError } from '@/lib/api/api-error';
 import { formatShortTime } from '@/lib/chat/format';
 import { hrefForLink, notificationKeys, notificationsApi, useNotifications } from '@/lib/notifications/notifications-api';
 import { useTheme } from '@/theme/use-theme';
@@ -18,10 +20,21 @@ export default function NotificationsScreen() {
   const items = query.data?.pages.flatMap((p) => p.items) ?? [];
   const unread = query.data?.pages[0]?.unreadCount ?? 0;
 
+  const [markingAll, setMarkingAll] = useState(false);
   const refresh = () => void client.invalidateQueries({ queryKey: notificationKeys.all });
 
+  const markAll = () => {
+    setMarkingAll(true);
+    notificationsApi
+      .markRead()
+      .then(refresh)
+      .catch((e: unknown) => Alert.alert('Not marked as read', describeError(e)))
+      .finally(() => setMarkingAll(false));
+  };
+
   const open = (n: NotificationDto) => {
-    if (!n.read) void notificationsApi.markRead([n.id]).then(refresh);
+    // Opening still works if marking read fails; it stays unread and can be retried.
+    if (!n.read) notificationsApi.markRead([n.id]).then(refresh).catch(() => undefined);
     const href = hrefForLink(n.link);
     if (href) router.push(href);
   };
@@ -33,7 +46,7 @@ export default function NotificationsScreen() {
         keyExtractor={(n) => n.id}
         contentContainerStyle={{ gap: spacing.sm, paddingVertical: spacing.md }}
         ListHeaderComponent={
-          unread ? <Button label={`Mark all as read (${unread})`} variant="ghost" fullWidth={false} onPress={() => void notificationsApi.markRead().then(refresh)} /> : undefined
+          unread ? <Button label={`Mark all as read (${unread})`} variant="ghost" fullWidth={false} loading={markingAll} onPress={markAll} /> : undefined
         }
         renderItem={({ item: n }) => (
           <Pressable
@@ -44,7 +57,7 @@ export default function NotificationsScreen() {
               padding: spacing.md,
               borderRadius: radius.lg,
               backgroundColor: pressed ? colors.primarySoft : n.read ? colors.surface : colors.primarySoft,
-              gap: 2,
+              gap: spacing.xxs,
             })}
           >
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: spacing.sm }}>
@@ -67,6 +80,7 @@ export default function NotificationsScreen() {
             <EmptyState title="No notifications yet" message="Quotes, bookings, order updates and messages show up here." />
           )
         }
+        ListFooterComponent={<PageFooter query={query} />}
         onEndReached={() => {
           if (query.hasNextPage && !query.isFetchingNextPage) void query.fetchNextPage();
         }}

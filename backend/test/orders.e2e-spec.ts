@@ -229,6 +229,22 @@ describe('permissions and rules (FR-401, FR-404, FR-405)', () => {
   });
 });
 
+describe('order list scope (Phase 9: "Active" is filtered on the server)', () => {
+  it('scope=active hides finished orders; scope=all and no scope show everything', async () => {
+    const { seller, buyer, order: active } = await inProgressOrder();
+    const l = await offer(seller, { title: 'A second logo package' });
+    const cancelled = (await book(buyer, l.id).expect(201)).body as OrderDetailDto;
+    await act(buyer, cancelled.id, 'cancel').expect(200);
+
+    const ids = async (query: string) =>
+      ((await api().get(`/api/v1/orders?role=buyer${query}`).set(buyer.auth).expect(200)).body as Page<OrderSummaryDto>).items.map((o) => o.id);
+    expect(await ids('&scope=active')).toEqual([active.id]);
+    expect((await ids('&scope=all')).sort()).toEqual([active.id, cancelled.id].sort());
+    expect((await ids('')).sort()).toEqual([active.id, cancelled.id].sort());
+    await api().get('/api/v1/orders?role=buyer&scope=finished').set(buyer.auth).expect(400);
+  });
+});
+
 describe('accepting a quote (FR-202)', () => {
   it('creates an IN_PROGRESS order, accepts the quote, closes the job and un-selects other quotes', async () => {
     const buyer = await verifiedUser('Job Owner');

@@ -1,0 +1,13 @@
+# Sign in from the welcome screen. Params: EMAIL, PASSWORD.
+appId: host.exp.exponent
+---
+- tapOn: "I already have an account"
+- tapOn: "Email"
+- inputText: ${EMAIL}
+- tapOn: "Password"
+- inputText: ${PASSWORD}
+- hideKeyboard
+- tapOn: "Sign in"
+- extendedWaitUntil:
+    visible: "+ Post"
+    timeout: 20000

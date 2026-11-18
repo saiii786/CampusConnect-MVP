@@ -4,7 +4,7 @@
  */
 import { router } from 'expo-router';
 import { FlatList, Pressable, RefreshControl, View } from 'react-native';
-import { AppText, Avatar, Chip, EmptyState, ErrorState, LoadingState, Screen } from '@/components/ui';
+import { AppText, Avatar, Chip, EmptyState, ErrorState, LoadingState, PageFooter, Screen } from '@/components/ui';
 import { useSession } from '@/lib/auth/session';
 import { useConversations } from '@/lib/chat/chat-api';
 import { formatShortTime } from '@/lib/chat/format';
@@ -36,7 +36,7 @@ export default function InboxScreen() {
             })}
           >
             <Avatar name={c.other.displayName} url={c.other.avatarUrl} size={48} />
-            <View style={{ flex: 1, gap: 2 }}>
+            <View style={{ flex: 1, gap: spacing.xxs }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: spacing.sm }}>
                 <AppText variant="label" numberOfLines={1} style={{ flex: 1 }}>
                   {c.other.displayName}
@@ -69,6 +69,7 @@ export default function InboxScreen() {
             <EmptyState title="No messages yet" message="Open a listing and tap Message, or send a quote on a job." />
           )
         }
+        ListFooterComponent={<PageFooter query={query} />}
         onEndReached={() => {
           if (query.hasNextPage && !query.isFetchingNextPage) void query.fetchNextPage();
         }}

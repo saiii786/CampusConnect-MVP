@@ -34,7 +34,7 @@ export function Button({
   const foreground = {
     primary: colors.onPrimary,
     secondary: colors.primary,
-    danger: '#FFFFFF',
+    danger: colors.onDanger,
     ghost: colors.primary,
   }[variant];
 

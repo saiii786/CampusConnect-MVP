@@ -19,7 +19,7 @@ export default function VerifyEmailScreen() {
   const { spacing } = useTheme();
   const email = useSession((s) => s.user?.email);
   const [formError, setFormError] = useState<string | null>(null);
-  const [resendState, setResendState] = useState<{ busy: boolean; message: string | null }>({
+  const [resendState, setResendState] = useState<{ busy: boolean; message: string | null; failed?: boolean }>({
     busy: false,
     message: null,
   });
@@ -44,7 +44,7 @@ export default function VerifyEmailScreen() {
       await authApi.resendVerification();
       setResendState({ busy: false, message: 'A new code is on its way.' });
     } catch (error) {
-      setResendState({ busy: false, message: describeError(error) });
+      setResendState({ busy: false, message: describeError(error), failed: true });
     }
   };
   const onSubmit = () => void submit();
@@ -76,7 +76,7 @@ export default function VerifyEmailScreen() {
         />
         <Button label="Verify" loading={formState.isSubmitting} onPress={onSubmit} />
         <Button label="Send a new code" variant="ghost" loading={resendState.busy} onPress={resend} />
-        {resendState.message ? <Notice message={resendState.message} /> : null}
+        {resendState.message ? <Notice tone={resendState.failed ? 'danger' : undefined} message={resendState.message} /> : null}
       </View>
     </Screen>
   );

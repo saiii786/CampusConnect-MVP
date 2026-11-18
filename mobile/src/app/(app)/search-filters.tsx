@@ -64,7 +64,7 @@ export default function SearchFiltersScreen() {
             </View>
           </View>
           {priceError ? (
-            <AppText variant="caption" color="danger">
+            <AppText variant="caption" color="danger" accessibilityLiveRegion="polite">
               {priceError}
             </AppText>
           ) : null}

@@ -98,12 +98,16 @@ export default function AddMoneyScreen() {
             <Button label="Open the payment page again" variant="secondary" onPress={() => void WebBrowser.openBrowserAsync(resolveMediaUrl(topup.checkoutUrl))} />
             <Button
               label="I've paid — check now"
-              onPress={() =>
+              loading={busy}
+              onPress={() => {
+                setBusy(true);
+                setError(null);
                 void walletApi
                   .verifyTopup(topup.id)
                   .then(setTopup)
                   .catch((e: unknown) => setError(describeError(e)))
-              }
+                  .finally(() => setBusy(false));
+              }}
             />
             {error ? <Notice tone="danger" message={error} /> : null}
           </>

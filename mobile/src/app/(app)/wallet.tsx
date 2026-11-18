@@ -5,7 +5,7 @@
 import { formatPaise } from '@cc/shared';
 import { router } from 'expo-router';
 import { FlatList, Pressable, RefreshControl, View } from 'react-native';
-import { AppText, Button, EmptyState, ErrorState, LoadingState, Screen, TestModeBadge } from '@/components/ui';
+import { AppText, Button, EmptyState, ErrorState, LoadingState, PageFooter, Screen, TestModeBadge } from '@/components/ui';
 import { TRANSACTION_LABEL, useWallet, useWalletTransactions } from '@/lib/wallet/wallet-api';
 import { useTheme } from '@/theme/use-theme';
 
@@ -61,7 +61,7 @@ export default function WalletScreen() {
             onPress={() => t.orderId && router.push({ pathname: '/orders/[id]', params: { id: t.orderId } })}
             style={{ flexDirection: 'row', justifyContent: 'space-between', padding: spacing.md, borderRadius: radius.md, backgroundColor: colors.surface }}
           >
-            <View style={{ flex: 1, gap: 2 }}>
+            <View style={{ flex: 1, gap: spacing.xxs }}>
               <AppText variant="label">{TRANSACTION_LABEL[t.kind]}</AppText>
               <AppText variant="caption" color="textMuted">
                 {new Date(t.createdAt).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
@@ -74,7 +74,16 @@ export default function WalletScreen() {
             </AppText>
           </Pressable>
         )}
-        ListEmptyComponent={history.isPending ? <LoadingState /> : <EmptyState title="No money movements yet" message="Add test money to pay for orders safely." />}
+        ListEmptyComponent={
+          history.isPending ? (
+            <LoadingState />
+          ) : history.isError ? (
+            <ErrorState error={history.error} onRetry={() => void history.refetch()} />
+          ) : (
+            <EmptyState title="No money movements yet" message="Add test money to pay for orders safely." />
+          )
+        }
+        ListFooterComponent={<PageFooter query={history} />}
         onEndReached={() => {
           if (history.hasNextPage && !history.isFetchingNextPage) void history.fetchNextPage();
         }}

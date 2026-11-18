@@ -20,7 +20,7 @@ export default function MyProfileScreen() {
   const portfolio = usePortfolio();
   const removeItem = useDeletePortfolioItem();
 
-  if (!user) return <LoadingState />;
+  if (!user) return <Screen><LoadingState /></Screen>;
   const { profile, student } = user;
 
   const confirmRemove = (id: string, title: string) =>

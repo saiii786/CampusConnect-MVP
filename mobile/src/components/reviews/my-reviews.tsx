@@ -6,7 +6,7 @@ import type { ReviewDto } from '@cc/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Alert, Share, View } from 'react-native';
-import { AppText, Button, EmptyState, LoadingState, TextField } from '@/components/ui';
+import { AppText, Button, EmptyState, ErrorState, LoadingState, TextField } from '@/components/ui';
 import { describeError } from '@/lib/api/api-error';
 import { reviewKeys, reviewsApi, useUserReviews, workRecordUrl } from '@/lib/reviews/reviews-api';
 import { useTheme } from '@/theme/use-theme';
@@ -60,6 +60,8 @@ export function MyReviews({ userId, displayName }: { userId: string; displayName
       </AppText>
       {reviews.isPending ? (
         <LoadingState />
+      ) : reviews.isError ? (
+        <ErrorState error={reviews.error} onRetry={() => void reviews.refetch()} />
       ) : items.length === 0 ? (
         <EmptyState title="No reviews yet" message="Complete orders to collect reviews." />
       ) : (

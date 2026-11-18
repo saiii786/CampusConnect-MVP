@@ -1,0 +1,53 @@
+# Journey 1: a seller posts a service, a buyer finds and opens it.
+# Env: EXPO_URL, SELLER_EMAIL, SELLER_PASSWORD, BUYER_EMAIL, BUYER_PASSWORD
+appId: host.exp.exponent
+---
+- evalScript: ${output.title = 'Maestro logo design ' + Date.now()}
+- runFlow: subflows/open-app.yaml
+- runFlow:
+    file: subflows/sign-in.yaml
+    env:
+      EMAIL: ${SELLER_EMAIL}
+      PASSWORD: ${SELLER_PASSWORD}
+
+# Post a remote, fixed-price service.
+- tapOn: "+ Post"
+- tapOn: "I offer a service"
+- tapOn: "Graphic design"
+- tapOn: "Title"
+- inputText: ${output.title}
+- tapOn: "Description"
+- inputText: "Simple clean logo for your club or startup, two revisions included."
+- hideKeyboard
+- tapOn: "Fixed price"
+- tapOn: "Price (₹)"
+- inputText: "500"
+- hideKeyboard
+- tapOn: "Remote / online"
+- scrollUntilVisible:
+    element: "Post"
+    direction: DOWN
+- tapOn:
+    text: "Post"
+    index: -1        # the submit button, not the screen title
+- extendedWaitUntil:
+    visible: ${output.title}
+    timeout: 15000
+- runFlow: subflows/sign-out.yaml
+
+# The buyer finds it by search.
+- runFlow:
+    file: subflows/sign-in.yaml
+    env:
+      EMAIL: ${BUYER_EMAIL}
+      PASSWORD: ${BUYER_PASSWORD}
+- tapOn: "Search"
+- inputText: ${output.title}
+- pressKey: Enter
+- extendedWaitUntil:
+    visible: ${output.title}
+    timeout: 15000
+- tapOn: ${output.title}
+- assertVisible: "Book"
+- assertVisible: "Message"
+- runFlow: subflows/sign-out.yaml

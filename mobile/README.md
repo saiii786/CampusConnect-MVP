@@ -48,6 +48,8 @@ To use a deployed API instead, copy `.env.example` to `.env` and set `EXPO_PUBLI
 | `lint` | ESLint (Expo config) |
 | `test` | Jest + React Native Testing Library (`src/**/*.test.ts(x)`) |
 
+End-to-end flows (Maestro, run on a device/emulator): see [e2e/README.md](e2e/README.md).
+
 ## How sign-in works (T1.7, ADR-017)
 - `src/lib/auth/session.ts` owns the session: status (`restoring` / `signedIn` / `signedOut` / `restoreFailed`) and the user, in a Zustand store (`useSession`).
 - **Refresh token** → device secure storage (`session-storage.ts`, Keychain/Keystore). **Access token** → memory only.
@@ -108,7 +110,9 @@ To use a deployed API instead, copy `.env.example` to `.env` and set `EXPO_PUBLI
 - Forms validate with the **shared zod schemas** from `@cc/shared` (`zodResolver(signupSchema)` …) — never write a second copy of a validation rule in the app.
 - Never store tokens anywhere except through `session` (no AsyncStorage for secrets).
 - Never hard-code colours, spacing or font sizes in screens — use `useTheme()`.
-- Every screen handles loading, error and empty states with the shared state views.
+- Every screen handles loading, error and empty states with the shared state views — an error is never shown as "nothing here".
+- Endless lists use `ListFooterComponent={<PageFooter query={query} />}`. Offline is handled app-wide (banner + paused queries, `lib/query-client.ts`) — don't add per-screen network checks.
+- Control outlines use `colors.borderStrong`; text on danger buttons `colors.onDanger`. `src/theme/tokens.test.ts` fails if a colour change breaks contrast (ADR-028).
 - Every interactive element has an accessible label and is ≥ 48 px tall.
 - Never put secrets in `EXPO_PUBLIC_*` variables — they ship inside the app.
 - Add Expo modules with `npx expo install <pkg>`. In this monorepo that command's npm step can fail

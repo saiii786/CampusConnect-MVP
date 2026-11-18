@@ -1,0 +1,75 @@
+# Journey 2: buyer books → seller accepts and delivers → buyer approves and reviews.
+# Needs the service posted by 01 (searches for "Maestro logo design").
+# Env: EXPO_URL, SELLER_EMAIL, SELLER_PASSWORD, BUYER_EMAIL, BUYER_PASSWORD
+appId: host.exp.exponent
+---
+- runFlow: subflows/open-app.yaml
+
+# Buyer books (pay directly, so no wallet money is needed).
+- runFlow:
+    file: subflows/sign-in.yaml
+    env:
+      EMAIL: ${BUYER_EMAIL}
+      PASSWORD: ${BUYER_PASSWORD}
+- tapOn: "Search"
+- inputText: "Maestro logo design"
+- pressKey: Enter
+- tapOn:
+    text: "Maestro logo design.*"
+    index: 0          # newest first
+- tapOn: "Book"
+- tapOn: "Pay directly"
+- scrollUntilVisible:
+    element: "Send booking request"
+- tapOn: "Send booking request"
+- extendedWaitUntil:
+    visible: "Waiting for seller"
+    timeout: 15000
+- runFlow: subflows/sign-out.yaml
+
+# Seller accepts and marks the work done.
+- runFlow:
+    file: subflows/sign-in.yaml
+    env:
+      EMAIL: ${SELLER_EMAIL}
+      PASSWORD: ${SELLER_PASSWORD}
+- tapOn: "Orders"
+- tapOn: "I'm selling"
+- tapOn:
+    text: "Maestro logo design.*"
+    index: 0
+- tapOn: "Accept booking"
+- extendedWaitUntil:
+    visible: "Mark work as done"
+    timeout: 15000
+- tapOn: "Mark work as done"
+- extendedWaitUntil:
+    visible: "Work submitted"
+    timeout: 15000
+- runFlow: subflows/sign-out.yaml
+
+# Buyer approves and leaves a review.
+- runFlow:
+    file: subflows/sign-in.yaml
+    env:
+      EMAIL: ${BUYER_EMAIL}
+      PASSWORD: ${BUYER_PASSWORD}
+- tapOn: "Orders"
+- tapOn:
+    text: "Maestro logo design.*"
+    index: 0
+- tapOn: "Approve & complete"
+- extendedWaitUntil:
+    visible: "Completed"
+    timeout: 15000
+- scrollUntilVisible:
+    element: "5 stars"
+- tapOn: "5 stars"
+- tapOn: "Comment (optional)"
+- inputText: "Great work, fast and friendly."
+- hideKeyboard
+- tapOn: "Post review"
+- extendedWaitUntil:
+    notVisible: "Post review"
+    timeout: 15000
+- runFlow: subflows/sign-out.yaml

@@ -33,7 +33,7 @@ export function TextField({ label, error, hint, style, ref, ...rest }: TextField
           {
             color: colors.text,
             backgroundColor: colors.surfaceRaised,
-            borderColor: error ? colors.danger : colors.border,
+            borderColor: error ? colors.danger : colors.borderStrong,
             borderRadius: radius.md,
             paddingHorizontal: spacing.md,
           },

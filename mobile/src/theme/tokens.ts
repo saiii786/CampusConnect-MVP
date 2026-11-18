@@ -11,12 +11,15 @@ export const palette = {
     surface: '#F5F3FA',
     surfaceRaised: '#FFFFFF',
     border: '#DDD8E8',
+    /** Outlines of controls (inputs, checkboxes, unselected pills, empty stars): ≥ 3:1 (WCAG 1.4.11). */
+    borderStrong: '#857F95',
     text: '#17141F',
     textMuted: '#5B5668',
     primary: '#6D28D9',
     onPrimary: '#FFFFFF',
     primarySoft: '#EDE7FB',
     danger: '#B42318',
+    onDanger: '#FFFFFF',
     dangerSoft: '#FEE4E2',
     success: '#067647',
     successSoft: '#DCFAE6',
@@ -28,12 +31,14 @@ export const palette = {
     surface: '#1C1A23',
     surfaceRaised: '#25222E',
     border: '#34303F',
+    borderStrong: '#7D7790',
     text: '#F4F2F8',
     textMuted: '#B3AEC0',
     primary: '#C4B5FD',
     onPrimary: '#1E0F45',
     primarySoft: '#2A2140',
     danger: '#F97066',
+    onDanger: '#3A1513',
     dangerSoft: '#3A1513',
     success: '#47CD89',
     successSoft: '#0E2C1E',
@@ -45,8 +50,8 @@ export const palette = {
 export type ColorName = keyof typeof palette.light;
 export type Colors = Record<ColorName, string>;
 
-/** 4-point spacing scale. */
-export const spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32 } as const;
+/** 4-point spacing scale (xxs for tight label/caption stacks). */
+export const spacing = { xxs: 2, xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32 } as const;
 
 export const radius = { sm: 6, md: 10, lg: 16, pill: 999 } as const;
 

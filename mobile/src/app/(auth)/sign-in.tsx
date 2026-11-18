@@ -3,11 +3,11 @@
  */
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema } from '@cc/shared';
-import { Link } from 'expo-router';
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { View } from 'react-native';
-import { AppText, Button, Notice, Screen, TextField } from '@/components/ui';
+import { Button, Notice, Screen, TextField } from '@/components/ui';
 import { authApi } from '@/lib/auth/auth-api';
 import { session } from '@/lib/auth/session';
 import { applyServerErrors } from '@/lib/forms/server-errors';
@@ -70,12 +70,8 @@ export default function SignInScreen() {
           )}
         />
         <Button label="Sign in" loading={formState.isSubmitting} onPress={onSubmit} />
-        <Link href="/forgot-password" style={{ alignSelf: 'center', padding: spacing.md }}>
-          <AppText color="primary">Forgot your password?</AppText>
-        </Link>
-        <Link href="/sign-up" replace style={{ alignSelf: 'center', padding: spacing.md }}>
-          <AppText color="primary">New here? Create an account</AppText>
-        </Link>
+        <Button label="Forgot your password?" variant="ghost" onPress={() => router.push('/forgot-password')} />
+        <Button label="New here? Create an account" variant="ghost" onPress={() => router.replace('/sign-up')} />
       </View>
     </Screen>
   );

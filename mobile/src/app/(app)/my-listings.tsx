@@ -6,7 +6,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { FlatList, RefreshControl, View } from 'react-native';
 import { ListingCard } from '@/components/listings/listing-card';
-import { Button, EmptyState, ErrorState, LoadingState, Screen, Segmented } from '@/components/ui';
+import { Button, EmptyState, ErrorState, LoadingState, PageFooter, Screen, Segmented } from '@/components/ui';
 import { useMyListings } from '@/lib/listings/listings-api';
 import { useTheme } from '@/theme/use-theme';
 
@@ -52,6 +52,7 @@ export default function MyListingsScreen() {
             <EmptyState title="Nothing here yet" message="Post a service you offer, or a job you need done." />
           )
         }
+        ListFooterComponent={<PageFooter query={results} />}
         onEndReached={() => {
           if (results.hasNextPage && !results.isFetchingNextPage) void results.fetchNextPage();
         }}

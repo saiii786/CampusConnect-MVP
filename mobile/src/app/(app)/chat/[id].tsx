@@ -8,7 +8,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Alert, FlatList, KeyboardAvoidingView, Platform, Pressable, TextInput, View } from 'react-native';
-import { AppText, Button, ErrorState, LoadingState, Notice, Screen } from '@/components/ui';
+import { AppText, Button, EmptyState, ErrorState, LoadingState, Notice, PageFooter, Screen } from '@/components/ui';
 import { describeError } from '@/lib/api/api-error';
 import { useSession } from '@/lib/auth/session';
 import { addMessageToCache, chatApi, chatKeys, useConversation, useMessages } from '@/lib/chat/chat-api';
@@ -26,6 +26,7 @@ export default function ChatScreen() {
   const messages = useMessages(id);
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
+  const [blocking, setBlocking] = useState(false);
   const lastSeen = useRef<string | null>(null);
 
   const items = messages.data?.pages.flatMap((p) => p.items) ?? [];
@@ -41,10 +42,15 @@ export default function ChatScreen() {
   useEffect(() => {
     if (!newestId || newestId === lastSeen.current) return;
     lastSeen.current = newestId;
-    void chatApi.markRead(id).then(() => {
-      void client.invalidateQueries({ queryKey: chatKeys.unread });
-      void client.invalidateQueries({ queryKey: chatKeys.conversations });
-    });
+    chatApi
+      .markRead(id)
+      .then(() => {
+        void client.invalidateQueries({ queryKey: chatKeys.unread });
+        void client.invalidateQueries({ queryKey: chatKeys.conversations });
+      })
+      .catch(() => {
+        lastSeen.current = null; // not marked: try again with the next message / visit
+      });
   }, [id, newestId, client]);
 
   const send = async () => {
@@ -75,16 +81,29 @@ export default function ChatScreen() {
         {
           text: action,
           style: c.blocked ? 'default' : 'destructive',
-          onPress: () =>
+          onPress: () => {
+            setBlocking(true);
             void (c.blocked ? chatApi.unblock(c.other.id) : chatApi.block(c.other.id))
               .then(() => client.invalidateQueries({ queryKey: chatKeys.all }))
-              .catch((e: unknown) => Alert.alert('Not changed', describeError(e))),
+              .catch((e: unknown) => Alert.alert('Not changed', describeError(e)))
+              .finally(() => setBlocking(false));
+          },
         },
       ],
     );
   };
 
-  if (conversation.isPending) return <LoadingState />;
+  const reportMessage = (messageId: string, body: string) =>
+    Alert.alert('Report this message?', body.slice(0, 120), [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Report',
+        style: 'destructive',
+        onPress: () => router.push({ pathname: '/report', params: { targetType: 'MESSAGE', targetId: messageId, label: 'Report a message' } }),
+      },
+    ]);
+
+  if (conversation.isPending) return <Screen><LoadingState /></Screen>;
   if (conversation.isError) return <Screen><ErrorState error={conversation.error} onRetry={() => conversation.refetch()} /></Screen>;
   const c = conversation.data;
 
@@ -98,7 +117,7 @@ export default function ChatScreen() {
         <View style={{ flexDirection: 'row', gap: spacing.sm, flexWrap: 'wrap' }}>
           <Button label="Listing" variant="secondary" fullWidth={false} onPress={() => router.push({ pathname: '/listings/[id]', params: { id: c.listing.id } })} />
           <Button label="Profile" variant="secondary" fullWidth={false} onPress={() => router.push({ pathname: '/users/[id]', params: { id: c.other.id } })} />
-          <Button label={c.blocked ? 'Unblock' : 'Block'} variant="ghost" fullWidth={false} onPress={toggleBlock} />
+          <Button label={c.blocked ? 'Unblock' : 'Block'} variant="ghost" fullWidth={false} loading={blocking} onPress={toggleBlock} />
           <Button
             label="Report"
             variant="ghost"
@@ -116,9 +135,19 @@ export default function ChatScreen() {
         onEndReached={() => {
           if (messages.hasNextPage && !messages.isFetchingNextPage) void messages.fetchNextPage();
         }}
-        ListEmptyComponent={messages.isPending ? <LoadingState /> : <AppText color="textMuted">Say hello 👋</AppText>}
+        ListEmptyComponent={
+          messages.isPending ? (
+            <LoadingState />
+          ) : messages.isError ? (
+            <ErrorState error={messages.error} onRetry={() => void messages.refetch()} />
+          ) : (
+            <EmptyState title="Say hello 👋" message="No messages yet." />
+          )
+        }
         ListFooterComponent={
-          <View style={{ paddingBottom: spacing.md }}>
+          <View style={{ paddingBottom: spacing.md, gap: spacing.sm }}>
+            {/* Inverted list: the footer is at the top, where older messages load. */}
+            <PageFooter query={messages} />
             <Notice
               tone="warning"
               message="For your safety, keep payments inside CampusConnect. Never share OTPs or bank passwords."
@@ -130,17 +159,13 @@ export default function ChatScreen() {
           return (
             <Pressable
               disabled={mine}
-              onLongPress={() =>
-                Alert.alert('Report this message?', m.body.slice(0, 120), [
-                  { text: 'Cancel', style: 'cancel' },
-                  {
-                    text: 'Report',
-                    style: 'destructive',
-                    onPress: () => router.push({ pathname: '/report', params: { targetType: 'MESSAGE', targetId: m.id, label: 'Report a message' } }),
-                  },
-                ])
-              }
+              onLongPress={() => reportMessage(m.id, m.body)}
               accessibilityHint={mine ? undefined : 'Long press to report'}
+              // Screen-reader users get "Report" in the actions menu instead of needing a long press.
+              accessibilityActions={mine ? undefined : [{ name: 'report', label: 'Report message' }]}
+              onAccessibilityAction={(e) => {
+                if (e.nativeEvent.actionName === 'report') reportMessage(m.id, m.body);
+              }}
               style={{
                 alignSelf: mine ? 'flex-end' : 'flex-start',
                 maxWidth: '82%',
@@ -185,7 +210,7 @@ export default function ChatScreen() {
                 maxHeight: 140,
                 color: colors.text,
                 backgroundColor: colors.surfaceRaised,
-                borderColor: colors.border,
+                borderColor: colors.borderStrong,
                 borderWidth: 1,
                 borderRadius: radius.md,
                 paddingHorizontal: spacing.md,

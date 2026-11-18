@@ -28,7 +28,7 @@ export function Segmented<T extends string>({ options, value, onChange, label, e
       <View
         accessibilityRole="radiogroup"
         accessibilityLabel={label}
-        style={{ flexDirection: 'row', backgroundColor: colors.surface, borderRadius: radius.md, padding: 4, gap: 4 }}
+        style={{ flexDirection: 'row', backgroundColor: colors.surface, borderRadius: radius.md, padding: spacing.xs, gap: spacing.xs }}
       >
         {options.map((o) => {
           const selected = o.value === value;
@@ -41,7 +41,8 @@ export function Segmented<T extends string>({ options, value, onChange, label, e
               onPress={() => onChange(o.value)}
               style={{
                 flex: 1,
-                minHeight: MIN_TOUCH_SIZE - 8,
+                minHeight: MIN_TOUCH_SIZE,
+                paddingVertical: spacing.xs,
                 borderRadius: radius.sm,
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -51,7 +52,8 @@ export function Segmented<T extends string>({ options, value, onChange, label, e
                 borderColor: colors.border,
               }}
             >
-              <AppText variant="label" color={selected ? 'primary' : 'textMuted'} numberOfLines={1}>
+              {/* No numberOfLines: with large system fonts the label wraps instead of being cut off (NFR-07). */}
+              <AppText variant="label" color={selected ? 'primary' : 'textMuted'} style={{ textAlign: 'center' }}>
                 {o.label}
               </AppText>
             </Pressable>

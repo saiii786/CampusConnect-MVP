@@ -6,6 +6,7 @@ import { formatPaise, type QuoteDto } from '@cc/shared';
 import type { ReactNode } from 'react';
 import { Pressable, View } from 'react-native';
 import { AppText, Avatar, Chip } from '@/components/ui';
+import { MIN_TOUCH_SIZE } from '@/theme/tokens';
 import { useTheme } from '@/theme/use-theme';
 
 export const QUOTE_STATUS_LABEL: Record<QuoteDto['status'], string> = {
@@ -31,10 +32,10 @@ export function QuoteCard({ quote, showSeller, onSellerPress, children }: {
           accessibilityRole="button"
           accessibilityLabel={`${s.displayName}, open profile`}
           onPress={onSellerPress}
-          style={{ flexDirection: 'row', gap: spacing.md, alignItems: 'center' }}
+          style={{ flexDirection: 'row', gap: spacing.md, alignItems: 'center', minHeight: MIN_TOUCH_SIZE }}
         >
           <Avatar name={s.displayName} url={s.avatarUrl} size={44} />
-          <View style={{ flex: 1, gap: 2 }}>
+          <View style={{ flex: 1, gap: spacing.xxs }}>
             <AppText variant="label">{s.displayName}</AppText>
             <AppText variant="caption" color="textMuted">
               {s.rating.average === null ? 'No reviews yet' : `★ ${s.rating.average.toFixed(1)} (${s.rating.count})`} · {s.completedJobs} job

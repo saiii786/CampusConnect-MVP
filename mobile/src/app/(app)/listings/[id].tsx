@@ -8,7 +8,7 @@ import { formatPaise, type ListingDetailDto } from '@cc/shared';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Pressable, ScrollView, View } from 'react-native';
+import { Alert, Pressable, ScrollView, useWindowDimensions, View } from 'react-native';
 import { AppText, Avatar, Button, Chip, EmptyState, ErrorState, LoadingState, Notice, Screen } from '@/components/ui';
 import { ApiError, describeError } from '@/lib/api/api-error';
 import { resolveMediaUrl } from '@/lib/api/media-url';
@@ -78,8 +78,11 @@ export default function ListingDetailScreen() {
   const location = useSearchFilters((s) => s.location);
   const query = useListing(id, location);
   const status = useListingStatus(id);
+  const { width } = useWindowDimensions();
+  // <Screen> caps content at 560 px and pads it by spacing.lg on each side.
+  const photoWidth = Math.min(width, 560) - 2 * spacing.lg;
 
-  if (query.isPending) return <LoadingState />;
+  if (query.isPending) return <Screen><LoadingState /></Screen>;
   if (query.isError) {
     return (
       <Screen>
@@ -105,12 +108,20 @@ export default function ListingDetailScreen() {
   return (
     <Screen>
       {l.imageUrls.length ? (
-        <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -spacing.lg }}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={{ marginHorizontal: -spacing.lg }}
+          snapToInterval={photoWidth + spacing.lg}
+          decelerationRate="fast"
+          contentContainerStyle={{ paddingRight: spacing.lg }}
+        >
           {l.imageUrls.map((url, i) => (
             <Image
               key={url}
               source={{ uri: resolveMediaUrl(url) }}
-              style={{ width: 360, aspectRatio: 4 / 3, marginLeft: spacing.lg, borderRadius: radius.lg, backgroundColor: colors.surface }}
+              // One photo per page at any phone width (was a fixed 360 px that clipped on small phones).
+              style={{ width: photoWidth, aspectRatio: 4 / 3, marginLeft: spacing.lg, borderRadius: radius.lg, backgroundColor: colors.surface }}
               contentFit="cover"
               accessibilityLabel={`Photo ${i + 1} of ${l.imageUrls.length}`}
             />
@@ -153,7 +164,7 @@ export default function ListingDetailScreen() {
       {l.isOwner ? (
         <View style={{ gap: spacing.sm }}>
           {l.status !== 'CLOSED' ? (
-            <Button label="Edit" onPress={() => router.push({ pathname: '/listings/edit/[id]', params: { id: l.id } })} />
+            <Button label="Edit" disabled={status.isPending} onPress={() => router.push({ pathname: '/listings/edit/[id]', params: { id: l.id } })} />
           ) : null}
           {l.status === 'ACTIVE' ? (
             <Button label="Pause (hide for now)" variant="secondary" loading={status.isPending} onPress={() => run('pause')} />
@@ -161,7 +172,7 @@ export default function ListingDetailScreen() {
           {l.status === 'PAUSED' ? (
             <Button label="Resume" variant="secondary" loading={status.isPending} onPress={() => run('resume')} />
           ) : null}
-          {l.status !== 'CLOSED' ? <Button label="Close listing" variant="ghost" onPress={confirmClose} /> : null}
+          {l.status !== 'CLOSED' ? <Button label="Close listing" variant="ghost" disabled={status.isPending} onPress={confirmClose} /> : null}
         </View>
       ) : (
         <VisitorActions listing={l} />

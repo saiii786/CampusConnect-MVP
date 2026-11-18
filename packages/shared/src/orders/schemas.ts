@@ -102,11 +102,19 @@ export const listOrdersSchema = z
   .object({
     role: z.enum(['buyer', 'seller']),
     status: z.enum(OrderStatus).optional(),
+    /** `active` = not finished (see FINISHED_ORDER_STATUSES). Filtered on the server so paging stays correct. */
+    scope: z.enum(['active', 'all']).optional(),
     cursor: z.string().max(200).optional(),
     limit: z.preprocess((v) => (v === '' || v === undefined ? undefined : Number(v)), z.number().int().min(1).max(50).optional()),
   })
   .strict();
 export type ListOrdersInput = z.infer<typeof listOrdersSchema>;
+
+/** Orders in these statuses are over; everything else is "active". */
+export const FINISHED_ORDER_STATUSES = [OrderStatus.COMPLETED, OrderStatus.CANCELLED, OrderStatus.DECLINED] as const;
+export function isActiveOrderStatus(status: OrderStatus): boolean {
+  return !(FINISHED_ORDER_STATUSES as readonly OrderStatus[]).includes(status);
+}
 
 // ── Responses ───────────────────────────────────────────────────────────────
 

@@ -6,8 +6,8 @@ import type {
   AcceptQuoteInput,
   BookServiceInput,
   OrderActionBody,
+  ListOrdersInput,
   OrderDetailDto,
-  OrderStatus,
   OrderSummaryDto,
   Page,
   UserOrderAction,
@@ -19,27 +19,30 @@ import { toQueryString } from '@/lib/listings/listings-api';
 /** Escrow (pay into the in-app wallet, test mode) is available since Phase 6. */
 export const ESCROW_AVAILABLE = true;
 
+export type OrderScope = NonNullable<ListOrdersInput['scope']>;
+
 export const orderKeys = {
   all: ['orders'] as const,
-  list: (role: 'buyer' | 'seller', status: OrderStatus | null) => ['orders', 'list', role, status] as const,
+  list: (role: 'buyer' | 'seller', scope: OrderScope) => ['orders', 'list', role, scope] as const,
   detail: (id: string) => ['orders', 'detail', id] as const,
 };
 
 export const ordersApi = {
   book: (input: BookServiceInput) => api.post<OrderDetailDto>('/orders', input),
   acceptQuote: (quoteId: string, input: AcceptQuoteInput) => api.post<OrderDetailDto>(`/quotes/${quoteId}/accept`, input),
-  list: (role: 'buyer' | 'seller', status: OrderStatus | null, cursor?: string) =>
-    api.get<Page<OrderSummaryDto>>(`/orders${toQueryString({ role, status, cursor })}`),
+  list: (role: 'buyer' | 'seller', scope: OrderScope, cursor?: string) =>
+    api.get<Page<OrderSummaryDto>>(`/orders${toQueryString({ role, scope, cursor })}`),
   get: (id: string) => api.get<OrderDetailDto>(`/orders/${id}`),
   act: (id: string, action: UserOrderAction, body: OrderActionBody = {}) =>
     api.post<OrderDetailDto>(`/orders/${id}/actions/${action}`, body),
   start: (id: string, code: string) => api.post<OrderDetailDto>(`/orders/${id}/start`, { code }),
 };
 
-export function useOrders(role: 'buyer' | 'seller', status: OrderStatus | null) {
+/** "Active" is filtered on the server, so endless scrolling works even when most orders are finished. */
+export function useOrders(role: 'buyer' | 'seller', scope: OrderScope) {
   return useInfiniteQuery({
-    queryKey: orderKeys.list(role, status),
-    queryFn: ({ pageParam }) => ordersApi.list(role, status, pageParam),
+    queryKey: orderKeys.list(role, scope),
+    queryFn: ({ pageParam }) => ordersApi.list(role, scope, pageParam),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (last) => last.nextCursor ?? undefined,
   });

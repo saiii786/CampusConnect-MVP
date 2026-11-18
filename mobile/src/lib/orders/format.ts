@@ -1,7 +1,7 @@
 /**
  * Human labels for order statuses, actions and timeline entries.
  */
-import type { OrderActor, OrderStatus, UserOrderAction } from '@cc/shared';
+import { isActiveOrderStatus, type OrderActor, type OrderStatus, type UserOrderAction } from '@cc/shared';
 
 export const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
   REQUESTED: 'Waiting for seller',
@@ -55,6 +55,5 @@ export function timelineText(action: string, actorRole: OrderActor, myRole: 'BUY
   return `${who} ${label}`;
 }
 
-export function isActiveStatus(status: OrderStatus): boolean {
-  return !['COMPLETED', 'CANCELLED', 'DECLINED'].includes(status);
-}
+/** Same rule as the server's `scope=active` (shared). */
+export const isActiveStatus = (status: OrderStatus): boolean => isActiveOrderStatus(status);

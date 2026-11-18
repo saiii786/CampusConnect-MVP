@@ -301,7 +301,7 @@ export function ListingForm({ initial, mode, submitLabel, onSubmit }: ListingFor
             </AppText>
           ) : null}
           {errors.location ? (
-            <AppText variant="caption" color="danger">
+            <AppText variant="caption" color="danger" accessibilityLiveRegion="polite">
               {errors.location}
             </AppText>
           ) : null}
@@ -322,7 +322,12 @@ export function ListingForm({ initial, mode, submitLabel, onSubmit }: ListingFor
               key={p.key ?? p.localUri}
               accessibilityRole="button"
               accessibilityLabel={`Remove photo ${i + 1}`}
-              onPress={() => set('photos', v.photos.filter((_, j) => j !== i))}
+              onPress={() =>
+                Alert.alert('Remove this photo?', undefined, [
+                  { text: 'Keep', style: 'cancel' },
+                  { text: 'Remove', style: 'destructive', onPress: () => set('photos', v.photos.filter((_, j) => j !== i)) },
+                ])
+              }
             >
               <Image
                 source={{ uri: p.localUri ?? resolveMediaUrl(p.url!) }}
@@ -337,14 +342,14 @@ export function ListingForm({ initial, mode, submitLabel, onSubmit }: ListingFor
         </View>
         {v.photos.length < LISTING_MAX_IMAGES ? <Button label="Add photo" variant="ghost" fullWidth={false} onPress={addPhoto} /> : null}
         {errors.photos ? (
-          <AppText variant="caption" color="danger">
+          <AppText variant="caption" color="danger" accessibilityLiveRegion="polite">
             {errors.photos}
           </AppText>
         ) : null}
       </View>
 
       {formError ? <Notice tone="danger" message={formError} /> : null}
-      <Button label={submitLabel} loading={busy === 'submit'} onPress={() => void submit()} />
+      <Button label={submitLabel} loading={busy === 'submit'} disabled={busy !== null} onPress={() => void submit()} />
     </View>
   );
 }

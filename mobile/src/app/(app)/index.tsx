@@ -7,7 +7,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Alert, FlatList, RefreshControl, View } from 'react-native';
 import { ListingCard } from '@/components/listings/listing-card';
-import { AppText, Button, EmptyState, ErrorState, LoadingState, Notice, Screen, Segmented, TextField } from '@/components/ui';
+import { AppText, Button, EmptyState, ErrorState, LoadingState, Notice, PageFooter, Screen, Segmented, TextField } from '@/components/ui';
 import { describeError } from '@/lib/api/api-error';
 import { useSession } from '@/lib/auth/session';
 import { useUnread } from '@/lib/chat/chat-api';
@@ -148,7 +148,7 @@ export default function BrowseScreen() {
           if (results.hasNextPage && !results.isFetchingNextPage) void results.fetchNextPage();
         }}
         onEndReachedThreshold={0.5}
-        ListFooterComponent={results.isFetchingNextPage ? <LoadingState label="Loading more…" /> : undefined}
+        ListFooterComponent={<PageFooter query={results} />}
         refreshControl={<RefreshControl refreshing={results.isRefetching} onRefresh={() => void results.refetch()} />}
         keyboardShouldPersistTaps="handled"
       />

@@ -32,7 +32,7 @@ export function Checkbox({ checked, onChange, label, error }: CheckboxProps) {
             height: 24,
             borderRadius: radius.sm,
             borderWidth: 2,
-            borderColor: error ? colors.danger : checked ? colors.primary : colors.border,
+            borderColor: error ? colors.danger : checked ? colors.primary : colors.borderStrong,
             backgroundColor: checked ? colors.primary : 'transparent',
             alignItems: 'center',
             justifyContent: 'center',

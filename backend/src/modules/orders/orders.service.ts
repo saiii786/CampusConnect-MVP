@@ -21,6 +21,7 @@ import {
   ListingStatus,
   ListingType,
   MAX_AMOUNT_PAISE,
+  FINISHED_ORDER_STATUSES,
   MAX_CHANGE_REQUESTS,
   NotificationType,
   OrderAction,
@@ -334,7 +335,11 @@ export class OrdersService {
     const rows = await this.prisma.order.findMany({
       where: {
         ...(query.role === 'buyer' ? { buyerId: userId } : { sellerId: userId }),
-        ...(query.status ? { status: query.status } : {}),
+        ...(query.status
+          ? { status: query.status }
+          : query.scope === 'active'
+            ? { status: { notIn: [...FINISHED_ORDER_STATUSES] } }
+            : {}),
         ...(cursor ? { id: { lt: cursor.v as string } } : {}),
       },
       orderBy: { id: 'desc' },

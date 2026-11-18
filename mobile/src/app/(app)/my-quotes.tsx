@@ -5,6 +5,7 @@
 import type { MyQuoteDto } from '@cc/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
+import { useState } from 'react';
 import { Alert, FlatList, RefreshControl, View } from 'react-native';
 import { QuoteCard } from '@/components/quotes/quote-card';
 import { AppText, Button, EmptyState, ErrorState, LoadingState, Screen } from '@/components/ui';
@@ -16,6 +17,7 @@ export default function MyQuotesScreen() {
   const { spacing } = useTheme();
   const client = useQueryClient();
   const quotes = useMyQuotes();
+  const [pendingId, setPendingId] = useState<string | null>(null);
 
   const withdraw = (q: MyQuoteDto) =>
     Alert.alert('Withdraw this quote?', 'You can send a new one later while the job is open.', [
@@ -23,11 +25,14 @@ export default function MyQuotesScreen() {
       {
         text: 'Withdraw',
         style: 'destructive',
-        onPress: () =>
+        onPress: () => {
+          setPendingId(q.id);
           void quotesApi
             .withdraw(q.id)
             .then(() => client.invalidateQueries({ queryKey: quoteKeys.all }))
-            .catch((e: unknown) => Alert.alert('Not changed', describeError(e))),
+            .catch((e: unknown) => Alert.alert('Not changed', describeError(e)))
+            .finally(() => setPendingId(null));
+        },
       },
     ]);
 
@@ -68,7 +73,7 @@ export default function MyQuotesScreen() {
                         })
                       }
                     />
-                    <Button label="Withdraw" variant="ghost" fullWidth={false} onPress={() => withdraw(q)} />
+                    <Button label="Withdraw" variant="ghost" fullWidth={false} loading={pendingId === q.id} onPress={() => withdraw(q)} />
                   </>
                 ) : null}
               </View>

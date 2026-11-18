@@ -72,7 +72,7 @@ export default function OrderDetailScreen() {
     }
   };
 
-  if (query.isPending) return <LoadingState />;
+  if (query.isPending) return <Screen><LoadingState /></Screen>;
   if (query.isError) return <Screen><ErrorState error={query.error} onRetry={() => query.refetch()} /></Screen>;
   const o = query.data;
   const onsiteSubmit = o.onsite.required && o.availableActions.includes('submit');

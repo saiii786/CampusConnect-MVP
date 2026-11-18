@@ -67,7 +67,7 @@ export default function ReportScreen() {
                   paddingHorizontal: spacing.md,
                   borderRadius: radius.md,
                   borderWidth: 1,
-                  borderColor: selected ? colors.primary : colors.border,
+                  borderColor: selected ? colors.primary : colors.borderStrong,
                   backgroundColor: selected ? colors.primarySoft : 'transparent',
                 }}
               >

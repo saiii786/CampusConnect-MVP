@@ -231,4 +231,18 @@ Format: **Context** (situation) → **Decision** → **Consequences** (trade-off
   - U1 `trust proxy 1` must match Render's real proxy hops → verify `req.ip` on Render during T10.2.
   - U2 **production cannot start yet**: `MAIL_DRIVER` has only the `console` driver, which production refuses. A real email provider (PRD Q3) is a Phase 10 blocker (T10.0).
 - **Decision — performance:** load-tested with 20,000 listings (`npm run load:test`, its own `*_load` database). Text search with no matches scanned every row (p95 323 ms) → **pg_trgm GIN indexes** on title and description (pg_trgm ships with Postgres and is available on Supabase free). "Near me" loaded 1,000 full rows with joins (p95 597 ms) → two passes: light candidate rows, then full rows for one page only. Load-test tooling is a ~150-line script with `fetch` (no k6 install needed).
-- **Consequences:** All 12 tested endpoints p95 ≤ 214 ms locally with 20 concurrent clients. Free-tier hosting will be slower (shared CPU, cold starts) — re-run against the deployed API in T10.2.
+- **Consequences (performance):** All 12 tested endpoints p95 ≤ 214 ms locally with 20 concurrent clients. Free-tier hosting will be slower (shared CPU, cold starts) — re-run against the deployed API in T10.2.
+
+## ADR-028 — App quality rules: offline, paging, contrast, touch targets (Phase 9)
+- **Date:** 2026-11-19 · **Status:** Accepted
+- **Context:** T9.1/T9.2 — an independent audit of every screen against the app's own rules (mobile README) found missing error states, silent paging failures, no offline handling, two contrast failures and a few small touch targets.
+- **Decision:**
+  - **Offline:** TanStack Query's `onlineManager` follows NetInfo (`@react-native-community/netinfo`, bundled in Expo Go) and `focusManager` follows AppState. Offline → queries pause (no error flood), an app-wide "You're offline" banner shows, and data refreshes on reconnect / return to the app.
+  - **Endless lists** always use `<PageFooter query={…} />` ("Loading more…", or the error with Try again).
+  - **Every list/section** distinguishes loading → error (with retry) → empty; an error is never shown as "nothing here".
+  - **Colours:** new tokens `onDanger` (text on danger buttons; was white = 2.8:1 in dark mode) and `borderStrong` (input/checkbox/pill outlines and empty stars, ≥ 3:1 per WCAG 1.4.11). `src/theme/tokens.test.ts` checks every text pair ≥ 4.5:1 and control outlines ≥ 3:1 in light and dark — changing a colour that breaks contrast fails the tests.
+  - **Touch targets** ≥ 48 px everywhere (segmented options, category pills, sign-in links, quote seller row). Labels wrap instead of truncating at large font sizes.
+  - Screen-reader users get a **Report message** action in chat (long-press alone is not discoverable).
+  - **Orders "Active" filter** moved to the server (`GET /orders?scope=active`), so paging works when most orders are finished.
+- **Deferred to Phase 9A (design system v2), not functional:** remaining hard-coded sizes (star font size, multiline field heights, image tile sizes), the chat screen's fixed keyboard offset (must be checked on an Android phone with edge-to-edge), and pinning the price a buyer saw (ADR-027 L1).
+- **Consequences:** Screens behave the same way under slow/no network. The contrast rule is enforced by tests, not by memory.

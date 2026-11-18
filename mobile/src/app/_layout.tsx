@@ -16,9 +16,11 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { session, useSession } from '@/lib/auth/session';
-import { createQueryClient } from '@/lib/query-client';
+import { OfflineBanner } from '@/components/ui';
+import { connectQueryToDevice, createQueryClient } from '@/lib/query-client';
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
+connectQueryToDevice();
 
 export default function RootLayout() {
   const scheme = useColorScheme();
@@ -58,6 +60,7 @@ export default function RootLayout() {
           {/* Terms / privacy / guidelines: always reachable (FR-604). */}
           <Stack.Screen name="legal/[doc]" options={{ headerShown: true, title: '' }} />
         </Stack>
+        <OfflineBanner />
       </ThemeProvider>
     </QueryClientProvider>
   );

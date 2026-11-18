@@ -47,7 +47,7 @@ export function ReviewForm({ orderId, otherName, onDone }: { orderId: string; ot
             onPress={() => setRating(n)}
             style={{ minWidth: MIN_TOUCH_SIZE, minHeight: MIN_TOUCH_SIZE, alignItems: 'center', justifyContent: 'center' }}
           >
-            <AppText style={{ fontSize: 30, color: n <= rating ? colors.primary : colors.border }}>★</AppText>
+            <AppText style={{ fontSize: 30, color: n <= rating ? colors.primary : colors.borderStrong }}>★</AppText>
           </Pressable>
         ))}
       </View>

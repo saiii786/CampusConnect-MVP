@@ -15,6 +15,34 @@ A dated, append-only record of what was done in each working session: what chang
 
 ---
 
+## 2026-11-19 — Phase 9 (part 2): UX + accessibility pass, E2E flows
+**Roadmap tasks:** T9.1, T9.2, T9.5
+
+**Done**
+- Independent read-only audit of every screen against the app's rules; fixed in code (ADR-028):
+  - Offline: NetInfo → TanStack `onlineManager`, AppState → `focusManager`, app-wide offline banner.
+  - Errors no longer shown as empty ("Say hello", "No reviews yet", "No money movements"): chat, wallet history, public/own reviews.
+  - `PageFooter` on all 7 endless lists (loading more / retry). Loading states inside `<Screen>` on 6 screens.
+  - Orders "Active" filter moved to the server (`scope=active`; shared `FINISHED_ORDER_STATUSES`).
+  - Double-submit guards: mark all read, "I've paid — check now", decline/withdraw quote, block, close/edit listing while busy, submit while locating. Unhandled promise rejections in mark-read fixed.
+  - Accessibility: touch targets ≥ 48 px (segmented, category pills, sign-in links, quote seller row), segmented labels wrap at large fonts, "Report message" screen-reader action, error captions announced. Contrast: `onDanger` (was 2.8:1 in dark) and `borderStrong` (control outlines were ~1.4:1) tokens + `tokens.test.ts`.
+  - Keyboard: forms scroll the focused field above the keyboard (`automaticallyAdjustKeyboardInsets`). Photo carousel sized to the screen; removing a photo asks first.
+- Maestro flows for both main journeys (`mobile/e2e/`) — **not executed** (no Java/Android SDK/Maestro on this computer). YAML syntax checked; labels taken from the code.
+- New dependency: `@react-native-community/netinfo` 12.0.1 (version chosen by `npx expo install`; free, bundled in Expo Go).
+
+**Problems found and fixed during the session**
+- A PowerShell bulk-replace I wrote treated one-pair arrays as strings and replaced single characters in 4 files (text-field, checkbox, review-form, report). Caught immediately with `git diff --stat`; the 4 files had no other uncommitted changes and were restored from the last commit, then edited with exact replacements. No more bulk replaces via PowerShell.
+- New component tests first failed: this React Native Testing Library version needs `await render(...)`.
+
+**Tests run (all executed this session)**
+- mobile **91/91** (38 new: 34 contrast pairs, offline banner, page footer ×3) · backend integration **101/101** (new: order list scope) · lint + typecheck clean · Android bundle builds (`npx expo export --platform android`).
+
+**Not verified / known gaps**
+- Nothing in this part was tried on a phone: offline banner with a real network drop, TalkBack, large system fonts, keyboard behaviour (chat on Android edge-to-edge), Maestro flows.
+- Deferred to 9A: remaining hard-coded sizes, price pinning (ADR-027 L1).
+
+**Next:** Phase 9A (UI/UX design) needs the founder: app name (PRD Q1), brand preferences, 3–5 students for a usability test. Phase 10 needs approval + keys and has a blocker (real email provider, T10.0).
+
 ## 2026-11-19 — Phase 9 (part 1): security review + load test
 **Roadmap tasks:** T9.3, T9.4
 

@@ -6,6 +6,7 @@
 import type { QuoteDto } from '@cc/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
+import { useState } from 'react';
 import { Alert, FlatList, RefreshControl, View } from 'react-native';
 import { QuoteCard } from '@/components/quotes/quote-card';
 import { Button, EmptyState, ErrorState, LoadingState, Notice, Screen } from '@/components/ui';
@@ -18,6 +19,7 @@ export default function ListingQuotesScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const client = useQueryClient();
   const quotes = useListingQuotes(id);
+  const [pendingId, setPendingId] = useState<string | null>(null);
 
   const decline = (q: QuoteDto) =>
     Alert.alert(`Decline ${q.seller.displayName}'s quote?`, 'They will see it was declined.', [
@@ -25,11 +27,14 @@ export default function ListingQuotesScreen() {
       {
         text: 'Decline',
         style: 'destructive',
-        onPress: () =>
+        onPress: () => {
+          setPendingId(q.id);
           void quotesApi
             .reject(q.id)
             .then(() => client.invalidateQueries({ queryKey: quoteKeys.all }))
-            .catch((e: unknown) => Alert.alert('Not changed', describeError(e))),
+            .catch((e: unknown) => Alert.alert('Not changed', describeError(e)))
+            .finally(() => setPendingId(null));
+        },
       },
     ]);
 
@@ -58,7 +63,7 @@ export default function ListingQuotesScreen() {
                       })
                     }
                   />
-                  <Button label="Decline" variant="ghost" fullWidth={false} onPress={() => decline(q)} />
+                  <Button label="Decline" variant="ghost" fullWidth={false} loading={pendingId === q.id} onPress={() => decline(q)} />
                 </>
               ) : null}
             </View>

@@ -189,11 +189,13 @@
 
 | ID | Task | Refs | Status |
 |---|---|---|---|
-| T9.1 | UX pass: loading/empty/error states everywhere, offline banner, consistent design | NFR-06 | ⬜ |
-| T9.2 | Accessibility pass (labels, font scaling, contrast, touch targets) | NFR-07 | ⬜ |
+| T9.1 | UX pass: loading/empty/error states everywhere, offline banner, consistent design | NFR-06 | ✅ (ADR-028; visual design → 9A) |
+| T9.2 | Accessibility pass (labels, font scaling, contrast, touch targets) | NFR-07 | ✅ in code + contrast tests — ⚠ TalkBack / large-font check on a phone still to do (T9A.8) |
 | T9.3 | Security review against ARCHITECTURE §10 + authorization matrix complete | NFR-01 | ✅ 3 medium fixed; lows tracked in ADR-027 |
 | T9.4 | Load test and query/index tuning | NFR-03 | ✅ 20k listings, worst p95 214 ms (`npm run load:test`, ADR-027) |
-| T9.5 | Maestro E2E for both main journeys | NFR-10 | ⬜ |
+| T9.5 | Maestro E2E for both main journeys | NFR-10 | 🟨 flows written (`mobile/e2e/`), **not executed** — no Java/Android SDK/Maestro on the dev computer; run on a device or emulator |
+
+**Exit status (2026-11-19):** ✅ security review (3 medium fixed), load test PASS (worst p95 214 ms with 20k listings), UX/a11y audit fixed in code, contrast enforced by tests. 🟨 Not yet done on a real device: Maestro run, TalkBack/large-font check, chat keyboard on Android.
 
 ## Phase 9A — UI/UX design & polish (ADR-018)
 **Depends on:** Phase 9 (all features working and tested). **Needs from founder:** app name (PRD Q1), brand preferences, 3–5 students for a usability test.

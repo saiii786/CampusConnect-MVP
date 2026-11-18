@@ -14,7 +14,7 @@ export default function EditListingScreen() {
   const queryClient = useQueryClient();
   const listing = useListing(id);
 
-  if (listing.isPending) return <LoadingState />;
+  if (listing.isPending) return <Screen><LoadingState /></Screen>;
   if (listing.isError) return <Screen><ErrorState error={listing.error} onRetry={() => listing.refetch()} /></Screen>;
   if (!listing.data.isOwner || listing.data.status === 'CLOSED') {
     return <Screen><EmptyState title="This listing cannot be edited" /></Screen>;
