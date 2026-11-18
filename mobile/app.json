@@ -32,6 +32,12 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "CampusConnect uses your photos so you can add a profile picture and examples of your work."
+        }
       ]
     ],
     "experiments": {

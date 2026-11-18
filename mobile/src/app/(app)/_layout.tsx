@@ -1,6 +1,6 @@
 /**
  * Signed-in area. Only reachable while signed in (guarded in the root layout).
- * Phase 2+ turns this into tabs (Home, Search, Messages, Orders, Profile).
+ * Phase 9A turns this into bottom tabs (Home, Search, Post, Messages, Profile).
  */
 import { Stack } from 'expo-router';
 
@@ -9,6 +9,12 @@ export default function AppLayout() {
     <Stack screenOptions={{ headerBackTitle: 'Back' }}>
       <Stack.Screen name="index" options={{ title: 'CampusConnect' }} />
       <Stack.Screen name="verify-email" options={{ title: 'Verify your email' }} />
+      <Stack.Screen name="profile" options={{ title: 'My profile' }} />
+      <Stack.Screen name="profile/edit" options={{ title: 'Edit profile' }} />
+      <Stack.Screen name="profile/student" options={{ title: 'Student badge' }} />
+      <Stack.Screen name="profile/add-work" options={{ title: 'Add work to portfolio' }} />
+      <Stack.Screen name="profile/delete-account" options={{ title: 'Delete account' }} />
+      <Stack.Screen name="users/[id]" options={{ title: 'Profile' }} />
     </Stack>
   );
 }

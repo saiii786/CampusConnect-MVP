@@ -175,6 +175,8 @@ model Profile {
   userId            String    @id @db.Uuid
   displayName       String
   avatarUrl         String?
+  /// Storage key of the avatar (used to delete the old file). Phase 2.
+  avatarKey         String?
   bio               String?
   city              String?
   /// Approximate location (rounded) used for "near me"; never an exact address.
@@ -184,6 +186,8 @@ model Profile {
   languages         String[]
   collegeName       String?
   studentVerifiedAt DateTime?
+  /// Verified college email (private, never public). Unique: one college email = one account (FR-004).
+  studentEmail      String?   @unique
   updatedAt         DateTime  @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -250,6 +254,8 @@ model PortfolioItem {
   title       String
   description String?
   imageUrl    String
+  /// Storage key of the image (used to delete the file). Phase 2.
+  imageKey    String
   position    Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

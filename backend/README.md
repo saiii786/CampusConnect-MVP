@@ -21,6 +21,7 @@ For your own machine you can generate real ones:
 `node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"` (run twice — the two secrets must differ).
 
 Verification/reset codes are **printed in this terminal** (`MAIL_DRIVER=console`) until a real email provider is chosen (PRD Q3).
+Uploaded images are stored in `backend/.uploads/` (`STORAGE_DRIVER=local`, git-ignored) until Supabase Storage is set up.
 
 ## Scripts (`npm run <script> -w @cc/backend`)
 | Script | Does |
@@ -34,6 +35,11 @@ Verification/reset codes are **printed in this terminal** (`MAIL_DRIVER=console`
 | `db:deploy` | Apply existing migrations (CI / production) |
 | `db:seed` | Upsert reference data |
 | `db:studio` | Browse the database in a web UI |
+| `admin:grant -- <email> [--revoke]` | Give/remove the ADMIN role (no API for this on purpose) |
+
+**Migrations in a non-interactive shell** (e.g. an AI assistant or CI): `prisma migrate dev` refuses to run.
+Generate the SQL with `npx prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --script -o prisma/migrations/<timestamp>_<name>/migration.sql`,
+**review it** (no drops without approval), then `npm run db:deploy`.
 
 ## Folder structure
 | Path | Purpose |
@@ -54,9 +60,10 @@ Verification/reset codes are **printed in this terminal** (`MAIL_DRIVER=console`
 | `prisma/schema.prisma` | Database schema (full MVP data model) |
 | `prisma/migrations/` | SQL migrations — never edit an applied migration; create a new one |
 | `prisma/seed.ts`, `prisma/seed-data/` | Idempotent reference data (categories) |
+| `prisma/scripts/grant-admin.ts` | `npm run admin:grant` |
 | `prisma/docker-init/` | SQL run once when the local Docker DB is created (creates the test DB) |
 | `prisma.config.ts` | Prisma 7 CLI config (schema path, migrations, seed, `DIRECT_URL`) |
-| `test/setup/` | Integration-test helpers: test env, global setup (runs migrations), `createTestApp()`, `resetUserData()` |
+| `test/setup/` | Integration-test helpers: test env, global setup (runs migrations), `createTestApp()`, `resetUserData()`, `seedCategories()`, `createUser()`, `uploadImage()` |
 | `test/*.e2e-spec.ts` | Integration tests |
 
 ## Modules
@@ -65,8 +72,12 @@ Verification/reset codes are **printed in this terminal** (`MAIL_DRIVER=console`
 | health | ✅ Phase 0 | [src/modules/health/README.md](src/modules/health/README.md) |
 | auth | ✅ Phase 1 | [src/modules/auth/README.md](src/modules/auth/README.md) |
 | mail | ✅ Phase 1 (console driver) | [src/modules/mail/README.md](src/modules/mail/README.md) |
-| users | 🟨 Phase 1: `GET /me`; rest in Phase 2 | [src/modules/users/README.md](src/modules/users/README.md) |
-| categories, listings, … | Planned — see [ROADMAP](../docs/ROADMAP.md) | — |
+| users | ✅ Phase 2 (profile, student badge, portfolio, public profiles, deletion) | [src/modules/users/README.md](src/modules/users/README.md) |
+| storage | ✅ Phase 2 (local ✅; Supabase built, not yet verified live) | [src/modules/storage/README.md](src/modules/storage/README.md) |
+| uploads | ✅ Phase 2 | [src/modules/uploads/README.md](src/modules/uploads/README.md) |
+| categories | ✅ Phase 2 | [src/modules/categories/README.md](src/modules/categories/README.md) |
+| admin | 🟨 Phase 2: student domains; rest in Phase 8 | [src/modules/admin/README.md](src/modules/admin/README.md) |
+| listings, quotes, … | Planned — see [ROADMAP](../docs/ROADMAP.md) | — |
 
 ## Conventions
 - ESM: relative imports end in `.js` (even for `.ts` files).

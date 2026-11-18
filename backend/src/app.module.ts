@@ -12,11 +12,15 @@ import { RequestContextMiddleware } from './common/http/request-context.middlewa
 import { createValidationPipe } from './common/validation/validation.pipe.js';
 import { ConfigModule } from './config/config.module.js';
 import type { AppEnv } from './config/env.js';
+import { AdminModule } from './modules/admin/admin.module.js';
 import { hasAuthRateLimit } from './modules/auth/auth.decorators.js';
 import { AuthGuard } from './modules/auth/auth.guard.js';
 import { AuthModule } from './modules/auth/auth.module.js';
+import { CategoriesModule } from './modules/categories/categories.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 import { MailModule } from './modules/mail/mail.module.js';
+import { StorageModule } from './modules/storage/storage.module.js';
+import { UploadsModule } from './modules/uploads/uploads.module.js';
 import { UsersModule } from './modules/users/users.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 
@@ -43,9 +47,13 @@ export class AppModule implements NestModule {
             },
           ],
         }),
+        StorageModule,
         HealthModule,
         AuthModule,
+        UploadsModule,
         UsersModule,
+        CategoriesModule,
+        AdminModule,
       ],
       providers: [
         { provide: APP_PIPE, useFactory: createValidationPipe },

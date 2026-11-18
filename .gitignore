@@ -10,6 +10,9 @@ coverage/
 # Prisma generated client
 backend/src/generated/
 
+# Images uploaded with the local storage driver (development only)
+backend/.uploads/
+
 # Environment files — never commit secrets (use .env.example as the template)
 .env
 .env.*

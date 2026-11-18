@@ -65,6 +65,22 @@ describe('loadEnv', () => {
     expect(problems).toContain('MAIL_DRIVER');
   });
 
+  it('storage: local by default; supabase needs its settings; production refuses local', () => {
+    expect(loadEnv(VALID).STORAGE_DRIVER).toBe('local');
+    const problems = problemsOf({ ...VALID, STORAGE_DRIVER: 'supabase' });
+    for (const name of ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'STORAGE_BUCKET']) expect(problems).toContain(name);
+    expect(
+      loadEnv({
+        ...VALID,
+        STORAGE_DRIVER: 'supabase',
+        SUPABASE_URL: 'https://abcd.supabase.co',
+        SUPABASE_SERVICE_ROLE_KEY: 'x'.repeat(40),
+        STORAGE_BUCKET: 'media',
+      }).STORAGE_BUCKET,
+    ).toBe('media');
+    expect(problemsOf({ ...VALID, NODE_ENV: 'production' })).toContain('STORAGE_DRIVER');
+  });
+
   it('never includes variable values in the error (they may be secrets)', () => {
     const secret = 'postgresql-but-not-really-SECRET123';
     expect(problemsOf({ ...VALID, DATABASE_URL: secret })).not.toContain('SECRET123');

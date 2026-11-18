@@ -15,6 +15,38 @@ A dated, append-only record of what was done in each working session: what chang
 
 ---
 
+## 2026-11-18 — Phase 2: profiles, student badge, categories, uploads (+ UI/UX phase planned)
+**Roadmap tasks:** T2.1–T2.8; new Phase 9A
+
+**Done**
+- Founder confirmed the "function first, UI/UX later" approach → **Phase 9A — UI/UX design & polish** added to ROADMAP (before deploy), recorded as ADR-018.
+- GitHub: the founder's repo is still empty — pushing needs a one-time browser sign-in as `saiii786` that only the founder can do (`! git push -u origin main`). Not worked around (work account untouched, as instructed).
+- Database: additive migration `20261118210000_phase2_profile_storage_keys` (2 nullable columns + 1 column on an empty table + unique index; no drops). Generated with `prisma migrate diff` because `migrate dev` refuses non-interactive shells; SQL reviewed before applying.
+- Shared: users/uploads/categories/admin schemas and types; `MeResponse` now has `profile` and `student` sections.
+- Backend: `storage` (local + Supabase drivers, ADR-019), `uploads` (sign/claim/discard, local upload + serve routes with magic-byte check), `users` (PATCH/DELETE /me, student badge, portfolio, `GET /users/:id`), `categories` (`GET /categories`, gated categories hidden), `admin` (student domains), `npm run admin:grant`, shared `CodeHasher`. Rules in ADR-020.
+- Mobile: my profile, edit profile (photo pick → resize → upload), student badge flow, add work, delete account, public profile; Avatar/Chip/ImageTile components; `expo-image-picker` + `expo-image-manipulator` (both in Expo Go).
+
+**Problems found and fixed during the session**
+- **Live run caught a bug the tests missed:** images were stored fine but returned 404, because Express refuses to serve files under a dot-folder (`.uploads`). Fixed (`dotfiles: 'allow'` on the validated path) and the test storage folder now also starts with a dot; confirmed the test fails without the fix and passes with it.
+- Typed routes: `profile/index.tsx` is typed as `/profile/index`, so My profile moved to `(app)/profile.tsx` (`/profile`); dynamic routes use `{ pathname: '/users/[id]', params }`.
+- Student screen would stay on the email step after changing the college email → fixed with an `onSent` callback.
+
+**Tests run (all executed this session)**
+- `npm test -w @cc/shared` → 59/59 pass
+- `npm test -w @cc/backend` → 56/56 pass (incl. storage drivers, Supabase via mocked HTTP, route safety with new public routes)
+- `npm run test:e2e -w @cc/backend` → 40/40 pass (26 earlier + 14 Phase 2)
+- `npm test -w @cc/mobile` → 36/36 pass
+- `npm run lint`, `npm run typecheck` → pass; mobile typecheck also passes on a fresh checkout without generated route types
+- `npx expo export --platform android` → bundle builds
+- Live (built server, port 3001): categories (10 groups / 39) → signup → sign + upload JPEG → set avatar → image served 200 `image/jpeg` → portfolio item → public profile without email → delete account → image 404. Smoke accounts + files removed afterwards.
+
+**Not verified / known gaps**
+- Supabase Storage driver not tried against a real project (needs the founder's Supabase project; setup steps in `backend/src/modules/storage/README.md`).
+- Photo picking/resizing not tried on a phone (needs a device). Push to GitHub pending the founder's sign-in.
+- Signed-but-unused uploads are not cleaned up (parking lot).
+
+**Next:** Phase 3 — listings & search (modes 1 and 2).
+
 ## 2026-11-18 — Phase 1: accounts & authentication
 **Roadmap tasks:** T1.1–T1.10
 

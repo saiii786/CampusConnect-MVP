@@ -25,7 +25,7 @@ import { AppError } from '../../common/errors/app-error.js';
 import { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { MailService } from '../mail/mail.service.js';
-import { toMeResponse, type UserWithProfile } from '../users/user.mapper.js';
+import { ME_INCLUDE, toMeResponse, type UserForMe } from '../users/user.mapper.js';
 import { EMAIL_CODE_TTL_MINUTES, EmailCodeService } from './email-code.service.js';
 import { PasswordHasher } from './password-hasher.js';
 import { hashRefreshToken, TokenService } from './token.service.js';
@@ -54,7 +54,7 @@ export class AuthService {
   /** FR-001/005: create the account (+ profile + empty wallet), sign in, email a verification code. */
   async signup(input: SignupInput): Promise<AuthSessionResponse> {
     const passwordHash = await this.passwords.hash(input.password);
-    let user: UserWithProfile;
+    let user: UserForMe;
     try {
       user = await this.prisma.user.create({
         data: {
@@ -65,7 +65,7 @@ export class AuthService {
           profile: { create: { displayName: input.displayName, skills: [], languages: [] } },
           wallet: { create: {} },
         },
-        include: { profile: true },
+        include: ME_INCLUDE,
       });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
@@ -82,7 +82,7 @@ export class AuthService {
   async login(input: LoginInput): Promise<AuthSessionResponse> {
     const user = await this.prisma.user.findUnique({
       where: { email: input.email },
-      include: { profile: true },
+      include: ME_INCLUDE,
     });
     if (!user || user.status === UserStatus.DELETED) {
       await this.passwords.verifyDummy(input.password);
@@ -98,7 +98,7 @@ export class AuthService {
   async refresh(refreshToken: string, now: Date = new Date()): Promise<AuthSessionResponse> {
     const existing = await this.prisma.refreshToken.findUnique({
       where: { tokenHash: hashRefreshToken(refreshToken) },
-      include: { user: { include: { profile: true } } },
+      include: { user: { include: ME_INCLUDE } },
     });
     if (!existing) throw REFRESH_INVALID();
 
@@ -164,7 +164,7 @@ export class AuthService {
     const updated = await this.prisma.user.update({
       where: { id: userId },
       data: { emailVerifiedAt: new Date() },
-      include: { profile: true },
+      include: ME_INCLUDE,
     });
     return toMeResponse(updated);
   }
@@ -209,14 +209,9 @@ export class AuthService {
     ]);
   }
 
-  /** GET /me */
-  async me(userId: string): Promise<MeResponse> {
-    return toMeResponse(await this.getUser(userId));
-  }
-
   // ── internals ────────────────────────────────────────────────────────────
 
-  private async startSession(user: UserWithProfile): Promise<AuthSessionResponse> {
+  private async startSession(user: UserForMe): Promise<AuthSessionResponse> {
     const now = new Date();
     const access = await this.tokens.signAccessToken(user.id, now);
     const refresh = this.tokens.newRefreshToken(now);
@@ -238,8 +233,8 @@ export class AuthService {
     await this.prisma.refreshToken.updateMany({ where: { familyId, revokedAt: null }, data: { revokedAt: now } });
   }
 
-  private async getUser(userId: string): Promise<UserWithProfile> {
-    const user = await this.prisma.user.findUnique({ where: { id: userId }, include: { profile: true } });
+  private async getUser(userId: string): Promise<UserForMe> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId }, include: ME_INCLUDE });
     if (!user) throw AppError.notFound();
     return user;
   }

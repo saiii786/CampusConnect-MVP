@@ -58,7 +58,35 @@ export const envSchema = z.object({
    * drivers are added when PRD Q3 is decided.
    */
   MAIL_DRIVER: z.enum(['console']).default('console'),
+
+  // ── Image storage (Phase 2, ADR-019) ─────────────────────────────────────
+  /**
+   * `local` = files saved on this server's disk and served by the API (development/tests only;
+   * refused in production because free hosting disks are wiped on restart).
+   * `supabase` = Supabase Storage (free 1 GB), the app uploads straight to it.
+   */
+  STORAGE_DRIVER: z.enum(['local', 'supabase']).default('local'),
+  /** Folder for the local driver (relative to the backend folder). */
+  STORAGE_LOCAL_DIR: z.string().min(1).default('.uploads'),
+  /** Supabase project URL, e.g. https://abcd.supabase.co (supabase driver). */
+  SUPABASE_URL: z.url({ protocol: /^https?$/ }).optional(),
+  /** Server-side only. NEVER put this in the mobile app. */
+  SUPABASE_SERVICE_ROLE_KEY: z.string().min(20).optional(),
+  /** Public bucket for images, e.g. `media`. */
+  STORAGE_BUCKET: z.string().regex(/^[a-z0-9][a-z0-9._-]{1,62}$/).optional(),
 }).superRefine((env, ctx) => {
+  if (env.STORAGE_DRIVER === 'supabase') {
+    for (const key of ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'STORAGE_BUCKET'] as const) {
+      if (!env[key]) ctx.addIssue({ code: 'custom', path: [key], message: 'is required when STORAGE_DRIVER=supabase' });
+    }
+  }
+  if (env.NODE_ENV === 'production' && env.STORAGE_DRIVER === 'local') {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['STORAGE_DRIVER'],
+      message: 'local storage is not allowed in production (files would be lost on restart)',
+    });
+  }
   if (env.JWT_ACCESS_SECRET === env.CODE_HASH_SECRET) {
     ctx.addIssue({ code: 'custom', path: ['CODE_HASH_SECRET'], message: 'must be different from JWT_ACCESS_SECRET' });
   }

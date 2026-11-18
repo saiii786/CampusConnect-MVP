@@ -18,13 +18,16 @@ import { IS_PUBLIC_KEY } from '../modules/auth/auth.decorators.js';
 
 /** Reviewed list of routes reachable without signing in. Keep sorted. */
 const PUBLIC_ROUTES = [
+  'GET /categories',
   'GET /health',
+  'GET /uploads/files/*key', // local storage driver only (404 with Supabase)
   'POST /auth/forgot-password',
   'POST /auth/login',
   'POST /auth/logout',
   'POST /auth/refresh',
   'POST /auth/reset-password',
   'POST /auth/signup',
+  'PUT /uploads/local/:token', // local storage driver only; the signed upload token is the credential
 ];
 
 const VALIDATED_PARAM_TYPES = new Set<number>([RouteParamtypes.BODY, RouteParamtypes.QUERY, RouteParamtypes.PARAM]);

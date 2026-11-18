@@ -10,6 +10,10 @@ names, statuses or rules (ADR-007 — the old demo-connect broke because they di
 | `src/orders/state-machine.ts` | The order state machine (ARCHITECTURE §6): `resolveOrderTransition()` (may this actor do this action now? what is the new status and money effect?), `availableOrderActions()` (which buttons to show), `initialOrderStatus()`, constants `MAX_CHANGE_REQUESTS`, `AUTO_APPROVE_AFTER_DAYS` |
 | `src/money.ts` | Integer-paise helpers: `rupeesToPaise()`, `formatPaise()` (Indian grouping, e.g. ₹1,00,000), `isValidAmountPaise()`, `MAX_AMOUNT_PAISE` |
 | `src/auth/schemas.ts` | Auth request schemas used by the API **and** the app's forms: `signupSchema`, `loginSchema`, `refreshTokenSchema`, `verifyEmailSchema`, `forgotPasswordSchema`, `resetPasswordSchema` (+ building blocks `emailSchema` — trims and lower-cases —, `passwordSchema` 8–128, `dateOfBirthSchema` 18+, `emailCodeSchema` 6 digits); helpers `parseIsoDate()`, `ageInYears()`; response types `MeResponse`, `AuthTokens`, `AuthSessionResponse`; error codes `AuthErrorCode`. All object schemas are `.strict()` (unknown fields rejected) |
+| `src/users/schemas.ts` | Profile/student/portfolio/deletion request schemas (`updateProfileSchema` cleans tags and turns "" into null), `idParamSchema`, `emailDomain()`, `STUDENT_EMAIL_SUFFIXES`, limits (`PORTFOLIO_MAX_ITEMS`…), response types `MeResponse`, `OwnProfile`, `StudentStatus`, `PublicProfile`, `PortfolioItemDto`, `UserBadge` |
+| `src/uploads/schemas.ts` | `signUploadSchema`, `uploadKeySchema` / `UPLOAD_KEY_PATTERN`, `UploadPurpose`, `IMAGE_CONTENT_TYPES`, `MAX_UPLOAD_BYTES`, `UploadTarget` |
+| `src/categories/types.ts` | `CategoriesResponse`, `CategoryGroupDto`, `CategoryDto` |
+| `src/admin/schemas.ts` | `domainSchema`, `upsertStudentDomainSchema`, `StudentDomainDto` |
 | `src/**/*.spec.ts` | Vitest tests. `state-machine.spec.ts` checks every status × action × actor × payment-mode combination against an independent copy of the documented table |
 
 Each roadmap phase adds the request schemas for its endpoints (one per API request body).

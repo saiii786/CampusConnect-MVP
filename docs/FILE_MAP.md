@@ -6,7 +6,7 @@ Every file we maintain, and what it is for. Not listed: generated/vendor files
 **Rule:** when you add, rename or delete a file, update this map in the same change. Function-level
 detail lives in each package/module `README.md` and in the file's header comment; this is the index.
 
-_Last updated: 2026-11-18 (end of Phase 1)._
+_Last updated: 2026-11-18 (end of Phase 2)._
 
 ---
 
@@ -28,7 +28,7 @@ _Last updated: 2026-11-18 (end of Phase 1)._
 | `docs/PRD.md` | Product requirements: problem, users, three matching modes, requirement IDs (FR/NFR), open questions Q1–Q7 |
 | `docs/ROADMAP.md` | Phased plan, task IDs and status, exit criteria, Definition of Done, parking lot |
 | `docs/ARCHITECTURE.md` | Technical design: stack, modules, data model, order state machine, money design, API & socket contracts, security, config, testing, deployment |
-| `docs/DECISIONS.md` | Decision log ADR-001…017, with reasons; how to change a decision |
+| `docs/DECISIONS.md` | Decision log ADR-001…020, with reasons; how to change a decision |
 | `docs/DEV_LOG.md` | Dated record of each work session: done, tests run, gaps, next |
 | `docs/FILE_MAP.md` | This file |
 
@@ -40,6 +40,11 @@ _Last updated: 2026-11-18 (end of Phase 1)._
 | `src/index.ts` | Public exports |
 | `src/auth/schemas.ts` | Auth request schemas (signup, login, refresh, verify, forgot/reset), DOB/age helpers, auth response types, `AuthErrorCode` |
 | `src/auth/schemas.spec.ts` | Tests: email normalisation, 18+ rule, terms, password limits, strict (no extra fields), code format |
+| `src/users/schemas.ts` | Profile, student badge, portfolio, account-deletion schemas; `MeResponse`, `PublicProfile`, `PortfolioItemDto`, `UserBadge` |
+| `src/users/schemas.spec.ts` | Tests for users/uploads/admin schemas (tag cleaning, limits, upload keys, domains, ids) |
+| `src/uploads/schemas.ts` | Upload signing schema, upload-key pattern, image types, 5 MB limit, `UploadTarget` |
+| `src/categories/types.ts` | Category response types |
+| `src/admin/schemas.ts` | Student-domain admin schema + DTO |
 | `src/enums.ts` | Domain enums (statuses, types) — must match the Prisma schema |
 | `src/money.ts` | Paise helpers: `rupeesToPaise`, `formatPaise`, `isValidAmountPaise` |
 | `src/money.spec.ts` | Tests for money helpers |
@@ -59,7 +64,9 @@ _Last updated: 2026-11-18 (end of Phase 1)._
 | `prisma.config.ts` | Prisma CLI config: schema, migrations, seed command, `DIRECT_URL` |
 | `prisma/schema.prisma` | **Database schema** — full MVP data model |
 | `prisma/migrations/20261118132417_init/migration.sql` | First migration: creates all tables, enums, indexes |
+| `prisma/migrations/20261118210000_phase2_profile_storage_keys/migration.sql` | Phase 2 (additive): `Profile.avatarKey`, `Profile.studentEmail` (unique), `PortfolioItem.imageKey` |
 | `prisma/migrations/migration_lock.toml` | Prisma's provider lock (do not edit) |
+| `prisma/scripts/grant-admin.ts` | `npm run admin:grant -- <email> [--revoke]` |
 | `prisma/seed.ts` | Idempotent seed runner (`npm run db:seed`) |
 | `prisma/seed-data/categories.ts` | Category tree (PRD Appendix A); `sensitive` flags gated categories |
 | `prisma/docker-init/01-create-test-db.sql` | Creates `campusconnect_test` when the Docker DB is first created |
@@ -93,15 +100,43 @@ _Last updated: 2026-11-18 (end of Phase 1)._
 | `src/modules/auth/password-hasher.ts` | argon2id hash/verify + timing-equalising dummy verify |
 | `src/modules/auth/password-hasher.spec.ts` | Hasher tests (OWASP params, salt, malformed hash) |
 | `src/modules/auth/email-code.service.ts` | 6-digit email codes: HMAC storage, expiry, attempts, cooldown, single use |
+| `src/modules/auth/code-hasher.ts` | Shared 6-digit code generation, scoped HMAC hashing, constant-time compare |
+| `src/modules/storage/README.md` | Storage drivers + Supabase bucket setup steps |
+| `src/modules/storage/storage.service.ts` | Abstract `StorageService` |
+| `src/modules/storage/local-storage.service.ts` | Local disk driver with signed upload tokens |
+| `src/modules/storage/supabase-storage.service.ts` | Supabase Storage driver (REST) |
+| `src/modules/storage/storage.module.ts` | Global provider; picks driver from `STORAGE_DRIVER` |
+| `src/modules/storage/storage.spec.ts` | Driver unit tests |
+| `src/modules/uploads/README.md` | Upload flow, endpoints, files |
+| `src/modules/uploads/uploads.service.ts` | `sign`, `claim`, `discard` |
+| `src/modules/uploads/uploads.controller.ts` | `POST /uploads/sign` |
+| `src/modules/uploads/local-uploads.controller.ts` | Local driver: `PUT /uploads/local/:token`, `GET /uploads/files/*key` |
+| `src/modules/uploads/image-signature.ts` | JPEG/PNG/WebP magic-byte check |
+| `src/modules/uploads/uploads.module.ts` | Module + raw-body parser on the local upload route only |
+| `src/modules/users/profile.service.ts` | Own profile, public profile, account deletion |
+| `src/modules/users/student-verification.service.ts` | Student badge: domain rules, code, grant |
+| `src/modules/users/student-verification.spec.ts` | Unit tests: domain candidates, image signature |
+| `src/modules/users/portfolio.service.ts` | Portfolio CRUD, 10-item limit, ordering |
+| `src/modules/users/portfolio.controller.ts` | `/me/portfolio*` |
+| `src/modules/users/users.controller.ts` | `GET /users/:id` |
+| `src/modules/categories/README.md` | Categories module docs |
+| `src/modules/categories/categories.service.ts` | Grouped list without gated categories; `getSelectable()` |
+| `src/modules/categories/categories.controller.ts` | `GET /categories` (public, cached) |
+| `src/modules/categories/categories.module.ts` | Exports `CategoriesService` |
+| `src/modules/admin/README.md` | Admin module docs + how to grant admin |
+| `src/modules/admin/admin.module.ts` | Registers admin controllers |
+| `src/modules/admin/student-domains.controller.ts` | `GET/POST /admin/student-domains` |
 | `src/modules/mail/README.md` | Mail module docs, drivers, how to add a provider |
 | `src/modules/mail/mail.service.ts` | `MailService` interface + `ConsoleMailService` (log + test outbox) |
 | `src/modules/mail/mail.module.ts` | Global provider; picks driver from `MAIL_DRIVER` |
 | `src/modules/users/README.md` | Users module docs |
-| `src/modules/users/users.module.ts` | Registers `/me` |
-| `src/modules/users/me.controller.ts` | `GET /me` |
-| `src/modules/users/user.mapper.ts` | `toMeResponse()` — safe user response mapping |
-| `test/setup/db.ts` | `resetUserData()` — truncates user data in the **test** DB |
+| `src/modules/users/users.module.ts` | Registers users controllers and services |
+| `src/modules/users/me.controller.ts` | `GET/PATCH/DELETE /me`, `/me/student-verification*` |
+| `src/modules/users/user.mapper.ts` | `toMeResponse`, `toPublicProfile`, `toPortfolioItemDto` — safe response mapping |
+| `test/setup/db.ts` | `resetUserData()` (truncates user data in the **test** DB), `seedCategories()` |
+| `test/setup/users.ts` | `createUser()`, `uploadImage()`, `JPEG_BYTES` |
 | `test/auth.e2e-spec.ts` | Integration tests for signup, login, tokens, refresh reuse, verification, reset, suspension, rate limits |
+| `test/profiles.e2e-spec.ts` | Integration tests for profile, uploads, portfolio, public profiles, student badge, categories, admin domains, account deletion |
 | `test/setup/test-env.ts` | Test configuration; points at the **test** database only |
 | `test/setup/global-setup.ts` | Runs migrations on the test DB before integration tests; refuses non-test DBs |
 | `test/setup/test-app.ts` | `createTestApp()` — boots the real app for integration tests |
@@ -127,10 +162,20 @@ _Last updated: 2026-11-18 (end of Phase 1)._
 | `src/app/(auth)/forgot-password.tsx` | Request a password-reset code |
 | `src/app/(auth)/reset-password.tsx` | Enter code + new password |
 | `src/app/(app)/_layout.tsx` | Signed-in stack |
-| `src/app/(app)/index.tsx` | Home (Phase 1): greeting, verify-email prompt, server status (dev), sign out |
+| `src/app/(app)/index.tsx` | Home (placeholder until Phase 3): greeting, verify-email + complete-profile prompts, server status (dev), sign out |
 | `src/app/(app)/verify-email.tsx` | Enter the 6-digit email code / resend |
+| `src/app/(app)/profile.tsx` | My profile: summary, student badge status, portfolio list/add/remove, links |
+| `src/app/(app)/profile/edit.tsx` | Edit profile + change/remove photo |
+| `src/app/(app)/profile/student.tsx` | Student badge: college email → code |
+| `src/app/(app)/profile/add-work.tsx` | Add a portfolio item (photo + title + description) |
+| `src/app/(app)/profile/delete-account.tsx` | Delete account with password confirmation |
+| `src/app/(app)/users/[id].tsx` | Another user's public profile |
 | `src/components/server-status-card.tsx` | Live `/health` status card |
+| `src/components/profile/profile-summary.tsx` | Shared profile header (photo, name, badges, stats, bio, skills, languages) |
 | `src/components/ui/index.ts` | UI kit exports |
+| `src/components/ui/avatar.tsx` | Round photo with initials fallback; `initialsOf()` |
+| `src/components/ui/chip.tsx` | `Chip`, `ChipList` |
+| `src/components/ui/image-tile.tsx` | Image with caption (portfolio) |
 | `src/components/ui/checkbox.tsx` | Accessible checkbox with label and error |
 | `src/components/ui/notice.tsx` | Inline danger/warning/success/info message box |
 | `src/components/ui/app-text.tsx` | Themed, font-scalable text |
@@ -149,6 +194,10 @@ _Last updated: 2026-11-18 (end of Phase 1)._
 | `src/lib/auth/auth-api.ts` | Typed `/auth/*` and `/me` calls |
 | `src/lib/forms/server-errors.ts` | Map server validation/field errors onto react-hook-form fields |
 | `src/lib/forms/server-errors.test.ts` | Tests for the mapping |
+| `src/lib/api/media-url.ts` | Resolve API-relative image URLs against the API origin |
+| `src/lib/uploads/upload-image.ts` | Pick + resize photo; sign + upload; returns key |
+| `src/lib/uploads/upload-image.test.ts` | Tests: upload flow, failures, 5 MB guard, media URLs, initials |
+| `src/lib/users/users-api.ts` | Users/portfolio/categories API calls and query hooks |
 | `src/tests/screens/sign-in.test.tsx` | Sign-in screen: validation messages, normalised submit, server error |
 | `src/lib/api/api-error.ts` | `ApiError` + `describeError()` friendly messages |
 | `src/lib/api/health.ts` | `useServerHealth()` hook (long timeout for sleeping free-tier server) |

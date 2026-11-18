@@ -81,16 +81,18 @@
 
 | ID | Task | Refs | Status |
 |---|---|---|---|
-| T2.1 | `GET/PATCH /me`, profile fields, public profile endpoint with safe mapper | FR-050, 052, 054 | ⬜ |
-| T2.2 | Student verification (college email domain check + code) + admin student-domain allow-list | FR-004 | ⬜ |
-| T2.3 | Categories endpoint + sensitive-category gating | FR-100, 104 | ⬜ |
-| T2.4 | Uploads: Supabase Storage signed URLs (with local fallback driver for dev/tests) | FR-051 | ⬜ |
-| T2.5 | Portfolio CRUD (max 10) | FR-051 | ⬜ |
-| T2.6 | Account deletion (anonymise) | FR-009 | ⬜ |
-| T2.7 | Mobile: profile view/edit, avatar + portfolio upload, student verification flow, public profile screen | — | ⬜ |
-| T2.8 | Tests | NFR-10 | ⬜ |
+| T2.1 | `GET/PATCH /me`, profile fields, public profile endpoint with safe mapper | FR-050, 052, 054 | ✅ |
+| T2.2 | Student verification (college email domain check + code) + admin student-domain allow-list | FR-004 | ✅ (ADR-020; `npm run admin:grant`) |
+| T2.3 | Categories endpoint + sensitive-category gating | FR-100, 104 | ✅ |
+| T2.4 | Uploads: Supabase Storage signed URLs (with local fallback driver for dev/tests) | FR-051 | 🟨 local driver ✅ verified live; Supabase driver built + unit-tested, **not yet tried against a real project** (ADR-019) |
+| T2.5 | Portfolio CRUD (max 10) | FR-051 | ✅ |
+| T2.6 | Account deletion (anonymise) | FR-009 | ✅ (ADR-020) |
+| T2.7 | Mobile: profile view/edit, avatar + portfolio upload, student verification flow, public profile screen | — | 🟨 built, tests green, bundle builds — not yet tried on a phone (photo picking needs a real device) |
+| T2.8 | Tests | NFR-10 | ✅ |
 
 **Exit:** a user has a complete public profile with portfolio and (optionally) a Student badge.
+
+**Exit status (2026-11-18):** ✅ API side verified by 14 new integration tests and a live run (upload → avatar served → portfolio → public profile without email → delete account → files removed). ⚠ Phone test pending (founder); Supabase Storage pending the founder's Supabase project.
 
 ## Phase 3 — Listings & search (Modes 1 and 2 posting)
 **Depends on:** Phase 2.
@@ -181,8 +183,26 @@
 | T9.4 | Load test (k6) and query/index tuning | NFR-03 | ⬜ |
 | T9.5 | Maestro E2E for both main journeys | NFR-10 | ⬜ |
 
+## Phase 9A — UI/UX design & polish (ADR-018)
+**Depends on:** Phase 9 (all features working and tested). **Needs from founder:** app name (PRD Q1), brand preferences, 3–5 students for a usability test.
+**Why here:** Phases 1–9 build functional screens on the shared UI kit and theme tokens; designing earlier would mean redesigning screens as features connect. Free resources only (Google Fonts, free icon sets, free illustrations).
+
+| ID | Task | Refs | Status |
+|---|---|---|---|
+| T9A.1 | Brand identity: name, logo + app icon + splash, colour palette, typography (free fonts via `expo-font`) | PRD Q1 | ⬜ |
+| T9A.2 | Design system v2: update `theme/tokens.ts`; new components — cards, chips, avatars, skeleton loaders, bottom sheets, toasts | NFR-06 | ⬜ |
+| T9A.3 | Navigation: bottom tabs (Home · Search · Post · Messages · Profile), consistent headers, deep links | NFR-06 | ⬜ |
+| T9A.4 | Screen redesign: home feed, listing cards/detail, profile & work record, chat, order timeline, wallet | NFR-06 | ⬜ |
+| T9A.5 | Motion & feedback: transitions, press feedback, haptics, pull-to-refresh, optimistic updates | NFR-06 | ⬜ |
+| T9A.6 | Form UX: native date picker, 6-box code input, inline validation, keyboard handling | NFR-06 | ⬜ |
+| T9A.7 | First-run onboarding walkthrough; illustrated empty states | NFR-06 | ⬜ |
+| T9A.8 | Usability test with 3–5 students; fix the top issues; re-run accessibility checks (T9.2) | NFR-07 | ⬜ |
+| T9A.9 | Update screen tests for the new components | NFR-10 | ⬜ |
+
+**Exit:** founder signs off the look and feel on a real phone; usability-test issues rated "blocker" are fixed; all tests green.
+
 ## Phase 10 — Deploy & pilot readiness
-**Depends on:** Phase 9. **Needs founder approval** before any deploy.
+**Depends on:** Phase 9A. **Needs founder approval** before any deploy.
 
 | ID | Task | Status |
 |---|---|---|
@@ -206,4 +226,5 @@ FR-300…303: AVAILABLE_NOW / NEED_NOW listings with expiry, nearby push matchin
 - Skill tests / certificates, college partnerships, recruiter access to work records
 - AI-assisted matching and pricing suggestions
 - Re-evaluate `@nestjs/authentication` once it reaches 1.0 (ADR-017)
+- Cleanup job for signed-but-never-used uploads (ADR-019)
 - Native date picker for date of birth (MVP uses a typed YYYY-MM-DD field); absolute max session lifetime (refresh tokens currently slide 30 days)

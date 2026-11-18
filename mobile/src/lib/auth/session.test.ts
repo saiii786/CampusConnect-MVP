@@ -17,7 +17,15 @@ let counter = 0;
 function sessionResponse(minutesValid = 15): AuthSessionResponse {
   counter += 1;
   return {
-    user: { id: 'u1', email: 'a@b.co', emailVerified: false, role: 'USER', displayName: 'A', createdAt: '' },
+    user: {
+      id: 'u1',
+      email: 'a@b.co',
+      emailVerified: false,
+      role: 'USER',
+      createdAt: '',
+      profile: { displayName: 'A', avatarUrl: null, bio: null, city: null, collegeName: null, skills: [], languages: [] },
+      student: { verified: false, collegeEmail: null, pendingEmail: null },
+    },
     tokens: {
       accessToken: `access-${counter}`,
       accessTokenExpiresAt: new Date(NOW + minutesValid * 60_000).toISOString(),

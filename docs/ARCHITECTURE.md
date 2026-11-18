@@ -109,7 +109,8 @@ Each module lives in `backend/src/modules/<name>/` and has its own `README.md` l
 | `notifications` | in-app notifications + Expo push | FR-550, 551 |
 | `safety` | reports, blocks | FR-253, 600 |
 | `admin` | admin-only endpoints (reports, suspensions, disputes, student domains) | FR-601 |
-| `uploads` | signed upload URLs for images | FR-051, 150 |
+| `storage` | `StorageService` drivers: local disk (dev/tests) and Supabase Storage (prod) — ADR-019 | FR-051 |
+| `uploads` | signed upload targets, claim/discard of uploaded images, local-driver upload/serve routes | FR-051, 150 |
 | `mail` | email sending abstraction | FR-003, 004, 006 |
 | `jobs` | scheduled tasks (auto-approve, expire) | FR-407 |
 
@@ -122,12 +123,12 @@ Source of truth: `backend/prisma/schema.prisma`. Summary:
 | Model | Key fields | Notes |
 |---|---|---|
 | **User** | id (uuid), email (unique), passwordHash, emailVerifiedAt, role (USER/ADMIN), status (ACTIVE/SUSPENDED/DELETED), dateOfBirth, termsAcceptedAt | Never returned to clients directly; mapped to safe DTOs |
-| **Profile** | userId (1-1), displayName, avatarUrl, bio, city, lat/lng (approx.), skills[], languages[], collegeName, studentVerifiedAt | Public data |
+| **Profile** | userId (1-1), displayName, avatarUrl, avatarKey, bio, city, lat/lng (approx.), skills[], languages[], collegeName, studentVerifiedAt, studentEmail (unique, private) | Public data except avatarKey/studentEmail/lat/lng |
 | **StudentVerification** | userId, collegeEmail, codeHash, expiresAt, attempts | 6-digit code mailed to college email |
 | **StudentDomain** | domain, collegeName, allowed | Admin allow-list (PRD Q5) |
 | **RefreshToken** | id, userId, tokenHash, familyId, expiresAt, revokedAt, replacedById | Rotation + reuse detection |
 | **EmailToken** | userId, purpose (VERIFY/RESET), codeHash, expiresAt | |
-| **PortfolioItem** | userId, title, description, imageUrl, position | max 10 |
+| **PortfolioItem** | userId, title, description, imageUrl, imageKey, position | max 10 |
 | **Category** | id, slug, name, groupName, sensitive (bool), position | `sensitive` → hidden until ID verification (FR-104) |
 | **Listing** | id, ownerId, type (SERVICE_OFFER / JOB_REQUEST / AVAILABLE_NOW / NEED_NOW), categoryId, title, description, pricingType (FIXED/HOURLY/QUOTE), pricePaise, budgetMinPaise/MaxPaise, workMode (REMOTE/ONSITE), city, lat, lng, radiusKm, preferredDate, expiresAt, status (ACTIVE/PAUSED/CLOSED), imageUrls[], deletedAt | One table for all modes. Indexed on (status, type, categoryId), (city), (lat, lng) |
 | **Quote** | id, listingId, sellerId, amountPaise, message, etaDate, status (ACTIVE/WITHDRAWN/ACCEPTED/REJECTED/NOT_SELECTED) | unique(listingId, sellerId) |
@@ -235,7 +236,7 @@ Terminal states: **COMPLETED, CANCELLED, DECLINED.** A buyer who wants to stop m
 | Me | `GET /me` · `PATCH /me` · `DELETE /me` · `POST /me/student-verification` · `POST /me/student-verification/confirm` · `GET/POST/PATCH/DELETE /me/portfolio[/:id]` · `GET /me/listings` · `GET /me/quotes` · `POST /me/push-tokens` |
 | Users | `GET /users/:id` · `GET /users/:id/reviews` · `GET /users/:id/work-record` (public, no auth) |
 | Categories | `GET /categories` |
-| Uploads | `POST /uploads/sign` |
+| Uploads | `POST /uploads/sign` · local driver only: `PUT /uploads/local/:token`, `GET /uploads/files/<key>` (public) |
 | Listings | `GET /listings` (search: `q, type, categoryId, city, workMode, minPricePaise, maxPricePaise, lat, lng, radiusKm, cursor`) · `GET /listings/:id` · `POST /listings` · `PATCH /listings/:id` · `POST /listings/:id/close` |
 | Quotes | `GET /listings/:id/quotes` (owner only) · `POST /listings/:id/quotes` · `PATCH /quotes/:id` · `POST /quotes/:id/withdraw` · `POST /quotes/:id/accept` · `POST /quotes/:id/reject` |
 | Conversations | `POST /conversations` · `GET /conversations` · `GET /conversations/:id/messages` · `POST /conversations/:id/messages` · `POST /conversations/:id/read` |
@@ -297,7 +298,9 @@ Validated in `backend/src/config/env.ts`; the server exits with a clear message 
 | `CORS_ORIGINS` | no | comma separated |
 | `PAYMENT_GATEWAY` | yes | `fake` or `razorpay` |
 | `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` / `RAZORPAY_WEBHOOK_SECRET` | if razorpay | **test** keys only |
-| `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` / `STORAGE_BUCKET` | for uploads | server-side only, never in the app |
+| `STORAGE_DRIVER` | no | `local` (default; refused in production) or `supabase` (ADR-019) |
+| `STORAGE_LOCAL_DIR` | no | `.uploads` (local driver folder, git-ignored) |
+| `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` / `STORAGE_BUCKET` | if `supabase` | server-side only, never in the app; bucket public, 5 MB limit, image types only |
 | `MAIL_DRIVER` | no | `console` (default; dev/test only — refused when `NODE_ENV=production`). Provider driver added when PRD Q3 is decided |
 | `PUBLIC_WEB_BASE_URL` | yes | base for public work-record links |
 

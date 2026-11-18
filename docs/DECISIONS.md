@@ -119,3 +119,29 @@ Format: **Context** (situation) → **Decision** → **Consequences** (trade-off
   - Email: `MailService` interface; only a `console` driver for now, **refused in production** by env validation until PRD Q3 picks a free provider.
   - Mobile: refresh token in SecureStore, access token in memory, **single-flight refresh** (two parallel refreshes would trigger reuse detection), 401 → refresh once → retry.
 - **Consequences:** We own ~600 lines of auth code, covered by unit + integration tests (token forgery, `alg: none`, reuse, concurrency, suspension, enumeration). Re-evaluate `@nestjs/authentication` when it reaches 1.0 (parking lot). Signup reveals whether an email is taken (usability trade-off, mitigated by rate limits); login and password reset do not.
+
+## ADR-018 — Function first, then a dedicated UI/UX phase
+- **Date:** 2026-11-18 · **Status:** Accepted (founder)
+- **Context:** Early screens are functional, not polished. Screens change as features connect (orders ↔ chat ↔ wallet ↔ reviews), so polishing each one as it is built would mean redesigning it later. The founder confirmed this approach.
+- **Decision:** Phases 1–9 deliver working, tested features with **functional** screens built only from the shared UI kit and theme tokens (no one-off styling). A dedicated **Phase 9A — UI/UX design & polish** (brand, design system v2, bottom tabs, screen redesign, motion, onboarding, usability test) runs after all features work and before deployment (Phase 10). Free design resources only.
+- **Consequences:** The app looks basic until Phase 9A — expected, not a defect. Because every screen uses the kit and tokens, the redesign is mostly changing those shared pieces rather than rewriting screens. Accessibility basics (labels, contrast, touch size) are still required from day one.
+
+## ADR-019 — Image storage: driver interface, server-chosen keys, claim before use
+- **Date:** 2026-11-18 · **Status:** Accepted
+- **Context:** Profiles and portfolios need images (FR-051) at ₹0. Images should not pass through the free API server in production, and a client must never be able to point its profile at an arbitrary URL or at someone else's file. The founder's Supabase project is not set up yet.
+- **Decision:**
+  - `StorageService` interface with two drivers chosen by `STORAGE_DRIVER`: **`local`** (dev/tests — files on disk, uploaded via a signed `PUT /uploads/local/:token`, served by `GET /uploads/files/<key>`; refused in production) and **`supabase`** (production — signed upload URL, app uploads directly, public bucket).
+  - The **server chooses every key**: `users/<userId>/<avatar|portfolio>/<uuid>.<jpg|png|webp>`. Features accept only a `key` and **claim** it: the key must be in the caller's own folder for that purpose, and the stored object must exist, be ≤ 5 MB and be an image. Only then is the public URL saved. Replaced/deleted images are removed (best effort).
+  - The app **resizes photos on the phone** (max 1280 px, JPEG 0.8) before uploading.
+  - Local driver checks the file's magic bytes; Supabase relies on bucket MIME/size limits + the claim check.
+  - DB keeps both the URL (for responses) and the key (for deletion): additive columns `Profile.avatarKey`, `PortfolioItem.imageKey`.
+- **Consequences:** Same app code for dev and prod. The Supabase driver is unit-tested with a mocked HTTP layer but **not yet verified live** (needs the founder's project — Phase 10 at the latest). Signed-but-unused uploads are not cleaned up yet (parking lot).
+
+## ADR-020 — Student badge, public profiles and account deletion rules
+- **Date:** 2026-11-18 · **Status:** Accepted
+- **Context:** FR-004, FR-009, FR-052, FR-054 leave some rules open; PRD Q5 default is `.ac.in`/`.edu`/`.edu.in` + an admin list.
+- **Decision:**
+  - **Student badge:** domain accepted if an admin `StudentDomain` row allows it (most specific domain wins, also matches sub-domains like `cse.iith.ac.in`), or it ends in a built-in suffix — unless an admin row **blocks** it. Code sent to the college email (same rules as other codes). **One college email = one account** (unique `Profile.studentEmail`, private, never public). Admins are made with `npm run admin:grant` (no API).
+  - **Public profiles** (`GET /users/:id`) require sign-in (the no-login shareable page is the work record, FR-053, Phase 7). Suspended/deleted users → 404. Never email, phone, DOB, college email or coordinates.
+  - **Account deletion** needs the password again and is refused while any order is open (REQUESTED, AWAITING_PAYMENT, IN_PROGRESS, SUBMITTED, DISPUTED). It **anonymises** (email → `deleted+<id>@deleted.invalid`, name → "Deleted user", profile cleared, tokens/portfolio/student data deleted, listings closed) and keeps orders/reviews for the other party. The email can be reused for a new account. Wallet balance is ignored while money is test-mode only.
+- **Consequences:** Clear, testable rules (all covered by integration tests). Revisit wallet handling on deletion if real money is ever introduced.

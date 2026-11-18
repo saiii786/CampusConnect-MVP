@@ -64,7 +64,13 @@ describe('signup (FR-001, FR-005)', () => {
     const res = await api().post('/api/v1/auth/signup').send(signupBody(email.toUpperCase())).expect(201);
     const body = res.body as AuthSessionResponse;
 
-    expect(body.user).toMatchObject({ email, emailVerified: false, role: 'USER', displayName: 'Test User' });
+    expect(body.user).toMatchObject({
+      email,
+      emailVerified: false,
+      role: 'USER',
+      profile: { displayName: 'Test User', skills: [], avatarUrl: null },
+      student: { verified: false, collegeEmail: null, pendingEmail: null },
+    });
     expect(body.tokens.accessToken).toBeTruthy();
     expect(body.tokens.refreshToken).toBeTruthy();
     expect(JSON.stringify(body)).not.toMatch(/passwordHash|dateOfBirth|argon2/);

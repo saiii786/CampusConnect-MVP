@@ -9,7 +9,7 @@
  * Every object schema is `.strict()`: unknown fields are rejected (mass-assignment guard).
  */
 import { z } from 'zod';
-import type { UserRole } from '../enums.js';
+import type { MeResponse } from '../users/schemas.js';
 
 export const PASSWORD_MIN_LENGTH = 8;
 /** Upper bound protects the server from hashing megabyte-long "passwords". */
@@ -134,16 +134,6 @@ export const resetPasswordSchema = z
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 
 // ── Responses ───────────────────────────────────────────────────────────────
-
-/** The signed-in user's own account (GET /me). Never returned for OTHER users — they get PublicUser. */
-export interface MeResponse {
-  id: string;
-  email: string;
-  emailVerified: boolean;
-  role: UserRole;
-  displayName: string;
-  createdAt: string;
-}
 
 export interface AuthTokens {
   accessToken: string;
