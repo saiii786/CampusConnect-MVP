@@ -8,6 +8,7 @@ import { Alert, View } from 'react-native';
 import { ProfileSummary } from '@/components/profile/profile-summary';
 import { AppText, Button, EmptyState, ErrorState, ImageTile, LoadingState, Notice, Screen } from '@/components/ui';
 import { describeError } from '@/lib/api/api-error';
+import { MyReviews } from '@/components/reviews/my-reviews';
 import { ServerStatusCard } from '@/components/server-status-card';
 import { session, useSession } from '@/lib/auth/session';
 import { useDeletePortfolioItem, usePortfolio } from '@/lib/users/users-api';
@@ -99,6 +100,8 @@ export default function MyProfileScreen() {
           <Button label="Add work" variant="secondary" onPress={() => router.push('/profile/add-work')} />
         ) : null}
       </View>
+
+      <MyReviews userId={user.id} displayName={profile.displayName} />
 
       {__DEV__ ? <ServerStatusCard /> : null}
       <Button label="Sign out" variant="secondary" onPress={() => session.signOut()} />

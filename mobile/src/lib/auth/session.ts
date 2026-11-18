@@ -39,6 +39,7 @@ export interface SessionDeps {
 }
 
 export function createSessionManager({ api, storage, store, now = Date.now, onStorageError }: SessionDeps) {
+  const signOutHooks: (() => Promise<void>)[] = [];
   let access: { token: string; expiresAt: number } | null = null;
   let refreshToken: string | null = null;
   let inflight: Promise<string | null> | null = null;
@@ -102,12 +103,28 @@ export function createSessionManager({ api, storage, store, now = Date.now, onSt
 
     signIn: apply,
 
+    /** Run `hook` (still signed in) whenever the user signs out. */
+    addSignOutHook(hook: () => Promise<void>): void {
+      signOutHooks.push(hook);
+    },
+
     /** Update the cached user (e.g. after verifying the email). */
     setUser(user: MeResponse): void {
       store.setState({ user });
     },
 
     async signOut(): Promise<void> {
+      // Hooks that still need the signed-in API (e.g. remove this device's push token). Max 3 s.
+      if (signOutHooks.length) {
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        await Promise.race([
+          Promise.allSettled(signOutHooks.map((hook) => hook())),
+          new Promise((resolve) => {
+            timer = setTimeout(resolve, 3000);
+          }),
+        ]);
+        clearTimeout(timer);
+      }
       const token = refreshToken;
       await clearLocal();
       if (token) {

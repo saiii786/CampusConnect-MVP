@@ -27,6 +27,7 @@ export function testEnv(overrides: Record<string, string> = {}): AppEnv {
     AUTH_RATE_LIMIT_PER_MINUTE: '1000',
     JWT_ACCESS_SECRET: 'test-only-access-secret-0123456789-abcdef',
     CODE_HASH_SECRET: 'test-only-code-secret-0123456789-fedcba',
+    PUSH_DRIVER: 'none',
     STORAGE_DRIVER: 'local',
     STORAGE_LOCAL_DIR: TEST_STORAGE_DIR,
     ...overrides,

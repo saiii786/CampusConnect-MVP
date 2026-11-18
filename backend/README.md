@@ -86,7 +86,9 @@ Generate the SQL with `npx prisma migrate diff --from-config-datasource --to-sch
 | orders | ✅ Phase 5 (direct payment; escrow in Phase 6) | [src/modules/orders/README.md](src/modules/orders/README.md) |
 | wallet | ✅ Phase 6 (ledger, escrow, simulated withdrawals) | [src/modules/wallet/README.md](src/modules/wallet/README.md) |
 | payments | ✅ Phase 6 (fake ✅; Razorpay test mode built, awaiting keys) | [src/modules/payments/README.md](src/modules/payments/README.md) |
-| reviews, notifications, … | Planned — see [ROADMAP](../docs/ROADMAP.md) | — |
+| reviews | ✅ Phase 7 (+ public work record) | [src/modules/reviews/README.md](src/modules/reviews/README.md) |
+| notifications | ✅ Phase 7 (in-app + live; phone push after the EAS build) | [src/modules/notifications/README.md](src/modules/notifications/README.md) |
+| reports, scheduled jobs, … | Planned — see [ROADMAP](../docs/ROADMAP.md) | — |
 
 ## Conventions
 - ESM: relative imports end in `.js` (even for `.ts` files).

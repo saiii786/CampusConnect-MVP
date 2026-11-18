@@ -22,6 +22,7 @@ import {
   ListingType,
   MAX_AMOUNT_PAISE,
   MAX_CHANGE_REQUESTS,
+  NotificationType,
   OrderAction,
   OrderActor,
   OrderSource,
@@ -53,7 +54,9 @@ import type { AppEnv } from '../../config/env.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { ConversationsService } from '../conversations/conversations.service.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
 import { RealtimeService, userRoom } from '../realtime/realtime.service.js';
+import { ReviewsService } from '../reviews/reviews.service.js';
 import { BlocksService } from '../safety/blocks.service.js';
 
 const ORDER_INCLUDE = {
@@ -73,6 +76,21 @@ type OrderWithDetail = Prisma.OrderGetPayload<{ include: typeof DETAIL_INCLUDE }
 type Tx = Prisma.TransactionClient;
 
 const notFound = () => AppError.notFound('ORDER_NOT_FOUND', 'Order not found');
+
+/** Notification sentences, "<who> …". */
+const ACTION_SENTENCE: Partial<Record<OrderAction, string>> = {
+  accept: 'accepted your booking',
+  decline: 'declined your booking',
+  cancel: 'cancelled the order',
+  fund: 'paid into escrow — you can start',
+  submit: 'marked the work as done — please check it',
+  approve: 'approved the work 🎉',
+  'request-changes': 'asked for changes',
+  dispute: 'reported a problem with the order',
+  'auto-approve': 'approved the order automatically after 5 days',
+  'resolve-refund': 'resolved the dispute: buyer refunded',
+  'resolve-release': 'resolved the dispute: seller paid',
+};
 const dateOrNull = (d: string | null | undefined) => (d ? new Date(`${d}T00:00:00.000Z`) : null);
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -95,6 +113,8 @@ export class OrdersService {
     private readonly realtime: RealtimeService,
     @Inject(APP_ENV) private readonly env: AppEnv,
     @Inject(ORDER_MONEY) private readonly money: OrderMoney,
+    private readonly notifications: NotificationsService,
+    private readonly reviews: ReviewsService,
   ) {}
 
   // ── Creation ──────────────────────────────────────────────────────────────
@@ -141,6 +161,7 @@ export class OrdersService {
 
     await this.notifyInChat(order, buyerId, `📦 Booking request: ${formatPaise(amountPaise)}${input.requirements ? `\n${input.requirements}` : ''}`);
     this.emitUpdate(order);
+    await this.notifyOrder(order.id, [order.sellerId], NotificationType.BOOKING_REQUEST, `New booking request: ${formatPaise(amountPaise)}`);
     return this.getDetail(buyerId, order.id);
   }
 
@@ -198,6 +219,7 @@ export class OrdersService {
 
     await this.notifyInChat(order, buyerId, `✅ Quote accepted — order started for ${formatPaise(order.amountPaise)}`);
     this.emitUpdate(order);
+    await this.notifyOrder(order.id, [order.sellerId], NotificationType.QUOTE_ACCEPTED, `Your quote was accepted 🎉 (${formatPaise(order.amountPaise)})`);
     return this.getDetail(buyerId, order.id);
   }
 
@@ -271,6 +293,15 @@ export class OrdersService {
       if (result.moneyEffect) await this.money.apply(tx, order, result.moneyEffect);
     });
     this.emitUpdate({ ...order, status: result.to });
+
+    // Tell the other side (or both, when the system/an admin acted).
+    const recipients =
+      actor === OrderActor.BUYER ? [order.sellerId] : actor === OrderActor.SELLER ? [order.buyerId] : [order.buyerId, order.sellerId];
+    const who = actor === OrderActor.BUYER ? 'The buyer' : actor === OrderActor.SELLER ? 'The seller' : 'CampusConnect';
+    await this.notifyOrder(order.id, recipients, NotificationType.ORDER_STATUS, `${who} ${ACTION_SENTENCE[action] ?? `did "${action}"`}`);
+    if (result.moneyEffect === 'RELEASE') {
+      await this.notifyOrder(order.id, [order.sellerId], NotificationType.PAYMENT_RECEIVED, `${formatPaise(order.amountPaise)} added to your wallet`);
+    }
   }
 
   /** POST /orders/:id/start — seller enters the buyer's start code at the site (FR-406). */
@@ -354,6 +385,7 @@ export class OrdersService {
         ? { reason: o.dispute.reason, status: o.dispute.status, raisedByMe: o.dispute.raisedById === userId, createdAt: o.dispute.createdAt.toISOString() }
         : null,
       conversationId: conversation?.id ?? null,
+      reviews: await this.reviews.forOrder(userId, o),
       timeline: o.events.map((e) => ({
         id: e.id,
         action: e.action,
@@ -397,7 +429,15 @@ export class OrdersService {
 
   private async notifyInChat(order: { listingId: string; buyerId: string; sellerId: string }, senderId: string, text: string) {
     const conversation = await this.conversations.ensure(order.listingId, order.buyerId, order.sellerId);
-    await this.conversations.postMessage(conversation, senderId, text);
+    await this.conversations.postMessage(conversation, senderId, text, { notify: false });
+  }
+
+  /** In-app + push notification about an order (FR-550). */
+  private async notifyOrder(orderId: string, userIds: string[], type: NotificationType, title: string, body?: string): Promise<void> {
+    const order = await this.prisma.order.findUnique({ where: { id: orderId }, select: { title: true } });
+    for (const userId of userIds) {
+      await this.notifications.notify(userId, { type, title, body: body ?? order?.title ?? '', link: { kind: 'order', id: orderId } });
+    }
   }
 
   private emitUpdate(order: { id: string; status: OrderStatus; buyerId: string; sellerId: string }): void {

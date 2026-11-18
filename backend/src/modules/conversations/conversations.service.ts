@@ -6,6 +6,7 @@
 import { Injectable } from '@nestjs/common';
 import {
   ListingType,
+  NotificationType,
   ServerEvent,
   UserStatus,
   type ConversationDto,
@@ -19,6 +20,7 @@ import { AppError } from '../../common/errors/app-error.js';
 import { decodeCursor, encodeCursor } from '../../common/pagination/cursor.js';
 import type { Conversation, Message } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
 import { conversationRoom, RealtimeService, userRoom } from '../realtime/realtime.service.js';
 import { BlocksService } from '../safety/blocks.service.js';
 
@@ -47,6 +49,7 @@ export class ConversationsService {
     private readonly prisma: PrismaService,
     private readonly blocks: BlocksService,
     private readonly realtime: RealtimeService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   /**
@@ -135,8 +138,11 @@ export class ConversationsService {
     return this.postMessage(c, userId, body);
   }
 
-  /** Store + deliver a message. Also used by quotes ("Quote: ₹…"). Caller has done all checks. */
-  async postMessage(c: Conversation, senderId: string, body: string): Promise<MessageDto> {
+  /**
+   * Store + deliver a message. Also used by quotes/orders ("Quote: ₹…"), which pass
+   * `notify: false` because they send their own, more specific notification. Caller has done all checks.
+   */
+  async postMessage(c: Conversation, senderId: string, body: string, options: { notify?: boolean } = {}): Promise<MessageDto> {
     const now = new Date();
     const [message] = await this.prisma.$transaction([
       this.prisma.message.create({ data: { conversationId: c.id, senderId, body, createdAt: now } }),
@@ -153,6 +159,16 @@ export class ConversationsService {
       ServerEvent.MESSAGE_NEW,
       dto,
     );
+    if (options.notify !== false) {
+      const recipientId = c.buyerId === senderId ? c.sellerId : c.buyerId;
+      const sender = await this.prisma.profile.findUnique({ where: { userId: senderId }, select: { displayName: true } });
+      await this.notifications.notify(recipientId, {
+        type: NotificationType.MESSAGE_NEW,
+        title: sender?.displayName ?? 'New message',
+        body: body.length > 140 ? `${body.slice(0, 140)}…` : body,
+        link: { kind: 'conversation', id: c.id },
+      });
+    }
     return dto;
   }
 

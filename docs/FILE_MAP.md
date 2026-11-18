@@ -6,7 +6,7 @@ Every file we maintain, and what it is for. Not listed: generated/vendor files
 **Rule:** when you add, rename or delete a file, update this map in the same change. Function-level
 detail lives in each package/module `README.md` and in the file's header comment; this is the index.
 
-_Last updated: 2026-11-18 (end of Phase 6)._
+_Last updated: 2026-11-18 (end of Phase 7)._
 
 ---
 
@@ -28,7 +28,7 @@ _Last updated: 2026-11-18 (end of Phase 6)._
 | `docs/PRD.md` | Product requirements: problem, users, three matching modes, requirement IDs (FR/NFR), open questions Q1–Q7 |
 | `docs/ROADMAP.md` | Phased plan, task IDs and status, exit criteria, Definition of Done, parking lot |
 | `docs/ARCHITECTURE.md` | Technical design: stack, modules, data model, order state machine, money design, API & socket contracts, security, config, testing, deployment |
-| `docs/DECISIONS.md` | Decision log ADR-001…024, with reasons; how to change a decision |
+| `docs/DECISIONS.md` | Decision log ADR-001…025, with reasons; how to change a decision |
 | `docs/DEV_LOG.md` | Dated record of each work session: done, tests run, gaps, next |
 | `docs/FILE_MAP.md` | This file |
 
@@ -54,6 +54,8 @@ _Last updated: 2026-11-18 (end of Phase 6)._
 | `src/money.spec.ts` | Tests for money helpers |
 | `src/orders/schemas.ts` | Order request schemas and DTOs |
 | `src/wallet/schemas.ts` | Wallet/top-up/withdrawal schemas and DTOs, reconcile DTO |
+| `src/reviews/schemas.ts` | Review/reply schemas, review + work-record DTOs |
+| `src/notifications/schemas.ts` | Notification types/DTOs, read + push-token schemas |
 | `src/orders/state-machine.ts` | Order lifecycle rules: `resolveOrderTransition`, `availableOrderActions`, `initialOrderStatus` |
 | `src/orders/state-machine.spec.ts` | Exhaustive test of every status × action × actor × payment mode against the documented table |
 
@@ -161,6 +163,16 @@ _Last updated: 2026-11-18 (end of Phase 6)._
 | `src/modules/payments/payments.module.ts` | Gateway selection |
 | `src/modules/payments/payments.spec.ts` | Ledger/gateway unit tests |
 | `src/modules/admin/ledger.controller.ts` | `GET /admin/ledger/reconcile` |
+| `src/modules/reviews/README.md` | Reviews + work record docs |
+| `src/modules/reviews/reviews.module.ts` | Reviews module |
+| `src/modules/reviews/reviews.controller.ts` | Review endpoints + public work record (JSON/HTML) |
+| `src/modules/reviews/reviews.service.ts` | Review rules, replies, per-order state, work record |
+| `src/modules/reviews/work-record.page.ts` | Public work-record HTML (escaped) |
+| `src/modules/notifications/README.md` | Notifications docs (how to notify, push drivers) |
+| `src/modules/notifications/notifications.module.ts` | Global notifications module |
+| `src/modules/notifications/notifications.service.ts` | notify (collapse chat), list, read, push tokens |
+| `src/modules/notifications/notifications.controller.ts` | Notification + push-token endpoints |
+| `src/modules/notifications/push.service.ts` | Expo push sending |
 | `src/modules/orders/README.md` | Orders module docs |
 | `src/modules/orders/orders.module.ts` | Orders module + escrow hook binding |
 | `src/modules/orders/orders.controller.ts` | Order endpoints (incl. `POST /quotes/:id/accept`) |
@@ -188,6 +200,7 @@ _Last updated: 2026-11-18 (end of Phase 6)._
 | `test/setup/users.ts` | `createUser()`, `uploadImage()`, `JPEG_BYTES` |
 | `test/auth.e2e-spec.ts` | Integration tests for signup, login, tokens, refresh reuse, verification, reset, suspension, rate limits |
 | `test/chat.e2e-spec.ts` | Integration tests: quotes, conversations, blocks, socket.io (handshake, rooms, live delivery) |
+| `test/reviews.e2e-spec.ts` | Integration tests: reviews, replies, window, work record privacy/escaping, notifications, push tokens |
 | `test/wallet.e2e-spec.ts` | Integration tests: top-ups, escrow flows, refunds, double tap, withdrawals, reconciliation, Razorpay webhooks (mocked API) |
 | `test/orders.e2e-spec.ts` | Integration tests: booking, quote acceptance, lifecycle, permissions, limits, disputes, double tap, on-site codes |
 | `test/listings.e2e-spec.ts` | Integration tests for listings and search (rules, ownership, visibility, photos, filters, near-me, pagination) |
@@ -240,6 +253,14 @@ _Last updated: 2026-11-18 (end of Phase 6)._
 | `src/components/ui/test-mode-badge.tsx` | TEST MODE badge |
 | `src/lib/wallet/wallet-api.ts` | Wallet calls + hooks, labels |
 | `src/lib/wallet/wallet.test.ts` | Every transaction kind has a label |
+| `src/app/(app)/notifications.tsx` | Notifications list (tap to open, mark all read) |
+| `src/components/reviews/review-card.tsx` | Review with stars and reply |
+| `src/components/reviews/review-form.tsx` | Star picker + comment |
+| `src/components/reviews/my-reviews.tsx` | Reviews about me (reply) + share work record |
+| `src/lib/reviews/reviews-api.ts` | Review calls/hooks, work-record URL |
+| `src/lib/notifications/notifications-api.ts` | Notification calls/hooks, link → screen |
+| `src/lib/notifications/push.ts` | Push registration (real builds only), sign-out removal |
+| `src/lib/notifications/notifications.test.ts` | Tests: link routing, work-record URL, stars |
 | `src/lib/orders/orders-api.ts` | Order calls + hooks, `ESCROW_AVAILABLE` |
 | `src/lib/orders/format.ts` | Status/action/timeline labels |
 | `src/lib/orders/orders.test.ts` | Tests: labels cover every action/status, timeline sentences |

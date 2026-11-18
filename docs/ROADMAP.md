@@ -162,11 +162,13 @@
 
 | ID | Task | Refs | Status |
 |---|---|---|---|
-| T7.1 | Two-way reviews (completed orders only, once, 14-day window), reply, rating aggregates | FR-500…502 | ⬜ |
-| T7.2 | Public work record endpoint + shareable link (simple public HTML page served by the API) | FR-053 | ⬜ |
-| T7.3 | Notifications service: in-app list + Expo push tokens + push sending | FR-550, 551 | ⬜ |
-| T7.4 | Mobile: leave review, reviews on profile, share work record, notifications screen, push registration | — | ⬜ |
-| T7.5 | Tests | NFR-10 | ⬜ |
+| T7.1 | Two-way reviews (completed orders only, once, 14-day window), reply, rating aggregates | FR-500…502 | ✅ (ADR-025) |
+| T7.2 | Public work record endpoint + shareable link (simple public HTML page served by the API) | FR-053 | ✅ |
+| T7.3 | Notifications service: in-app list + Expo push tokens + push sending | FR-550, 551 | ✅ in-app + live; 🟨 phone push needs an EAS build (Phase 10) |
+| T7.4 | Mobile: leave review, reviews on profile, share work record, notifications screen, push registration | — | 🟨 built, tests green, bundle builds — not yet tried on a phone |
+| T7.5 | Tests | NFR-10 | ✅ |
+
+**Exit status (2026-11-18):** ✅ 6 new integration tests + live run (booking notifies seller → completed → 5★ review + reply → seller notified → public work record JSON/HTML without buyer name or email → mark all read). ⚠ Phone push untestable until the EAS build.
 
 ## Phase 8 — Safety, admin, scheduled jobs
 **Depends on:** Phase 7.
@@ -238,4 +240,5 @@ FR-300…303: AVAILABLE_NOW / NEED_NOW listings with expiry, nearby push matchin
 - Search scaling: `pg_trgm` indexes for keywords, PostGIS for near-me (ADR-021) — only when data volume needs it
 - Map view / location pin picker for listings (MVP uses "use my current location")
 - socket.io Redis adapter (only when running more than one API instance, ADR-022)
+- Work record opt-out / secret share link (ADR-025)
 - Native date picker for date of birth (MVP uses a typed YYYY-MM-DD field); absolute max session lifetime (refresh tokens currently slide 30 days)

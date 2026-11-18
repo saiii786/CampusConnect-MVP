@@ -4,10 +4,15 @@
  * Phase 9A turns this into bottom tabs (Home, Search, Post, Messages, Profile).
  */
 import { Stack } from 'expo-router';
+import { useEffect } from 'react';
+import { registerForPush } from '@/lib/notifications/push';
 import { useRealtime } from '@/lib/realtime/realtime';
 
 export default function AppLayout() {
   useRealtime();
+  useEffect(() => {
+    void registerForPush(); // no-op in Expo Go / before the EAS project exists
+  }, []);
   return (
     <Stack screenOptions={{ headerBackTitle: 'Back' }}>
       <Stack.Screen name="index" options={{ title: 'CampusConnect' }} />
@@ -23,6 +28,7 @@ export default function AppLayout() {
       <Stack.Screen name="accept-quote" options={{ title: 'Accept quote' }} />
       <Stack.Screen name="orders" options={{ title: 'Orders' }} />
       <Stack.Screen name="orders/[id]" options={{ title: 'Order' }} />
+      <Stack.Screen name="notifications" options={{ title: 'Notifications' }} />
       <Stack.Screen name="wallet" options={{ title: 'Wallet' }} />
       <Stack.Screen name="add-money" options={{ title: 'Add money' }} />
       <Stack.Screen name="withdraw" options={{ title: 'Withdraw' }} />

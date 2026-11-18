@@ -22,7 +22,9 @@ import { ConversationsModule } from './modules/conversations/conversations.modul
 import { HealthModule } from './modules/health/health.module.js';
 import { ListingsModule } from './modules/listings/listings.module.js';
 import { MailModule } from './modules/mail/mail.module.js';
+import { NotificationsModule } from './modules/notifications/notifications.module.js';
 import { OrdersModule } from './modules/orders/orders.module.js';
+import { ReviewsModule } from './modules/reviews/reviews.module.js';
 import { PaymentsModule } from './modules/payments/payments.module.js';
 import { WalletModule } from './modules/wallet/wallet.module.js';
 import { QuotesModule } from './modules/quotes/quotes.module.js';
@@ -64,11 +66,13 @@ export class AppModule implements NestModule {
         CategoriesModule,
         ListingsModule,
         RealtimeModule,
+        NotificationsModule,
         SafetyModule,
         ConversationsModule,
         QuotesModule,
         PaymentsModule,
         WalletModule,
+        ReviewsModule,
         OrdersModule,
         AdminModule,
       ],

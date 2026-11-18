@@ -5,7 +5,8 @@
  * token (re-read on every reconnect, so refreshed tokens are used), and on
  *   - message:new        → adds the message to the cached conversation and refreshes the inbox/unread badge;
  *   - conversation:read  → refreshes the inbox;
- *   - order:updated      → refreshes order lists and details.
+ *   - order:updated      → refreshes order lists and details (and the wallet);
+ *   - notification:new   → refreshes the notification list and badge.
  * `joinConversation(id)` is called by the chat screen (the server checks I am a participant).
  * If the socket is down, screens still work: they refetch on focus/pull-to-refresh.
  */
@@ -16,6 +17,7 @@ import { io, type Socket } from 'socket.io-client';
 import { getApiBaseUrl } from '@/config/api-url';
 import { session } from '@/lib/auth/session';
 import { addMessageToCache, chatKeys } from '@/lib/chat/chat-api';
+import { notificationKeys } from '@/lib/notifications/notifications-api';
 import { orderKeys } from '@/lib/orders/orders-api';
 import { walletKeys } from '@/lib/wallet/wallet-api';
 
@@ -52,6 +54,9 @@ export function useRealtime(): void {
       void client.invalidateQueries({ queryKey: orderKeys.all });
       // Escrow release/refund changes balances.
       void client.invalidateQueries({ queryKey: walletKeys.all });
+    });
+    s.on(ServerEvent.NOTIFICATION_NEW, () => {
+      void client.invalidateQueries({ queryKey: notificationKeys.all });
     });
     s.on(ServerEvent.CONVERSATION_READ, () => {
       void client.invalidateQueries({ queryKey: chatKeys.conversations });

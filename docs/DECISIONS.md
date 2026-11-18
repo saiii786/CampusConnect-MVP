@@ -191,3 +191,13 @@ Format: **Context** (situation) → **Decision** → **Consequences** (trade-off
   - **App flow:** checkout opens in the in-app browser; because Android does not report when the tab closes, the app re-verifies on return to foreground and every 3 s for up to 3 minutes. TEST MODE badge on every money screen (FR-455).
   - **Withdrawals** are simulated (WALLET −x, EXTERNAL +x).
 - **Consequences:** Real money is impossible by configuration. Razorpay driver is unit- and integration-tested against a mocked Razorpay API but **not yet against a real test account** (needs the founder's test keys + a public webhook URL, i.e. after deploy). Moving to live money later requires KYC, a registered business and a new ADR (parking lot).
+
+## ADR-025 — Reviews, public work record and notifications
+- **Date:** 2026-11-18 · **Status:** Accepted
+- **Context:** FR-500…502, FR-053, FR-550/551. Reviews must be trustworthy, the work record must help students on a CV without exposing anyone, and notifications must work at ₹0.
+- **Decision:**
+  - **Reviews:** only participants of a COMPLETED order, once each (DB unique), within 14 days of completion; 1–5 stars + optional comment; the reviewee may reply once (conditional update). Ratings shown everywhere come from these reviews only.
+  - **Work record:** public (no login) JSON `GET /users/:id/work-record` and HTML `GET /work-record/:id`, addressed by the user's UUID. Shows completed jobs as seller: category, month, the buyer's rating and comment. Never buyer names, amounts, emails or phones; HTML-escaped; 404 for suspended/deleted users. (An opt-out/secret link is a possible later improvement — parking lot.)
+  - **Notifications:** `NotificationsService.notify()` (global module) is called after a feature's change commits; stores the notification, emits `notification:new`, sends a push; never throws. Events: quote received, quote accepted, booking request, every order status change (to the other side), payment received (escrow release), top-up paid, review received, chat messages. Chat messages update one unread notification per conversation instead of creating one per message; quote/booking chat notes do not double-notify.
+  - **Push:** Expo's free push API (`PUSH_DRIVER=expo`), `log` in development, `none` in tests. Tokens are registered only from real app builds with an EAS project id — Expo Go (Android) has no remote push since SDK 53 — so push becomes testable in Phase 10. Tokens move to the last user who signed in on a device and are removed on sign-out; `DeviceNotRegistered` tokens are deleted.
+- **Consequences:** In-app notifications and live updates work everywhere now; phone push needs the EAS build (Phase 10).

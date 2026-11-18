@@ -17,6 +17,8 @@ names, statuses or rules (ADR-007 — the old demo-connect broke because they di
 | `src/listings/schemas.ts` | `createListingSchema` (offer/job union), `updateListingSchema`, `checkListingRules()`, `searchListingsSchema`, `listingDetailQuerySchema`, `myListingsSchema`, `ListingSort`, `Page<T>`, `ListingSummaryDto`, `ListingDetailDto`, `distanceKm()` (haversine), `roundCoordinate()`, limits |
 | `src/quotes/schemas.ts` | `createQuoteSchema`, `updateQuoteSchema`, `QuoteDto`, `MyQuoteDto`, `QuoteSellerDto` |
 | `src/conversations/schemas.ts` | `startConversationSchema`, `sendMessageSchema`, `pageQuerySchema`, `blockUserSchema`, DTOs, socket event names `ServerEvent` / `ClientEvent`, `SocketAck` |
+| `src/reviews/schemas.ts` | `createReviewSchema`, `replyReviewSchema`, `REVIEW_WINDOW_DAYS`, `ReviewDto`, `OrderReviewsDto`, `WorkRecordDto` |
+| `src/notifications/schemas.ts` | `NotificationType`, `NotificationLink`, `NotificationDto`, `markNotificationsReadSchema`, `pushTokenSchema` |
 | `src/categories/types.ts` | `CategoriesResponse`, `CategoryGroupDto`, `CategoryDto` |
 | `src/admin/schemas.ts` | `domainSchema`, `upsertStudentDomainSchema`, `StudentDomainDto` |
 | `src/**/*.spec.ts` | Vitest tests. `state-machine.spec.ts` checks every status × action × actor × payment-mode combination against an independent copy of the documented table |

@@ -15,6 +15,30 @@ A dated, append-only record of what was done in each working session: what chang
 
 ---
 
+## 2026-11-18 — Phase 7: reviews, work record, notifications
+**Roadmap tasks:** T7.1–T7.5
+
+**Done**
+- Shared: review/reply schemas, review + work-record DTOs, notification types/DTOs, push-token schema; order detail now carries `reviews`.
+- Backend: `reviews` (create with completed + 14-day + once rules, one reply, per-order review state, public work record JSON + escaped HTML page), `notifications` (global `notify()` → DB + socket + push; chat messages collapse per conversation; list/unread/read; push tokens), `PushService` (Expo push, `PUSH_DRIVER`), notifications wired into quotes, bookings, quote acceptance, every order transition, escrow release, top-ups, reviews and chat. Decisions in ADR-025.
+- Mobile: notifications screen + 🔔 badge (live), review form and both reviews on completed orders, reviews on public profiles, "Reviews about me" with replies + "Share my work record", push registration (real builds only, lazily loaded; removed on sign-out via a new session sign-out hook). `expo-notifications` ~58.1.9 added.
+
+**Problems found and fixed during the session**
+- Sign-out hook timeout left a 3 s timer running → cleared after the race.
+- Smoke cleanup did not know about reviews → transaction rolled back (nothing deleted), script extended, re-run.
+- A test used a non-existent category slug with a silent fallback → fixed to the real slug (`baking`).
+
+**Tests run (all executed this session)**
+- shared 70/70 · backend unit 62/62 · backend integration 87/87 (6 new) · mobile 51/51
+- `npm run lint`, `npm run typecheck` → pass · `npx expo export --platform android` → bundle builds
+- Live (built server, port 3001): booking → seller notified (BOOKING_REQUEST) → completed → 5★ review + reply → seller notifications REVIEW_RECEIVED/ORDER_STATUS/BOOKING_REQUEST → public work record (no auth) 1 job, rating 5; HTML has the comment, no buyer name, no email → mark all read → 0. Smoke data removed.
+
+**Not verified / known gaps**
+- Phone push: needs an EAS build + project id (Phase 10); `PUSH_DRIVER=log` prints pushes in development.
+- Not tried on a phone.
+
+**Next:** Phase 8 — safety (reports), admin (suspend, disputes), scheduled jobs (auto-approve), spam guard, terms/privacy screens.
+
 ## 2026-11-18 — Phase 6: wallet, escrow, payments (test mode)
 **Roadmap tasks:** T6.1–T6.7
 

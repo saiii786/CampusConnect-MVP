@@ -10,6 +10,8 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Alert, View } from 'react-native';
 import { AppText, Avatar, Button, Chip, ErrorState, LoadingState, Notice, Screen, TestModeBadge, TextField } from '@/components/ui';
+import { ReviewCard } from '@/components/reviews/review-card';
+import { ReviewForm } from '@/components/reviews/review-form';
 import { ApiError, describeError } from '@/lib/api/api-error';
 import { orderKeys, ordersApi, useOrder } from '@/lib/orders/orders-api';
 import { walletKeys } from '@/lib/wallet/wallet-api';
@@ -186,6 +188,35 @@ export default function OrderDetailScreen() {
               onPress={() => press(a)}
             />
           ))}
+        </View>
+      ) : null}
+
+      {o.status === 'COMPLETED' ? (
+        <View style={{ gap: spacing.sm }}>
+          {o.reviews.canReview ? (
+            <ReviewForm
+              orderId={o.id}
+              otherName={o.other.displayName}
+              onDone={() => void client.invalidateQueries({ queryKey: orderKeys.detail(id) })}
+            />
+          ) : null}
+          {o.reviews.mine ? (
+            <>
+              <AppText variant="label">Your review</AppText>
+              <ReviewCard review={o.reviews.mine} />
+            </>
+          ) : null}
+          {o.reviews.theirs ? (
+            <>
+              <AppText variant="label">{o.other.displayName}&apos;s review of you</AppText>
+              <ReviewCard review={o.reviews.theirs} />
+            </>
+          ) : null}
+          {!o.reviews.canReview && !o.reviews.mine && o.reviews.reviewDeadline ? (
+            <AppText variant="caption" color="textMuted">
+              The 14-day review window has closed.
+            </AppText>
+          ) : null}
         </View>
       ) : null}
 

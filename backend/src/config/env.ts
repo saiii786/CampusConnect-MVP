@@ -90,6 +90,10 @@ export const envSchema = z.object({
   RAZORPAY_WEBHOOK_SECRET: z.string().min(8).optional(),
   /** Public https URL of this API (e.g. https://campusconnect-api.onrender.com). Used for gateway redirects. */
   PUBLIC_API_URL: z.url({ protocol: /^https?$/ }).optional(),
+
+  // ── Push notifications (Phase 7, FR-551) ────────────────────────────────
+  /** `expo` = send via Expo's free push API · `log` = only log (development) · `none` = off (tests). */
+  PUSH_DRIVER: z.enum(['expo', 'log', 'none']).default('log'),
 }).superRefine((env, ctx) => {
   if (env.PAYMENT_GATEWAY === 'razorpay') {
     for (const key of ['RAZORPAY_KEY_ID', 'RAZORPAY_KEY_SECRET', 'RAZORPAY_WEBHOOK_SECRET'] as const) {

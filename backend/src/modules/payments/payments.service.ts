@@ -6,12 +6,21 @@
  */
 import { createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { LedgerAccount, LedgerTransactionKind, PaymentStatus, type CreateTopupInput, type TopupDto } from '@cc/shared';
+import {
+  formatPaise,
+  LedgerAccount,
+  LedgerTransactionKind,
+  NotificationType,
+  PaymentStatus,
+  type CreateTopupInput,
+  type TopupDto,
+} from '@cc/shared';
 import { AppError } from '../../common/errors/app-error.js';
 import { APP_ENV } from '../../config/config.module.js';
 import type { AppEnv } from '../../config/env.js';
 import { Prisma, type Payment } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
 import { LedgerService } from '../wallet/ledger.service.js';
 import { FakeGateway } from './fake-gateway.js';
 import { PaymentGateway } from './payment-gateway.js';
@@ -27,6 +36,7 @@ export class PaymentsService {
     private readonly gateway: PaymentGateway,
     private readonly ledger: LedgerService,
     @Inject(APP_ENV) private readonly env: AppEnv,
+    private readonly notifications: NotificationsService,
   ) {}
 
   /** POST /wallet/topups */
@@ -137,7 +147,16 @@ export class PaymentsService {
       // A concurrent refresh (webhook + verify at the same moment) already applied it.
       if (!(error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002')) throw error;
     }
-    return this.prisma.payment.findUniqueOrThrow({ where: { id: payment.id } });
+    const after = await this.prisma.payment.findUniqueOrThrow({ where: { id: payment.id } });
+    if (after.status === PaymentStatus.PAID && next === PaymentStatus.PAID) {
+      await this.notifications.notify(payment.userId, {
+        type: NotificationType.TOPUP_PAID,
+        title: `${formatPaise(payment.amountPaise)} added to your wallet`,
+        body: 'Test-mode top-up successful',
+        link: { kind: 'wallet' },
+      });
+    }
+    return after;
   }
 
   private fakeToken(paymentId: string): string {

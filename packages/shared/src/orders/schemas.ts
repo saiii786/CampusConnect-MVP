@@ -5,6 +5,7 @@
 import { z } from 'zod';
 import { OrderStatus, PaymentMode, type WorkMode } from '../enums.js';
 import { isValidAmountPaise, MAX_AMOUNT_PAISE } from '../money.js';
+import type { OrderReviewsDto } from '../reviews/schemas.js';
 import { OrderAction, type OrderActor } from './state-machine.js';
 
 export const ORDER_REQUIREMENTS_MAX = 2000;
@@ -163,6 +164,8 @@ export interface OrderDetailDto extends OrderSummaryDto {
   dispute: { reason: string; status: string; raisedByMe: boolean; createdAt: string } | null;
   conversationId: string | null;
   timeline: OrderEventDto[];
+  /** Reviews for this order (FR-500). */
+  reviews: OrderReviewsDto;
 }
 
 /** Socket event payload for `order:updated`. */

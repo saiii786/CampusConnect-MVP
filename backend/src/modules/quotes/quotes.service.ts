@@ -14,6 +14,7 @@ import {
   formatPaise,
   ListingStatus,
   ListingType,
+  NotificationType,
   QuoteStatus,
   UserBadge,
   UserStatus,
@@ -26,6 +27,7 @@ import { AppError } from '../../common/errors/app-error.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { ConversationsService } from '../conversations/conversations.service.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
 import { BlocksService } from '../safety/blocks.service.js';
 import { UserStatsService, type UserStats } from '../users/user-stats.service.js';
 
@@ -59,6 +61,7 @@ export class QuotesService {
     private readonly conversations: ConversationsService,
     private readonly blocks: BlocksService,
     private readonly stats: UserStatsService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   /** POST /listings/:id/quotes */
@@ -105,8 +108,15 @@ export class QuotesService {
 
     const conversation = await this.conversations.ensure(listingId, listing.ownerId, sellerId);
     const note = input.message.length > 300 ? `${input.message.slice(0, 300)}…` : input.message;
-    await this.conversations.postMessage(conversation, sellerId, `💼 Quote: ${formatPaise(input.amountPaise)}\n${note}`);
-    return this.getDto(quoteId);
+    await this.conversations.postMessage(conversation, sellerId, `💼 Quote: ${formatPaise(input.amountPaise)}\n${note}`, { notify: false });
+    const dto = await this.getDto(quoteId);
+    await this.notifications.notify(listing.ownerId, {
+      type: NotificationType.QUOTE_NEW,
+      title: `New quote: ${formatPaise(input.amountPaise)}`,
+      body: `${dto.seller.displayName} sent a quote for your job`,
+      link: { kind: 'quotes', id: listingId },
+    });
+    return dto;
   }
 
   /** GET /listings/:id/quotes — job owner only; ACTIVE first, then cheapest. */

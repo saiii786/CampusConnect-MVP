@@ -1,15 +1,35 @@
 /**
  * Another user's public profile (FR-052): photo, name, badges, rating, completed jobs, bio,
  * skills, languages and portfolio. Never shows email/phone (the API does not send them).
- * Reviews and active listings are added in Phases 3 and 7.
+ * Shows the reviews the person received (Phase 7).
  */
 import { useLocalSearchParams } from 'expo-router';
 import { View } from 'react-native';
 import { ProfileSummary } from '@/components/profile/profile-summary';
+import { ReviewCard } from '@/components/reviews/review-card';
+import { useUserReviews } from '@/lib/reviews/reviews-api';
 import { AppText, EmptyState, ErrorState, ImageTile, LoadingState, Screen } from '@/components/ui';
 import { ApiError } from '@/lib/api/api-error';
 import { usePublicProfile } from '@/lib/users/users-api';
 import { useTheme } from '@/theme/use-theme';
+
+function ReviewsSection({ userId }: { userId: string }) {
+  const { spacing } = useTheme();
+  const reviews = useUserReviews(userId);
+  const items = reviews.data?.items ?? [];
+  return (
+    <View style={{ gap: spacing.md }}>
+      <AppText variant="heading">Reviews</AppText>
+      {reviews.isPending ? (
+        <LoadingState />
+      ) : items.length === 0 ? (
+        <EmptyState title="No reviews yet" />
+      ) : (
+        items.map((r) => <ReviewCard key={r.id} review={r} />)
+      )}
+    </View>
+  );
+}
 
 export default function PublicProfileScreen() {
   const { spacing } = useTheme();
@@ -50,6 +70,7 @@ export default function PublicProfileScreen() {
       <AppText variant="caption" color="textMuted">
         Member since {new Date(p.memberSince).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}
       </AppText>
+      <ReviewsSection userId={p.id} />
       <View style={{ gap: spacing.md }}>
         <AppText variant="heading">Portfolio</AppText>
         {p.portfolio.length === 0 ? (

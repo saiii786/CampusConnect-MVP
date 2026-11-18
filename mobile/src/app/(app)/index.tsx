@@ -11,6 +11,7 @@ import { AppText, Button, EmptyState, ErrorState, LoadingState, Notice, Screen, 
 import { describeError } from '@/lib/api/api-error';
 import { useSession } from '@/lib/auth/session';
 import { useUnread } from '@/lib/chat/chat-api';
+import { useNotificationCount } from '@/lib/notifications/notifications-api';
 import { useListingSearch } from '@/lib/listings/listings-api';
 import { activeFilterCount, toSearchQuery, useSearchFilters } from '@/lib/listings/search-filters';
 import { getCurrentLocation } from '@/lib/location/current-location';
@@ -25,6 +26,7 @@ export default function BrowseScreen() {
   const query = toSearchQuery(filters);
   const results = useListingSearch(query);
   const unread = useUnread();
+  const notificationCount = useNotificationCount();
   const items = results.data?.pages.flatMap((p) => p.items) ?? [];
   const filterCount = activeFilterCount(filters);
 
@@ -52,6 +54,13 @@ export default function BrowseScreen() {
     <View style={{ gap: spacing.md, paddingBottom: spacing.md }}>
       <View style={{ flexDirection: 'row', gap: spacing.sm, flexWrap: 'wrap' }}>
         <Button label="+ Post" fullWidth={false} onPress={() => router.push('/listings/new')} />
+        <Button
+          label={notificationCount.data?.unreadCount ? `🔔 ${notificationCount.data.unreadCount}` : '🔔'}
+          accessibilityLabel={`Notifications${notificationCount.data?.unreadCount ? `, ${notificationCount.data.unreadCount} unread` : ''}`}
+          variant={notificationCount.data?.unreadCount ? 'primary' : 'secondary'}
+          fullWidth={false}
+          onPress={() => router.push('/notifications')}
+        />
         <Button
           label={unread.data?.unreadMessages ? `Messages (${unread.data.unreadMessages})` : 'Messages'}
           variant={unread.data?.unreadMessages ? 'primary' : 'secondary'}
