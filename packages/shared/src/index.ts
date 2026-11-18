@@ -14,3 +14,4 @@ export * from './orders/state-machine.js';
 export * from './quotes/schemas.js';
 export * from './uploads/schemas.js';
 export * from './users/schemas.js';
+export * from './wallet/schemas.js';

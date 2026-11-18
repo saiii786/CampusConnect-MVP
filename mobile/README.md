@@ -29,7 +29,9 @@ Studio / Xcode needed. Design: [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md).
 9. Orders (Phase 5): **Book** a service (or **Accept** a quote) → **Orders** shows "I'm buying" / "I'm selling";
    the order screen shows only the allowed buttons (accept, mark done, approve, ask for changes, cancel,
    report a problem) and the timeline. On-site jobs: the buyer sees start/finish codes, the seller enters them.
-   Payment is "Pay directly" for now; the wallet arrives in Phase 6.
+10. Wallet (Phase 6, TEST MODE): **Wallet** → **Add money** opens the checkout in the in-app browser
+    (a fake page in development) and updates by itself when you come back; book with **Wallet (safer)**,
+    pay into escrow on the order screen, and the seller is paid when you approve. **Withdraw** is simulated.
 
 To use a deployed API instead, copy `.env.example` to `.env` and set `EXPO_PUBLIC_API_URL`.
 
@@ -56,7 +58,7 @@ To use a deployed API instead, copy `.env.example` to `.env` and set `EXPO_PUBLI
 | `src/app/_layout.tsx` | Root providers (TanStack Query, theme) + session restore + protected route groups |
 | `src/app/reconnect.tsx` | Shown when a saved session could not be restored because the server was unreachable |
 | `src/app/(auth)/` | Signed-out screens: `welcome`, `sign-in`, `sign-up`, `forgot-password`, `reset-password` (+ `_layout` stack) |
-| `src/app/(app)/` | Signed-in screens: `index` (Browse: search, type tabs, near me, endless list), `search-filters`, `listings/new`, `listings/[id]`, `listings/edit/[id]`, `my-listings`, `listing-quotes/[id]`, `quote-form`, `my-quotes`, `inbox`, `chat/[id]`, `book`, `accept-quote`, `orders`, `orders/[id]`, `verify-email`, `profile` (my profile + portfolio + sign out), `profile/edit`, `profile/student`, `profile/add-work`, `profile/delete-account`, `users/[id]` (public profile) (+ `_layout` stack) |
+| `src/app/(app)/` | Signed-in screens: `index` (Browse: search, type tabs, near me, endless list), `search-filters`, `listings/new`, `listings/[id]`, `listings/edit/[id]`, `my-listings`, `listing-quotes/[id]`, `quote-form`, `my-quotes`, `inbox`, `chat/[id]`, `book`, `accept-quote`, `orders`, `orders/[id]`, `wallet`, `add-money`, `withdraw`, `verify-email`, `profile` (my profile + portfolio + sign out), `profile/edit`, `profile/student`, `profile/add-work`, `profile/delete-account`, `users/[id]` (public profile) (+ `_layout` stack) |
 | `src/components/listings/` | `listing-card`, `category-picker`, `listing-form` (shared by new/edit; `buildListingBody`, `listingToFormValues`) |
 | `src/components/ui/` | Base UI kit — `AppText`, `Avatar`, `Button`, `TextField`, `Checkbox`, `Chip`/`ChipList`, `ImageTile`, `Notice`, `Screen`, `Segmented`, `LoadingState` / `ErrorState` / `EmptyState`. Import from `@/components/ui` |
 | `src/components/profile/profile-summary.tsx` | Profile header shared by "My profile" and public profiles |
@@ -76,7 +78,9 @@ To use a deployed API instead, copy `.env.example` to `.env` and set `EXPO_PUBLI
 | `src/lib/quotes/quotes-api.ts` | Quote calls + hooks (`useListingQuotes`, `useMyQuotes`, `useMyQuoteFor`) |
 | `src/lib/realtime/realtime.ts` | `useRealtime()` (socket.io connection while signed in; updates caches on `message:new` / `conversation:read`), `joinConversation`, `leaveConversation` |
 | `src/components/quotes/quote-card.tsx` | Quote with seller trust signals and actions |
-| `src/components/orders/payment-mode-picker.tsx` | Pay directly / Wallet (escrow disabled until Phase 6) |
+| `src/components/orders/payment-mode-picker.tsx` | Pay directly / Wallet (escrow) |
+| `src/lib/wallet/wallet-api.ts` | Wallet, history, top-up, verify, withdraw calls + hooks; transaction labels |
+| `src/components/ui/test-mode-badge.tsx` | "TEST MODE — no real money" badge (FR-455) |
 | `src/lib/orders/` | `orders-api.ts` (calls + hooks, `ESCROW_AVAILABLE`), `format.ts` (status/action/timeline labels) |
 | `src/lib/location/current-location.ts` | Phone location with permission ("while using the app") + best-effort city |
 | `src/lib/users/users-api.ts` | Profile/student/portfolio/public-profile/categories calls + query hooks; keeps the session's user in sync |

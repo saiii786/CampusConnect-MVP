@@ -1,6 +1,6 @@
 /**
  * Choose how an order is paid (FR-403): directly (cash/UPI outside the app, on completion) or
- * escrow (in-app wallet, held until approval — Phase 6). Escrow is shown but disabled until then.
+ * escrow (in-app test-mode wallet, held until approval). `ESCROW_AVAILABLE` can switch escrow off.
  */
 import type { PaymentMode } from '@cc/shared';
 import { View } from 'react-native';

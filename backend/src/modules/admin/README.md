@@ -15,9 +15,12 @@ npm run admin:grant -w @cc/backend -- someone@example.com --revoke  # back to no
 
 `allowed: true` accepts a college domain without an `.ac.in/.edu/.edu.in` suffix and sets the college name on verified profiles; `allowed: false` blocks a domain even if its suffix would be accepted (ADR-020).
 
+| `GET /api/v1/admin/ledger/reconcile` | — | 200 `LedgerReconcileDto` — `ok: true` when every wallet equals its ledger entries, every transaction balances and no finished order holds escrow (Phase 6) |
+
 | File | What it does |
 |---|---|
 | `admin.module.ts` | Registers admin controllers |
 | `student-domains.controller.ts` | Student-domain allow/deny list |
+| `ledger.controller.ts` | Ledger reconciliation |
 
 Phase 8 adds reports, suspensions, dispute resolution and ledger reconciliation here.

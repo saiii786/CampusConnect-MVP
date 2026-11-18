@@ -20,6 +20,8 @@ import { IS_PUBLIC_KEY } from '../modules/auth/auth.decorators.js';
 const PUBLIC_ROUTES = [
   'GET /categories',
   'GET /health',
+  'GET /payments/fake/:id', // fake gateway only; HMAC token in the query is the credential
+  'GET /payments/return', // static "go back to the app" page after a gateway checkout
   'GET /uploads/files/*key', // local storage driver only (404 with Supabase)
   'POST /auth/forgot-password',
   'POST /auth/login',
@@ -27,6 +29,9 @@ const PUBLIC_ROUTES = [
   'POST /auth/refresh',
   'POST /auth/reset-password',
   'POST /auth/signup',
+  'POST /payments/fake/:id/cancel', // fake gateway only; token-protected
+  'POST /payments/fake/:id/pay', // fake gateway only; token-protected
+  'POST /webhooks/razorpay', // authenticated by the X-Razorpay-Signature HMAC
   'PUT /uploads/local/:token', // local storage driver only; the signed upload token is the credential
 ];
 

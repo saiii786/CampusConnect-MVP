@@ -179,3 +179,15 @@ Format: **Context** (situation) → **Decision** → **Consequences** (trade-off
   - Booking and quote acceptance post a short message in the buyer↔seller chat; every change emits `order:updated` to both users.
   - Blocking prevents new orders but not finishing existing ones (cancel/dispute must stay possible).
 - **Consequences:** The money layer can be added without touching order rules. A 4-digit code can be guessed by brute force only via the rate-limited endpoint (10/min/IP) by the seller of that order — acceptable for a confirmation code, not a security credential.
+
+## ADR-024 — Wallet, escrow and test-mode payments
+- **Date:** 2026-11-18 · **Status:** Accepted
+- **Context:** FR-450…456 and ADR-004: a real-feeling payment experience with fake money, ₹0 cost, and a ledger that can be trusted.
+- **Decision:**
+  - **Ledger:** `LedgerService.post()` is the only code that moves money — balanced entries, unique idempotency key per business event (`topup:<paymentId>`, `escrow-hold|release|refund:<orderId>`, `withdrawal:<id>`), wallet cache updated in the same transaction with a conditional update (never negative → 422 `WALLET_INSUFFICIENT_FUNDS`). Escrow balance = sum of the order's ESCROW entries. `GET /admin/ledger/reconcile` proves wallets = ledger, transactions sum to zero, no escrow stuck on finished orders.
+  - **Escrow** is the orders' `ORDER_MONEY` (ADR-023): HOLD on fund, RELEASE on approve/auto-approve/admin release, REFUND on seller cancel/admin refund — inside the order transition's transaction. Platform fee 0% (FR-456).
+  - **Gateways:** `PaymentGateway` interface. `RazorpayGateway` uses hosted **Payment Links** in **test mode only** — env refuses keys that are not `rzp_test_…`. `FakeGateway` (default) serves a no-script HTML checkout from the API (HMAC token per payment); refused in production.
+  - **Crediting:** the wallet is credited only when the server itself asks the gateway (`fetchStatus`) and it reports PAID for exactly our amount. Triggers: signed webhook (HMAC over the raw body — app runs with `rawBody: true`; the webhook only tells us *which* link to check), the app's `verify`, or the fake page. Status change + ledger posting in one transaction; concurrent duplicates are no-ops. Amount mismatches are logged and never credited.
+  - **App flow:** checkout opens in the in-app browser; because Android does not report when the tab closes, the app re-verifies on return to foreground and every 3 s for up to 3 minutes. TEST MODE badge on every money screen (FR-455).
+  - **Withdrawals** are simulated (WALLET −x, EXTERNAL +x).
+- **Consequences:** Real money is impossible by configuration. Razorpay driver is unit- and integration-tested against a mocked Razorpay API but **not yet against a real test account** (needs the founder's test keys + a public webhook URL, i.e. after deploy). Moving to live money later requires KYC, a registered business and a new ADR (parking lot).

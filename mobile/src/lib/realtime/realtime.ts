@@ -17,6 +17,7 @@ import { getApiBaseUrl } from '@/config/api-url';
 import { session } from '@/lib/auth/session';
 import { addMessageToCache, chatKeys } from '@/lib/chat/chat-api';
 import { orderKeys } from '@/lib/orders/orders-api';
+import { walletKeys } from '@/lib/wallet/wallet-api';
 
 let socket: Socket | null = null;
 
@@ -49,6 +50,8 @@ export function useRealtime(): void {
     });
     s.on(ServerEvent.ORDER_UPDATED, () => {
       void client.invalidateQueries({ queryKey: orderKeys.all });
+      // Escrow release/refund changes balances.
+      void client.invalidateQueries({ queryKey: walletKeys.all });
     });
     s.on(ServerEvent.CONVERSATION_READ, () => {
       void client.invalidateQueries({ queryKey: chatKeys.conversations });

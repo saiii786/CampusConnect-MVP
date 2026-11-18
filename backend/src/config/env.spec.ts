@@ -81,6 +81,16 @@ describe('loadEnv', () => {
     expect(problemsOf({ ...VALID, NODE_ENV: 'production' })).toContain('STORAGE_DRIVER');
   });
 
+  it('payments: fake by default; razorpay needs keys and refuses LIVE keys; production refuses fake', () => {
+    expect(loadEnv(VALID).PAYMENT_GATEWAY).toBe('fake');
+    const missing = problemsOf({ ...VALID, PAYMENT_GATEWAY: 'razorpay' });
+    for (const name of ['RAZORPAY_KEY_ID', 'RAZORPAY_KEY_SECRET', 'RAZORPAY_WEBHOOK_SECRET']) expect(missing).toContain(name);
+    const rzp = { ...VALID, PAYMENT_GATEWAY: 'razorpay', RAZORPAY_KEY_SECRET: 'secret123', RAZORPAY_WEBHOOK_SECRET: 'whsecret123' };
+    expect(loadEnv({ ...rzp, RAZORPAY_KEY_ID: 'rzp_test_abc' }).RAZORPAY_KEY_ID).toBe('rzp_test_abc');
+    expect(problemsOf({ ...rzp, RAZORPAY_KEY_ID: 'rzp_live_abc' })).toContain('RAZORPAY_KEY_ID');
+    expect(problemsOf({ ...VALID, NODE_ENV: 'production' })).toContain('PAYMENT_GATEWAY');
+  });
+
   it('never includes variable values in the error (they may be secrets)', () => {
     const secret = 'postgresql-but-not-really-SECRET123';
     expect(problemsOf({ ...VALID, DATABASE_URL: secret })).not.toContain('SECRET123');

@@ -144,12 +144,11 @@ describe('booking a service (FR-400a, FR-402)', () => {
     await book(buyer, fixed.id, { amountPaise: 1 }).expect(400); // cannot override a fixed price
   });
 
-  it('refuses own listings, job requests, escrow (until the wallet), blocked pairs and unverified buyers', async () => {
+  it('refuses own listings, job requests, blocked pairs and unverified buyers', async () => {
     const seller = await verifiedUser();
     const buyer = await verifiedUser();
     const l = await offer(seller);
     expect((await book(seller, l.id).expect(422)).body.error.code).toBe('CANNOT_ORDER_OWN_LISTING');
-    expect((await book(buyer, l.id, { paymentMode: 'ESCROW' }).expect(422)).body.error.code).toBe('PAYMENT_MODE_UNAVAILABLE');
 
     const job = await api()
       .post('/api/v1/listings')

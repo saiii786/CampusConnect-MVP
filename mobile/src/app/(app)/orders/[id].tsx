@@ -9,9 +9,10 @@ import { useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Alert, View } from 'react-native';
-import { AppText, Avatar, Button, Chip, ErrorState, LoadingState, Notice, Screen, TextField } from '@/components/ui';
-import { describeError } from '@/lib/api/api-error';
+import { AppText, Avatar, Button, Chip, ErrorState, LoadingState, Notice, Screen, TestModeBadge, TextField } from '@/components/ui';
+import { ApiError, describeError } from '@/lib/api/api-error';
 import { orderKeys, ordersApi, useOrder } from '@/lib/orders/orders-api';
+import { walletKeys } from '@/lib/wallet/wallet-api';
 import { ACTION_ORDER, DESTRUCTIVE_ACTIONS, isActiveStatus, ORDER_ACTION_LABEL, ORDER_STATUS_LABEL, timelineText } from '@/lib/orders/format';
 import { useTheme } from '@/theme/use-theme';
 
@@ -43,8 +44,16 @@ export default function OrderDetailScreen() {
     setBusy(true);
     try {
       done(await ordersApi.act(id, action, body));
+      if (action === 'fund' || action === 'approve' || action === 'cancel') void client.invalidateQueries({ queryKey: walletKeys.all });
     } catch (e) {
-      Alert.alert('Not done', describeError(e));
+      if (e instanceof ApiError && e.code === 'WALLET_INSUFFICIENT_FUNDS') {
+        Alert.alert('Not enough money', 'Add test money to your wallet, then pay again.', [
+          { text: 'Later', style: 'cancel' },
+          { text: 'Add money', onPress: () => router.push('/add-money') },
+        ]);
+      } else {
+        Alert.alert('Not done', describeError(e));
+      }
     } finally {
       setBusy(false);
     }
@@ -83,6 +92,7 @@ export default function OrderDetailScreen() {
   return (
     <Screen>
       <View style={{ gap: spacing.sm }}>
+        {o.paymentMode === 'ESCROW' ? <TestModeBadge /> : null}
         <View style={{ flexDirection: 'row', gap: spacing.sm, flexWrap: 'wrap' }}>
           <Chip label={ORDER_STATUS_LABEL[o.status]} tone={isActiveStatus(o.status) ? 'primary' : 'neutral'} />
           <Chip label={o.paymentMode === 'DIRECT' ? 'Pay directly' : 'Wallet / escrow'} />
@@ -114,6 +124,12 @@ export default function OrderDetailScreen() {
           tone="warning"
           message={`The seller marked the work as done. Approve it or ask for changes (${o.maxChangeRequests - o.changeRequests} left). If you do nothing, it is approved automatically on ${new Date(o.autoApproveAt).toLocaleDateString('en-IN')}.`}
         />
+      ) : null}
+      {o.status === 'AWAITING_PAYMENT' && o.role === 'BUYER' ? (
+        <Notice tone="warning" message={`Pay ${formatPaise(o.amountPaise)} into escrow to start. The seller is paid only when you approve the work.`} />
+      ) : null}
+      {o.status === 'AWAITING_PAYMENT' && o.role === 'SELLER' ? (
+        <Notice message="Waiting for the buyer to pay into escrow. Start working once the order is In progress." />
       ) : null}
       {o.paymentMode === 'DIRECT' && o.status === 'COMPLETED' && o.role === 'BUYER' ? (
         <Notice message={`Remember to pay ${o.other.displayName} ${formatPaise(o.amountPaise)} directly, as agreed.`} />

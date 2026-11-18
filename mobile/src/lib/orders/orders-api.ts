@@ -16,11 +16,8 @@ import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api/client';
 import { toQueryString } from '@/lib/listings/listings-api';
 
-/**
- * Escrow (pay into the in-app wallet) needs the wallet (Phase 6). Until then the app only offers
- * "Pay directly". Flipped to true in Phase 6.
- */
-export const ESCROW_AVAILABLE = false;
+/** Escrow (pay into the in-app wallet, test mode) is available since Phase 6. */
+export const ESCROW_AVAILABLE = true;
 
 export const orderKeys = {
   all: ['orders'] as const,

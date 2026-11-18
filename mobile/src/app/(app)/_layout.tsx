@@ -23,6 +23,9 @@ export default function AppLayout() {
       <Stack.Screen name="accept-quote" options={{ title: 'Accept quote' }} />
       <Stack.Screen name="orders" options={{ title: 'Orders' }} />
       <Stack.Screen name="orders/[id]" options={{ title: 'Order' }} />
+      <Stack.Screen name="wallet" options={{ title: 'Wallet' }} />
+      <Stack.Screen name="add-money" options={{ title: 'Add money' }} />
+      <Stack.Screen name="withdraw" options={{ title: 'Withdraw' }} />
       <Stack.Screen name="inbox" options={{ title: 'Messages' }} />
       <Stack.Screen name="chat/[id]" options={{ title: 'Chat' }} />
       <Stack.Screen name="verify-email" options={{ title: 'Verify your email' }} />

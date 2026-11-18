@@ -242,8 +242,9 @@ Terminal states: **COMPLETED, CANCELLED, DECLINED.** A buyer who wants to stop m
 | Conversations | `POST /conversations` · `GET /conversations` · `GET /conversations/unread` · `GET /conversations/:id` · `GET /conversations/:id/messages` · `POST /conversations/:id/messages` · `POST /conversations/:id/read` |
 | Orders | `POST /orders` (book a service) · `POST /quotes/:id/accept` · `GET /orders?role=buyer|seller&status=` · `GET /orders/:id` · `POST /orders/:id/actions/:action` (accept, decline, fund, submit, approve, request-changes, cancel, dispute) · `POST /orders/:id/start` (on-site start code) · `POST /orders/:id/review` (Phase 7) — ADR-023 |
 | Reviews | `POST /reviews/:id/reply` |
-| Wallet | `GET /wallet` · `GET /wallet/transactions` · `POST /wallet/topups` · `POST /wallet/topups/:id/verify` · `POST /wallet/withdrawals` |
-| Webhooks | `POST /webhooks/razorpay` (no JWT; signature verified) |
+| Wallet | `GET /wallet` · `GET /wallet/transactions` · `POST /wallet/topups` · `GET /wallet/topups/:id` · `POST /wallet/topups/:id/verify` · `POST /wallet/withdrawals` (ADR-024) |
+| Webhooks | `POST /webhooks/razorpay` (no JWT; HMAC signature over the raw body) |
+| Payment pages | `GET /payments/fake/:id` + `POST …/pay` / `…/cancel` (fake gateway only, token-protected) · `GET /payments/return` |
 | Notifications | `GET /notifications` · `POST /notifications/read` |
 | Safety | `POST /reports` (Phase 8) · `GET /blocks` · `POST /blocks` · `DELETE /blocks/:userId` |
 | Admin | `GET /admin/reports` · `POST /admin/reports/:id/resolve` · `POST /admin/users/:id/suspend` · `POST /admin/disputes/:orderId/resolve` · `GET/POST /admin/student-domains` · `GET /admin/ledger/reconcile` |
@@ -296,8 +297,9 @@ Validated in `backend/src/config/env.ts`; the server exits with a clear message 
 | `RATE_LIMIT_PER_MINUTE` / `AUTH_RATE_LIMIT_PER_MINUTE` | no | 120 / 10 per IP (auth limit only on `@AuthRateLimit()` routes) |
 | `LOG_LEVEL` / `LOG_JSON` | no | `log` / `true` in production |
 | `CORS_ORIGINS` | no | comma separated |
-| `PAYMENT_GATEWAY` | yes | `fake` or `razorpay` |
-| `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` / `RAZORPAY_WEBHOOK_SECRET` | if razorpay | **test** keys only |
+| `PAYMENT_GATEWAY` | no | `fake` (default; refused in production) or `razorpay` (ADR-024) |
+| `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` / `RAZORPAY_WEBHOOK_SECRET` | if razorpay | **test** keys only — a key not starting with `rzp_test_` is refused |
+| `PUBLIC_API_URL` | no | public https URL of the API; used for the "back to the app" page after checkout |
 | `STORAGE_DRIVER` | no | `local` (default; refused in production) or `supabase` (ADR-019) |
 | `STORAGE_LOCAL_DIR` | no | `.uploads` (local driver folder, git-ignored) |
 | `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` / `STORAGE_BUCKET` | if `supabase` | server-side only, never in the app; bucket public, 5 MB limit, image types only |

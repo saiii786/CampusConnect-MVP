@@ -145,15 +145,17 @@
 
 | ID | Task | Refs | Status |
 |---|---|---|---|
-| T6.1 | Ledger + wallet service (double-entry, idempotency, conditional balance update, reconciliation) | FR-450, NFR-04 | ⬜ |
-| T6.2 | `PaymentGateway` interface, `FakeGateway`, `RazorpayGateway` (test keys) | FR-451 | ⬜ |
-| T6.3 | Top-up: create checkout, webhook with signature check, verify-on-return fallback | FR-451 | ⬜ |
-| T6.4 | Escrow hooks in order transitions: fund, release, refund | FR-452 | ⬜ |
-| T6.5 | Wallet history; simulated withdrawal | FR-453, 454 | ⬜ |
-| T6.6 | Mobile: wallet screen, add money (in-app browser), history, TEST MODE badge, fund-order step | FR-455 | ⬜ |
-| T6.7 | Tests: ledger invariants, duplicate webhooks, insufficient funds, races, reconciliation = 0 | NFR-10 | ⬜ |
+| T6.1 | Ledger + wallet service (double-entry, idempotency, conditional balance update, reconciliation) | FR-450, NFR-04 | ✅ (ADR-024; `GET /admin/ledger/reconcile`) |
+| T6.2 | `PaymentGateway` interface, `FakeGateway`, `RazorpayGateway` (test keys) | FR-451 | 🟨 fake ✅ verified live; Razorpay built and tested against a mocked API — **needs founder's test keys** for a real run |
+| T6.3 | Top-up: create checkout, webhook with signature check, verify-on-return fallback | FR-451 | ✅ |
+| T6.4 | Escrow hooks in order transitions: fund, release, refund | FR-452 | ✅ |
+| T6.5 | Wallet history; simulated withdrawal | FR-453, 454 | ✅ |
+| T6.6 | Mobile: wallet screen, add money (in-app browser), history, TEST MODE badge, fund-order step | FR-455 | 🟨 built, tests green, bundle builds — not yet tried on a phone |
+| T6.7 | Tests: ledger invariants, duplicate webhooks, insufficient funds, races, reconciliation = 0 | NFR-10 | ✅ |
 
 **Exit:** escrow orders work end-to-end with Razorpay test checkout; ledger always reconciles.
+
+**Exit status (2026-11-18):** ✅ escrow works end-to-end with the fake checkout (8 new integration tests incl. mocked Razorpay webhooks; live run: top-up ₹1,000 → fund ₹600 → approve → seller paid → withdraw). ⚠ Razorpay test checkout itself not yet exercised — waiting for test keys (and a public URL for webhooks; `verify` works without one).
 
 ## Phase 7 — Reviews, work record, notifications
 **Depends on:** Phase 6 (reviews only need Phase 5; can overlap).

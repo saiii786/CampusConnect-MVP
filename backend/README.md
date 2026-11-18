@@ -22,6 +22,7 @@ For your own machine you can generate real ones:
 
 Verification/reset codes are **printed in this terminal** (`MAIL_DRIVER=console`) until a real email provider is chosen (PRD Q3).
 Uploaded images are stored in `backend/.uploads/` (`STORAGE_DRIVER=local`, git-ignored) until Supabase Storage is set up.
+"Add money" uses a built-in fake checkout page (`PAYMENT_GATEWAY=fake`) until Razorpay test keys are configured.
 
 ## Scripts (`npm run <script> -w @cc/backend`)
 | Script | Does |
@@ -83,7 +84,9 @@ Generate the SQL with `npx prisma migrate diff --from-config-datasource --to-sch
 | realtime | ✅ Phase 4 (socket.io) | [src/modules/realtime/README.md](src/modules/realtime/README.md) |
 | safety | 🟨 Phase 4: blocks; reports in Phase 8 | [src/modules/safety/README.md](src/modules/safety/README.md) |
 | orders | ✅ Phase 5 (direct payment; escrow in Phase 6) | [src/modules/orders/README.md](src/modules/orders/README.md) |
-| wallet, payments, … | Planned — see [ROADMAP](../docs/ROADMAP.md) | — |
+| wallet | ✅ Phase 6 (ledger, escrow, simulated withdrawals) | [src/modules/wallet/README.md](src/modules/wallet/README.md) |
+| payments | ✅ Phase 6 (fake ✅; Razorpay test mode built, awaiting keys) | [src/modules/payments/README.md](src/modules/payments/README.md) |
+| reviews, notifications, … | Planned — see [ROADMAP](../docs/ROADMAP.md) | — |
 
 ## Conventions
 - ESM: relative imports end in `.js` (even for `.ts` files).

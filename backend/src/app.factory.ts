@@ -17,6 +17,8 @@ export async function createApp(env: AppEnv): Promise<INestApplication> {
   const levels = LOG_LEVELS.slice(0, LOG_LEVELS.indexOf(env.LOG_LEVEL) + 1);
   const app = await NestFactory.create<NestExpressApplication>(AppModule.forRoot(env), {
     logger: new ConsoleLogger({ json: env.LOG_JSON, logLevels: [...levels] }),
+    // Keep the exact request bytes (req.rawBody) — payment webhooks are signed over them.
+    rawBody: true,
   });
 
   app.setGlobalPrefix(API_PREFIX);

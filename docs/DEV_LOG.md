@@ -15,6 +15,29 @@ A dated, append-only record of what was done in each working session: what chang
 
 ---
 
+## 2026-11-18 — Phase 6: wallet, escrow, payments (test mode)
+**Roadmap tasks:** T6.1–T6.7
+
+**Done**
+- Shared: wallet schemas/DTOs (top-up ₹10–₹50,000, withdrawals, reconcile).
+- Backend: `wallet` (LedgerService — balanced, idempotent, never-negative; escrow as orders' `ORDER_MONEY`; history; simulated withdrawals), `payments` (gateway interface, fake gateway with HTML checkout, Razorpay test-mode Payment Links, raw-body signed webhook, verify, crediting only after the server confirms the exact amount), `GET /admin/ledger/reconcile`. App now created with `rawBody: true`. New env: `PAYMENT_GATEWAY`, `RAZORPAY_*` (live keys refused), `PUBLIC_API_URL`; production refuses the fake gateway. Decisions in ADR-024.
+- Mobile: Wallet screen (balance, in escrow, history), Add money (in-app browser + auto-verify on return and polling), Withdraw (simulated), TEST MODE badge, escrow enabled in the payment picker, "Not enough money → Add money" on funding, wallet refresh on order updates.
+
+**Problems found and fixed during the session**
+- PowerShell 5.1 broke a `git commit -m` message containing double quotes (Phase 5 commit failed, nothing committed) → commit messages now go through a file (`git commit -F`).
+- LedgerService was provided by two modules (two instances) → single `LedgerModule`.
+
+**Tests run (all executed this session)**
+- shared 70/70 · backend unit 62/62 · backend integration 81/81 (8 new, incl. Razorpay webhooks against a mocked Razorpay API) · mobile 49/49
+- `npm run lint`, `npm run typecheck` → pass · `npx expo export --platform android` → bundle builds
+- Live (built server, port 3001, fake gateway): checkout page shows TEST MODE → pay → verify PAID → wallet ₹1,000 → escrow order: accept → fund (buyer ₹400 left, ₹600 in escrow) → submit → approve (seller ₹600, escrow 0) → simulated withdrawal ₹200. Smoke data removed with the extended scoped script.
+
+**Not verified / known gaps**
+- Razorpay test checkout not exercised for real — needs the founder's test keys; webhooks additionally need a public URL (after deploy). Local dev works via "verify".
+- Not tried on a phone.
+
+**Next:** Phase 7 — reviews, work record, notifications.
+
 ## 2026-11-18 — Phase 5: orders (direct payment)
 **Roadmap tasks:** T5.1–T5.6
 

@@ -74,7 +74,31 @@ export const envSchema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(20).optional(),
   /** Public bucket for images, e.g. `media`. */
   STORAGE_BUCKET: z.string().regex(/^[a-z0-9][a-z0-9._-]{1,62}$/).optional(),
+
+  // ── Payments (Phase 6, ADR-004, ADR-024) ────────────────────────────────
+  /**
+   * `fake` = built-in fake checkout page (development/tests; refused in production).
+   * `razorpay` = Razorpay **test mode** (real hosted checkout, fake money).
+   */
+  PAYMENT_GATEWAY: z.enum(['fake', 'razorpay']).default('fake'),
+  /** Must be a TEST key (`rzp_test_…`) — live keys are refused (ADR-004: no real money). */
+  RAZORPAY_KEY_ID: z
+    .string()
+    .regex(/^rzp_test_/, 'must be a Razorpay TEST key (rzp_test_…) — live keys are not allowed')
+    .optional(),
+  RAZORPAY_KEY_SECRET: z.string().min(8).optional(),
+  RAZORPAY_WEBHOOK_SECRET: z.string().min(8).optional(),
+  /** Public https URL of this API (e.g. https://campusconnect-api.onrender.com). Used for gateway redirects. */
+  PUBLIC_API_URL: z.url({ protocol: /^https?$/ }).optional(),
 }).superRefine((env, ctx) => {
+  if (env.PAYMENT_GATEWAY === 'razorpay') {
+    for (const key of ['RAZORPAY_KEY_ID', 'RAZORPAY_KEY_SECRET', 'RAZORPAY_WEBHOOK_SECRET'] as const) {
+      if (!env[key]) ctx.addIssue({ code: 'custom', path: [key], message: 'is required when PAYMENT_GATEWAY=razorpay' });
+    }
+  }
+  if (env.NODE_ENV === 'production' && env.PAYMENT_GATEWAY === 'fake') {
+    ctx.addIssue({ code: 'custom', path: ['PAYMENT_GATEWAY'], message: 'the fake gateway is not allowed in production' });
+  }
   if (env.STORAGE_DRIVER === 'supabase') {
     for (const key of ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'STORAGE_BUCKET'] as const) {
       if (!env[key]) ctx.addIssue({ code: 'custom', path: [key], message: 'is required when STORAGE_DRIVER=supabase' });

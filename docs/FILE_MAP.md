@@ -6,7 +6,7 @@ Every file we maintain, and what it is for. Not listed: generated/vendor files
 **Rule:** when you add, rename or delete a file, update this map in the same change. Function-level
 detail lives in each package/module `README.md` and in the file's header comment; this is the index.
 
-_Last updated: 2026-11-18 (end of Phase 5)._
+_Last updated: 2026-11-18 (end of Phase 6)._
 
 ---
 
@@ -28,7 +28,7 @@ _Last updated: 2026-11-18 (end of Phase 5)._
 | `docs/PRD.md` | Product requirements: problem, users, three matching modes, requirement IDs (FR/NFR), open questions Q1–Q7 |
 | `docs/ROADMAP.md` | Phased plan, task IDs and status, exit criteria, Definition of Done, parking lot |
 | `docs/ARCHITECTURE.md` | Technical design: stack, modules, data model, order state machine, money design, API & socket contracts, security, config, testing, deployment |
-| `docs/DECISIONS.md` | Decision log ADR-001…023, with reasons; how to change a decision |
+| `docs/DECISIONS.md` | Decision log ADR-001…024, with reasons; how to change a decision |
 | `docs/DEV_LOG.md` | Dated record of each work session: done, tests run, gaps, next |
 | `docs/FILE_MAP.md` | This file |
 
@@ -53,6 +53,7 @@ _Last updated: 2026-11-18 (end of Phase 5)._
 | `src/money.ts` | Paise helpers: `rupeesToPaise`, `formatPaise`, `isValidAmountPaise` |
 | `src/money.spec.ts` | Tests for money helpers |
 | `src/orders/schemas.ts` | Order request schemas and DTOs |
+| `src/wallet/schemas.ts` | Wallet/top-up/withdrawal schemas and DTOs, reconcile DTO |
 | `src/orders/state-machine.ts` | Order lifecycle rules: `resolveOrderTransition`, `availableOrderActions`, `initialOrderStatus` |
 | `src/orders/state-machine.spec.ts` | Exhaustive test of every status × action × actor × payment mode against the documented table |
 
@@ -144,6 +145,22 @@ _Last updated: 2026-11-18 (end of Phase 5)._
 | `src/modules/conversations/conversations.module.ts` | Conversations module |
 | `src/modules/conversations/conversations.controller.ts` | `/conversations…` |
 | `src/modules/conversations/conversations.service.ts` | Conversations, messages, unread, read receipts |
+| `src/modules/wallet/README.md` | Wallet/ledger docs: endpoints, money movements |
+| `src/modules/wallet/ledger.module.ts` | Single LedgerService provider |
+| `src/modules/wallet/ledger.service.ts` | Double-entry posting, escrow balance, reconciliation |
+| `src/modules/wallet/wallet.service.ts` | Wallet, history, withdrawals, escrow (`OrderMoney`) |
+| `src/modules/wallet/wallet.controller.ts` | `/wallet…` |
+| `src/modules/wallet/wallet.module.ts` | Wallet module |
+| `src/modules/payments/README.md` | Payments docs + how to switch on Razorpay test mode |
+| `src/modules/payments/payment-gateway.ts` | Gateway interface |
+| `src/modules/payments/fake-gateway.ts` | Fake gateway (dev/tests) |
+| `src/modules/payments/razorpay-gateway.ts` | Razorpay test-mode Payment Links |
+| `src/modules/payments/payments.service.ts` | Top-ups, verify, webhook handling, crediting |
+| `src/modules/payments/webhooks.controller.ts` | `POST /webhooks/razorpay` (raw body) |
+| `src/modules/payments/fake-checkout.controller.ts` | Fake checkout HTML pages + return page |
+| `src/modules/payments/payments.module.ts` | Gateway selection |
+| `src/modules/payments/payments.spec.ts` | Ledger/gateway unit tests |
+| `src/modules/admin/ledger.controller.ts` | `GET /admin/ledger/reconcile` |
 | `src/modules/orders/README.md` | Orders module docs |
 | `src/modules/orders/orders.module.ts` | Orders module + escrow hook binding |
 | `src/modules/orders/orders.controller.ts` | Order endpoints (incl. `POST /quotes/:id/accept`) |
@@ -171,6 +188,7 @@ _Last updated: 2026-11-18 (end of Phase 5)._
 | `test/setup/users.ts` | `createUser()`, `uploadImage()`, `JPEG_BYTES` |
 | `test/auth.e2e-spec.ts` | Integration tests for signup, login, tokens, refresh reuse, verification, reset, suspension, rate limits |
 | `test/chat.e2e-spec.ts` | Integration tests: quotes, conversations, blocks, socket.io (handshake, rooms, live delivery) |
+| `test/wallet.e2e-spec.ts` | Integration tests: top-ups, escrow flows, refunds, double tap, withdrawals, reconciliation, Razorpay webhooks (mocked API) |
 | `test/orders.e2e-spec.ts` | Integration tests: booking, quote acceptance, lifecycle, permissions, limits, disputes, double tap, on-site codes |
 | `test/listings.e2e-spec.ts` | Integration tests for listings and search (rules, ownership, visibility, photos, filters, near-me, pagination) |
 | `test/profiles.e2e-spec.ts` | Integration tests for profile, uploads, portfolio, public profiles, student badge, categories, admin domains, account deletion |
@@ -216,6 +234,12 @@ _Last updated: 2026-11-18 (end of Phase 5)._
 | `src/app/(app)/orders.tsx` | Orders list: I'm buying / I'm selling, active / all |
 | `src/app/(app)/orders/[id].tsx` | Order detail: actions, on-site codes, timeline |
 | `src/components/orders/payment-mode-picker.tsx` | Direct / wallet payment choice |
+| `src/app/(app)/wallet.tsx` | Wallet: balance, escrow, history, add/withdraw |
+| `src/app/(app)/add-money.tsx` | Top-up in the in-app browser with auto-verify |
+| `src/app/(app)/withdraw.tsx` | Simulated withdrawal |
+| `src/components/ui/test-mode-badge.tsx` | TEST MODE badge |
+| `src/lib/wallet/wallet-api.ts` | Wallet calls + hooks, labels |
+| `src/lib/wallet/wallet.test.ts` | Every transaction kind has a label |
 | `src/lib/orders/orders-api.ts` | Order calls + hooks, `ESCROW_AVAILABLE` |
 | `src/lib/orders/format.ts` | Status/action/timeline labels |
 | `src/lib/orders/orders.test.ts` | Tests: labels cover every action/status, timeline sentences |
