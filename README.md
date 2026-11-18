@@ -33,7 +33,8 @@ npm run db:seed -w @cc/backend           # categories
 npm run dev:api                          # terminal 1: API → http://localhost:3000/api/v1/health
 npm run dev:mobile                       # terminal 2: scan the QR code with Expo Go
 ```
-The app's welcome screen should show **Server status: ● Connected**.
+The app's welcome screen should show **Server status: ● Connected**. Create an account to try the
+sign-in flow — the email verification code is printed in **terminal 1** (no real emails until PRD Q3).
 
 ### Everyday commands (from the repo root)
 | Command | What it does |

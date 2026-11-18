@@ -53,8 +53,11 @@ campusconnect-mvp/
 ├── mobile/                   Expo app (SDK 58, expo-router file-based navigation)
 │   └── src/
 │       ├── app/              screens = routes (nothing else lives here)
-│       ├── components/ui/    base UI kit
-│       ├── config/ lib/      API URL, API client, query client
+│       │   ├── (auth)/       signed-out screens (welcome, sign in/up, password reset)
+│       │   └── (app)/        signed-in screens (home, verify email, …)
+│       ├── components/       base UI kit (ui/) + shared composite components
+│       ├── config/ lib/      API URL, API client, session (auth), forms, query client
+│       ├── tests/            screen tests (kept outside app/, which only holds routes)
 │       └── theme/ hooks/     design tokens, hooks
 ├── docker-compose.yml        local Postgres (host port 5433) for dev + tests
 └── .github/workflows/        CI
@@ -69,7 +72,7 @@ campusconnect-mvp/
 | Backend framework | NestJS 12 (ESM-only), official starter toolchain (ADR-013) | Modules, DI and guards fit a growing API; both old codebases used it |
 | Validation | **zod** schemas in `@cc/shared`, used by backend (Nest 12 `StandardSchemaValidationPipe`, `@Body({ schema })`) **and** mobile (forms) | One definition of every request shape → frontend and backend cannot drift apart (the main bug of the old demo-connect) |
 | ORM / DB | Prisma 7.x stable (`prisma-client` generator, `@prisma/adapter-pg`, `prisma.config.ts`) + PostgreSQL on Supabase free tier | Type-safe queries, migrations; Postgres is reliable and free |
-| Auth | Strong password hash (argon2id or scrypt); JWT access (15 min) + rotating refresh token (30 days, stored hashed). First-party `@nestjs/authentication` evaluated first (ADR-014) | Secure and keeps users logged in |
+| Auth | Own module on audited primitives (ADR-017): argon2id (`@node-rs/argon2`); JWT access token (HS256 via `jose`, 15 min); opaque rotating refresh token (30 days, stored as SHA-256, reuse detection); global guard, routes are private unless `@Public()` | Secure and keeps users logged in; `@nestjs/authentication` was pre-1.0 (ADR-014) |
 | Realtime | socket.io on the same Nest server, JWT-verified handshake | Simple; free; works on Render |
 | Payments | Razorpay **test mode** behind a `PaymentGateway` interface; `FakeGateway` for tests/dev | Real gateway experience at ₹0; can switch to live later |
 | File storage | Supabase Storage (signed upload URLs) | Free 1 GB; images never pass through our server |
@@ -286,13 +289,16 @@ Validated in `backend/src/config/env.ts`; the server exits with a clear message 
 | `PORT` | no | 3000 |
 | `DATABASE_URL` | yes | pooled Supabase URL (runtime) |
 | `DIRECT_URL` | yes | direct Supabase URL (migrations) |
-| `JWT_ACCESS_SECRET` | yes | ≥ 32 random chars |
-| `JWT_REFRESH_SECRET` | yes | ≥ 32 random chars, different from access |
+| `JWT_ACCESS_SECRET` | yes | ≥ 32 random chars; production refuses the `.env.example` placeholder |
+| `CODE_HASH_SECRET` | yes | ≥ 32 random chars, different from `JWT_ACCESS_SECRET`; keys the HMAC of email codes (ADR-017). Replaces the planned `JWT_REFRESH_SECRET` — refresh tokens are opaque, not JWTs |
+| `ACCESS_TOKEN_TTL_MINUTES` / `REFRESH_TOKEN_TTL_DAYS` | no | 15 / 30 |
+| `RATE_LIMIT_PER_MINUTE` / `AUTH_RATE_LIMIT_PER_MINUTE` | no | 120 / 10 per IP (auth limit only on `@AuthRateLimit()` routes) |
+| `LOG_LEVEL` / `LOG_JSON` | no | `log` / `true` in production |
 | `CORS_ORIGINS` | no | comma separated |
 | `PAYMENT_GATEWAY` | yes | `fake` or `razorpay` |
 | `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` / `RAZORPAY_WEBHOOK_SECRET` | if razorpay | **test** keys only |
 | `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` / `STORAGE_BUCKET` | for uploads | server-side only, never in the app |
-| `MAIL_DRIVER` | yes | `console` (dev) or provider name |
+| `MAIL_DRIVER` | no | `console` (default; dev/test only — refused when `NODE_ENV=production`). Provider driver added when PRD Q3 is decided |
 | `PUBLIC_WEB_BASE_URL` | yes | base for public work-record links |
 
 Mobile: `EXPO_PUBLIC_API_URL` (required for builds). In development it may be left empty: the app derives `http://<dev-computer>:3000/api/v1` from the Expo dev server address (ADR-015). No hard-coded IPs anywhere.

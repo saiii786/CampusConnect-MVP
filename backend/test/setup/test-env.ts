@@ -16,6 +16,9 @@ export function testEnv(overrides: Record<string, string> = {}): AppEnv {
     DIRECT_URL: TEST_DATABASE_URL,
     LOG_LEVEL: 'error',
     RATE_LIMIT_PER_MINUTE: '1000',
+    AUTH_RATE_LIMIT_PER_MINUTE: '1000',
+    JWT_ACCESS_SECRET: 'test-only-access-secret-0123456789-abcdef',
+    CODE_HASH_SECRET: 'test-only-code-secret-0123456789-fedcba',
     ...overrides,
   });
 }

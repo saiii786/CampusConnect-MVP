@@ -16,6 +16,12 @@ npm run dev:api                    # API on http://localhost:3000/api/v1 (auto-r
 ```
 Check: open http://localhost:3000/api/v1/health → `{"status":"ok","database":"up",...}`.
 
+`.env.example` contains **placeholder** auth secrets that work locally (production refuses them).
+For your own machine you can generate real ones:
+`node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"` (run twice — the two secrets must differ).
+
+Verification/reset codes are **printed in this terminal** (`MAIL_DRIVER=console`) until a real email provider is chosen (PRD Q3).
+
 ## Scripts (`npm run <script> -w @cc/backend`)
 | Script | Does |
 |---|---|
@@ -40,7 +46,8 @@ Check: open http://localhost:3000/api/v1/health → `{"status":"ok","database":"
 | `src/common/errors/app-error.ts` | `AppError` — throw this for expected problems (`AppError.notFound()`, `.forbidden()`, `.conflict()` …) |
 | `src/common/errors/all-exceptions.filter.ts` | Converts every error to the standard `{ error: { code, message, details, requestId } }` body; hides internals of 5xx errors |
 | `src/common/http/request-context.middleware.ts` | Request IDs (`x-request-id`) + one access-log line per request (never logs bodies or tokens) |
-| `src/common/validation/validation.pipe.ts` | Global zod validation via Nest's `StandardSchemaValidationPipe`, with our error format. **Every `@Body`/`@Query` must pass `{ schema }`** |
+| `src/common/validation/validation.pipe.ts` | Global zod validation via Nest's `StandardSchemaValidationPipe`, with our error format. **Every `@Body`/`@Query`/`@Param` must pass `{ schema }`** |
+| `src/common/route-safety.spec.ts` | Scans all controllers: fails on any unvalidated parameter, or if the set of `@Public()` routes changes without updating its reviewed list |
 | `src/prisma/` | `PrismaService` (database client, `isHealthy()`) and its global module |
 | `src/modules/<feature>/` | One folder per feature, each with its own README |
 | `src/generated/prisma/` | Generated Prisma client (git-ignored; created by `npm install` / `prisma generate`) |
@@ -49,17 +56,21 @@ Check: open http://localhost:3000/api/v1/health → `{"status":"ok","database":"
 | `prisma/seed.ts`, `prisma/seed-data/` | Idempotent reference data (categories) |
 | `prisma/docker-init/` | SQL run once when the local Docker DB is created (creates the test DB) |
 | `prisma.config.ts` | Prisma 7 CLI config (schema path, migrations, seed, `DIRECT_URL`) |
-| `test/setup/` | Integration-test helpers: test env, global setup (runs migrations), `createTestApp()` |
+| `test/setup/` | Integration-test helpers: test env, global setup (runs migrations), `createTestApp()`, `resetUserData()` |
 | `test/*.e2e-spec.ts` | Integration tests |
 
 ## Modules
 | Module | Status | README |
 |---|---|---|
 | health | ✅ Phase 0 | [src/modules/health/README.md](src/modules/health/README.md) |
-| auth, users, … | Planned — see [ROADMAP](../docs/ROADMAP.md) | — |
+| auth | ✅ Phase 1 | [src/modules/auth/README.md](src/modules/auth/README.md) |
+| mail | ✅ Phase 1 (console driver) | [src/modules/mail/README.md](src/modules/mail/README.md) |
+| users | 🟨 Phase 1: `GET /me`; rest in Phase 2 | [src/modules/users/README.md](src/modules/users/README.md) |
+| categories, listings, … | Planned — see [ROADMAP](../docs/ROADMAP.md) | — |
 
 ## Conventions
 - ESM: relative imports end in `.js` (even for `.ts` files).
+- Every route requires sign-in unless marked `@Public()` (global `AuthGuard`). Get the caller with `@CurrentUser()`.
 - Services enforce authorization (filter by the acting user) — never rely on the app to hide things.
 - Money only through `WalletService`; order status only through `OrdersService.transition()` (from Phase 5/6).
 - Expected errors: throw `AppError` with a stable `code`. Never rename an existing code (the app may depend on it).

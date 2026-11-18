@@ -7,6 +7,7 @@ import { Controller, Get, HttpStatus, Res } from '@nestjs/common';
 import { SkipThrottle } from '@nestjs/throttler';
 import type { Response } from 'express';
 import { PrismaService } from '../../prisma/prisma.service.js';
+import { Public } from '../auth/auth.decorators.js';
 
 export interface HealthResponse {
   status: 'ok' | 'degraded';
@@ -15,6 +16,7 @@ export interface HealthResponse {
   timestamp: string;
 }
 
+@Public()
 @SkipThrottle()
 @Controller('health')
 export class HealthController {

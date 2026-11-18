@@ -61,18 +61,20 @@
 
 | ID | Task | Refs | Status |
 |---|---|---|---|
-| T1.1 | Signup (email, password, DOB 18+, terms), login, argon2id | FR-001, 005 | ⬜ |
-| T1.2 | Access + refresh tokens with rotation and reuse detection; logout | FR-002 | ⬜ |
-| T1.3 | `MailService` (console driver) + email verification code | FR-003 | ⬜ |
-| T1.4 | Forgot / reset password | FR-006 | ⬜ |
-| T1.5 | Auth guard, `@CurrentUser()`, `@Roles('ADMIN')`, suspended-user blocking | FR-601 | ⬜ |
-| T1.6 | Rate limits on auth endpoints | FR-603 | ⬜ |
-| T1.7 | Mobile: welcome, sign up, login, verify email, forgot password; secure token storage; auto refresh on 401; logout | FR-001…006 | ⬜ |
-| T1.8 | Tests: unit + integration (incl. token reuse, expired token, suspended user) | NFR-10 | ⬜ |
-| T1.9 | Route-schema guard test: fails if any `@Body`/`@Query` parameter has no zod schema (an unvalidated parameter is silently accepted — the old demo-connect bug) | NFR-01 | ⬜ |
-| T1.10 | Decide ADR-014 (first-party `@nestjs/authentication` vs hand-rolled) before starting T1.1 | ADR-014 | ⬜ |
+| T1.1 | Signup (email, password, DOB 18+, terms), login, argon2id | FR-001, 005 | ✅ |
+| T1.2 | Access + refresh tokens with rotation and reuse detection; logout | FR-002 | ✅ |
+| T1.3 | `MailService` (console driver) + email verification code | FR-003 | ✅ |
+| T1.4 | Forgot / reset password | FR-006 | ✅ |
+| T1.5 | Auth guard, `@CurrentUser()`, `@Roles('ADMIN')`, suspended-user blocking | FR-601 | ✅ (global guard; also `@Public()`, `@RequireVerifiedEmail()`; `GET /me`) |
+| T1.6 | Rate limits on auth endpoints | FR-603 | ✅ (`@AuthRateLimit()`, 10/min/IP default) |
+| T1.7 | Mobile: welcome, sign up, login, verify email, forgot password; secure token storage; auto refresh on 401; logout | FR-001…006 | 🟨 built, unit/screen tests green, Android bundle builds — not yet tried on a phone |
+| T1.8 | Tests: unit + integration (incl. token reuse, expired token, suspended user) | NFR-10 | ✅ |
+| T1.9 | Route-schema guard test: fails if any `@Body`/`@Query` parameter has no zod schema (an unvalidated parameter is silently accepted — the old demo-connect bug) | NFR-01 | ✅ (`route-safety.spec.ts`; also pins the list of public routes) |
+| T1.10 | Decide ADR-014 (first-party `@nestjs/authentication` vs hand-rolled) before starting T1.1 | ADR-014 | ✅ → ADR-017 (own module on argon2 + jose) |
 
 **Exit:** new user can sign up, verify, log in, stay logged in across restarts, log out; all auth tests green.
+
+**Exit status (2026-11-18):** ✅ backend flow verified by 21 integration tests + a live run of the built server (signup → code in log → verify → `/me` → refresh → 401 without token). ✅ Mobile session logic, API client and sign-in screen covered by tests; bundle builds. ⚠ Not yet exercised on a physical phone (founder test pending, same as Phase 0). Real email delivery waits on PRD Q3 (codes print in the API log until then).
 
 ## Phase 2 — Profiles, student badge, categories, uploads
 **Depends on:** Phase 1.
@@ -203,3 +205,5 @@ FR-300…303: AVAILABLE_NOW / NEED_NOW listings with expiry, nearby push matchin
 - Web app, admin dashboard UI
 - Skill tests / certificates, college partnerships, recruiter access to work records
 - AI-assisted matching and pricing suggestions
+- Re-evaluate `@nestjs/authentication` once it reaches 1.0 (ADR-017)
+- Native date picker for date of birth (MVP uses a typed YYYY-MM-DD field); absolute max session lifetime (refresh tokens currently slide 30 days)

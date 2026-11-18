@@ -15,6 +15,42 @@ A dated, append-only record of what was done in each working session: what chang
 
 ---
 
+## 2026-11-18 — Phase 1: accounts & authentication
+**Roadmap tasks:** T1.1–T1.10
+
+**Done**
+- Founder approved committing; Phase 0 committed (`.gitattributes` added for LF line endings). Repo-local git identity set to the founder's personal GitHub account (`saiii786`, GitHub noreply email) — global git config and the work account untouched. Push needs a one-time browser sign-in by the founder.
+- **T1.10 / ADR-014 decided → ADR-017:** `@nestjs/authentication` is v0.1.6 (pre-1.0) without documented reuse detection or Prisma storage → own module on argon2id (`@node-rs/argon2`) + JWT (`jose`).
+- Shared: auth zod schemas + response types (`packages/shared/src/auth/schemas.ts`), used by API and app forms.
+- Backend: `auth` module (signup/login/refresh/logout/verify/resend/forgot/reset), global `AuthGuard` (private by default), decorators, `TokenService`, `PasswordHasher`, `EmailCodeService`; `mail` module (console driver); `users` module with `GET /me`; `auth` named throttler; new env vars `JWT_ACCESS_SECRET`, `CODE_HASH_SECRET`, TTLs, `AUTH_RATE_LIMIT_PER_MINUTE`, `MAIL_DRIVER` (production refuses placeholders and console mail). Local `backend/.env` got freshly generated random secrets.
+- Route-safety test (T1.9): scans all controllers for unvalidated params and pins the public-route list.
+- Mobile: session layer (SecureStore refresh token, in-memory access token, single-flight refresh, restore on start), API client auth + retry, `(auth)` and `(app)` route groups with `Stack.Protected`, screens: welcome, sign in, sign up, forgot/reset password, home, verify email, reconnect; `Checkbox` and `Notice` UI components.
+
+**Problems found and fixed during the session**
+- First push failed (403): this PC's stored GitHub login is the work account. Did not change it; configured the repo to use `saiii786` instead.
+- `import.meta.glob` (Vite-only typing) broke the backend typecheck → route-safety test scans the filesystem instead.
+- react-hook-form's `handleSubmit` is typed for web events → wrapped as `() => void submit()` in RN screens.
+- A screen test placed in `src/app/` would have become a route → screen tests live in `src/tests/`.
+- Sign-up first navigated to verify-email right after signing in, which can race the route guard → home shows the verify prompt instead.
+- During the live check, port 3000 was already used by a running `nest start --watch` (left untouched) → smoke test ran on port 3001; the two smoke accounts were deleted from the local dev DB afterwards.
+
+**Tests run (all executed this session)**
+- `npm test -w @cc/shared` → 49/49 pass
+- `npm test -w @cc/backend` → 47/47 pass (incl. token forgery/`alg: none`, argon2id params, guard, route safety)
+- `npm run test:e2e -w @cc/backend` → 26/26 pass (5 platform + 21 auth: signup, duplicate, validation, login, enumeration, token checks, rotation, reuse → family revoked, concurrent refresh, logout, verification attempts/expiry/cooldown, reset + revoke-all, verify-code ≠ reset-code, suspension, rate limit)
+- `npm test -w @cc/mobile` → 32/32 pass
+- `npm run lint`, `npm run typecheck` (all packages) → pass
+- `npx expo export --platform android` → bundle builds with the new routes
+- Live: built server on port 3001 → signup 201 → code printed in log → verify 200 → `/me` 200 → refresh rotates → `/me` without token 401; no secrets/hashes in the log
+
+**Not verified / known gaps**
+- Not yet run on a physical phone (founder test). Push to GitHub and first CI run pending the founder's one-time sign-in.
+- Emails only go to the API log until PRD Q3 (provider) is decided — production deploy is blocked on this by design.
+- DOB is a typed `YYYY-MM-DD` field (no native date picker yet); terms/privacy screens (FR-604 content) not written yet — the checkbox text references them.
+- `npm audit` unchanged from Phase 0 (tooling-only advisories).
+
+**Next:** Phase 2 — profiles, student badge, categories, uploads.
+
 ## 2026-11-18 — Phase 0: foundation built
 **Roadmap tasks:** T0.2–T0.8
 

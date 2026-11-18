@@ -89,7 +89,7 @@ Format: **Context** (situation) → **Decision** → **Consequences** (trade-off
 - **Consequences:** Supersedes the "Jest / ESLint" mentions in the first draft of ARCHITECTURE.md (updated). Fewer custom pieces; matches Nest docs, so future developers can follow the official documentation.
 
 ## ADR-014 — Evaluate first-party `@nestjs/authentication` before hand-rolling auth
-- **Date:** 2026-11-18 · **Status:** Proposed (decide at start of Phase 1)
+- **Date:** 2026-11-18 · **Status:** Decided 2026-11-18 → **not adopted for the MVP; see ADR-017**
 - **Context:** Nest 12 ships an official authentication package (password login with scrypt, JWT access + rotating refresh tokens, global guard with `@Public()`, `@CurrentUser()`, email verification, password reset). Security code we don't write ourselves is code we can't get wrong.
 - **Decision:** At T1.1, read its full documentation and check it supports: Prisma-backed storage, refresh-token reuse detection, socket.io handshake verification, suspended-user blocking. If yes, use it; if not, hand-roll per ARCHITECTURE §10 and record why here.
 - **Consequences:** Password hashing may be scrypt instead of argon2id (both acceptable under OWASP guidance).
@@ -105,3 +105,17 @@ Format: **Context** (situation) → **Decision** → **Consequences** (trade-off
 - **Context:** The first ARCHITECTURE draft named pino. Nest 12's `ConsoleLogger` has a JSON mode, which covers our needs without an extra dependency. Separately, the founder's machine already runs a native PostgreSQL 18 service on 5432.
 - **Decision:** Use `ConsoleLogger({ json })` + our request-ID middleware. Docker Postgres maps to host port **5433** so it never collides with a locally installed Postgres; we never touch the founder's existing database service.
 - **Consequences:** One less dependency; developers with nothing on 5432 are unaffected.
+
+## ADR-017 — Own auth module built on audited primitives (resolves ADR-014)
+- **Date:** 2026-11-18 · **Status:** Accepted
+- **Context (ADR-014 evaluation):** `@nestjs/authentication` is at **v0.1.6** (pre-1.0, no releases page, ~16 GitHub stars). Its README documents no refresh-token reuse detection, no Prisma storage (a custom store must be written anyway), no suspended-user hook and nothing specific about socket.io handshakes. Building login security on a pre-1.0 API that may change, while still writing the storage layer ourselves, adds risk without removing much code.
+- **Decision:** Implement `backend/src/modules/auth` ourselves, but only the *glue* — every cryptographic primitive comes from a widely used library:
+  - Passwords: **argon2id** via `@node-rs/argon2` (OWASP parameters m=19 MiB, t=2, p=1; prebuilt binaries, no compiler). Login burns a dummy hash for unknown emails (no timing oracle).
+  - Access token: **JWT HS256 via `jose`**, 15 min, claims `sub`/`typ`/`iss`/`aud`; algorithm, issuer and audience pinned on verify. Role/status are **read from the database on every request** (not trusted from the token) so suspension is immediate — one primary-key lookup per request.
+  - Refresh token: **opaque 32 random bytes**, stored as SHA-256 hash, 30 days, **rotated on every use**; `familyId` groups a device's chain; presenting a revoked token **revokes the whole family** (reuse detection); rotation claims the old row atomically so concurrent refreshes cannot both win. Therefore the planned `JWT_REFRESH_SECRET` is not needed.
+  - Email codes (verify, reset): 6 digits from `crypto.randomInt`, stored as **HMAC-SHA256 keyed by `CODE_HASH_SECRET`**, bound to user + purpose, 5 attempts, 30/15 min expiry, 60 s resend cooldown, single use.
+  - **Secure by default:** a global `AuthGuard` protects every route; public routes need `@Public()` and are pinned in a reviewed list by `route-safety.spec.ts` (T1.9).
+  - Rate limits: a second named throttler `auth` (`AUTH_RATE_LIMIT_PER_MINUTE`, default 10/min/IP — moderate because a whole college can share one IP) applies only to routes marked `@AuthRateLimit()`.
+  - Email: `MailService` interface; only a `console` driver for now, **refused in production** by env validation until PRD Q3 picks a free provider.
+  - Mobile: refresh token in SecureStore, access token in memory, **single-flight refresh** (two parallel refreshes would trigger reuse detection), 401 → refresh once → retry.
+- **Consequences:** We own ~600 lines of auth code, covered by unit + integration tests (token forgery, `alg: none`, reuse, concurrency, suspension, enumeration). Re-evaluate `@nestjs/authentication` when it reaches 1.0 (parking lot). Signup reveals whether an email is taken (usability trade-off, mitigated by rate limits); login and password reset do not.

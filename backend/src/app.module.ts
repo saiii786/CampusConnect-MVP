@@ -1,6 +1,8 @@
 /**
  * Root module: wires configuration, database, cross-cutting concerns and feature modules.
  * Feature modules are added here as each roadmap phase is built (docs/ROADMAP.md).
+ *
+ * Global guards run in this order: ThrottlerGuard (rate limits) → AuthGuard (sign-in, roles).
  */
 import { Module, type DynamicModule, type MiddlewareConsumer, type NestModule } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD, APP_PIPE } from '@nestjs/core';
@@ -10,7 +12,12 @@ import { RequestContextMiddleware } from './common/http/request-context.middlewa
 import { createValidationPipe } from './common/validation/validation.pipe.js';
 import { ConfigModule } from './config/config.module.js';
 import type { AppEnv } from './config/env.js';
+import { hasAuthRateLimit } from './modules/auth/auth.decorators.js';
+import { AuthGuard } from './modules/auth/auth.guard.js';
+import { AuthModule } from './modules/auth/auth.module.js';
 import { HealthModule } from './modules/health/health.module.js';
+import { MailModule } from './modules/mail/mail.module.js';
+import { UsersModule } from './modules/users/users.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 
 @Module({})
@@ -22,16 +29,29 @@ export class AppModule implements NestModule {
       imports: [
         ConfigModule.forRoot(env),
         PrismaModule,
-        // Default rate limit for every route (FR-603). Stricter limits are set per route.
+        MailModule,
         ThrottlerModule.forRoot({
-          throttlers: [{ name: 'default', ttl: 60_000, limit: env.RATE_LIMIT_PER_MINUTE }],
+          throttlers: [
+            // Every route, per IP (FR-603). Opt out with @SkipThrottle().
+            { name: 'default', ttl: 60_000, limit: env.RATE_LIMIT_PER_MINUTE },
+            // Additional stricter limit, only on routes marked @AuthRateLimit().
+            {
+              name: 'auth',
+              ttl: 60_000,
+              limit: env.AUTH_RATE_LIMIT_PER_MINUTE,
+              skipIf: (context) => !hasAuthRateLimit(context),
+            },
+          ],
         }),
         HealthModule,
+        AuthModule,
+        UsersModule,
       ],
       providers: [
         { provide: APP_PIPE, useFactory: createValidationPipe },
         { provide: APP_FILTER, useClass: AllExceptionsFilter },
         { provide: APP_GUARD, useClass: ThrottlerGuard },
+        { provide: APP_GUARD, useExisting: AuthGuard },
       ],
     };
   }

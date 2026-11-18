@@ -1,10 +1,9 @@
 /**
- * Welcome screen (Phase 0). Shows what the app is and a live "server status" card that
- * calls GET /health — proves the phone can reach the API (Phase 0 exit criterion).
- * Sign-up / sign-in buttons are added here in Phase 1 (T1.7).
+ * Live "server status" card (GET /health). Proves the phone can reach the API; shown on the
+ * welcome screen and the home screen during development and testing.
  */
 import { View } from 'react-native';
-import { AppText, Button, ErrorState, LoadingState, Screen } from '@/components/ui';
+import { AppText, Button, ErrorState, LoadingState } from '@/components/ui';
 import { getApiBaseUrl } from '@/config/api-url';
 import { useServerHealth } from '@/lib/api/health';
 import { useTheme } from '@/theme/use-theme';
@@ -17,19 +16,12 @@ function safeApiUrl(): string {
   }
 }
 
-function ServerStatusCard() {
+export function ServerStatusCard() {
   const { colors, radius, spacing } = useTheme();
   const health = useServerHealth();
 
   return (
-    <View
-      style={{
-        backgroundColor: colors.surface,
-        borderRadius: radius.lg,
-        padding: spacing.lg,
-        gap: spacing.sm,
-      }}
-    >
+    <View style={{ backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.lg, gap: spacing.sm }}>
       <AppText variant="label">Server status</AppText>
       {health.isPending ? (
         <LoadingState label="Connecting to the server (can take up to a minute if it was asleep)…" />
@@ -53,20 +45,5 @@ function ServerStatusCard() {
         API: {safeApiUrl()}
       </AppText>
     </View>
-  );
-}
-
-export default function WelcomeScreen() {
-  const { spacing } = useTheme();
-  return (
-    <Screen>
-      <View style={{ gap: spacing.sm, marginTop: spacing.xxl }}>
-        <AppText variant="title">CampusConnect</AppText>
-        <AppText color="textMuted">
-          Earn from your skills. Hire people near you. Build a verified record of real work.
-        </AppText>
-      </View>
-      <ServerStatusCard />
-    </Screen>
   );
 }

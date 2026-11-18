@@ -18,7 +18,7 @@ const WAKE_UP_TIMEOUT_MS = 70_000;
 export function useServerHealth() {
   return useQuery({
     queryKey: ['health'],
-    queryFn: () => api.get<HealthResponse>('/health', { timeoutMs: WAKE_UP_TIMEOUT_MS }),
+    queryFn: () => api.get<HealthResponse>('/health', { timeoutMs: WAKE_UP_TIMEOUT_MS, auth: false }),
     retry: false,
   });
 }

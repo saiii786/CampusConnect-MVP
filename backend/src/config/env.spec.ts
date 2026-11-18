@@ -4,7 +4,19 @@ const VALID = {
   NODE_ENV: 'test',
   DATABASE_URL: 'postgresql://u:p@localhost:5432/db',
   DIRECT_URL: 'postgresql://u:p@localhost:5432/db',
+  JWT_ACCESS_SECRET: 'a'.repeat(32),
+  CODE_HASH_SECRET: 'b'.repeat(32),
 };
+
+function problemsOf(source: Record<string, string>): string {
+  try {
+    loadEnv(source);
+  } catch (error) {
+    expect(error).toBeInstanceOf(InvalidEnvironmentError);
+    return (error as InvalidEnvironmentError).problems.join('\n');
+  }
+  return expect.unreachable('should have thrown');
+}
 
 describe('loadEnv', () => {
   it('accepts a minimal valid environment and applies defaults', () => {
@@ -14,6 +26,10 @@ describe('loadEnv', () => {
     expect(env.LOG_JSON).toBe(false);
     expect(env.CORS_ORIGINS).toEqual([]);
     expect(env.RATE_LIMIT_PER_MINUTE).toBe(120);
+    expect(env.ACCESS_TOKEN_TTL_MINUTES).toBe(15);
+    expect(env.REFRESH_TOKEN_TTL_DAYS).toBe(30);
+    expect(env.AUTH_RATE_LIMIT_PER_MINUTE).toBe(10);
+    expect(env.MAIL_DRIVER).toBe('console');
   });
 
   it('parses comma-separated CORS origins and booleans', () => {
@@ -23,15 +39,9 @@ describe('loadEnv', () => {
   });
 
   it('refuses to start when required variables are missing, naming each one', () => {
-    try {
-      loadEnv({});
-      expect.unreachable('should have thrown');
-    } catch (error) {
-      expect(error).toBeInstanceOf(InvalidEnvironmentError);
-      const problems = (error as InvalidEnvironmentError).problems.join('\n');
-      expect(problems).toContain('NODE_ENV');
-      expect(problems).toContain('DATABASE_URL');
-      expect(problems).toContain('DIRECT_URL');
+    const problems = problemsOf({});
+    for (const name of ['NODE_ENV', 'DATABASE_URL', 'DIRECT_URL', 'JWT_ACCESS_SECRET', 'CODE_HASH_SECRET']) {
+      expect(problems).toContain(name);
     }
   });
 
@@ -40,13 +50,24 @@ describe('loadEnv', () => {
     expect(() => loadEnv({ ...VALID, PORT: 'abc' })).toThrow(InvalidEnvironmentError);
   });
 
+  it('rejects short or identical auth secrets', () => {
+    expect(problemsOf({ ...VALID, JWT_ACCESS_SECRET: 'too-short' })).toContain('JWT_ACCESS_SECRET');
+    expect(problemsOf({ ...VALID, CODE_HASH_SECRET: VALID.JWT_ACCESS_SECRET })).toContain('CODE_HASH_SECRET');
+  });
+
+  it('in production, refuses placeholder secrets and console mail', () => {
+    const problems = problemsOf({
+      ...VALID,
+      NODE_ENV: 'production',
+      JWT_ACCESS_SECRET: 'dev-only-change-me-access-secret-0123456789',
+    });
+    expect(problems).toContain('JWT_ACCESS_SECRET');
+    expect(problems).toContain('MAIL_DRIVER');
+  });
+
   it('never includes variable values in the error (they may be secrets)', () => {
     const secret = 'postgresql-but-not-really-SECRET123';
-    try {
-      loadEnv({ ...VALID, DATABASE_URL: secret });
-      expect.unreachable('should have thrown');
-    } catch (error) {
-      expect((error as Error).message).not.toContain('SECRET123');
-    }
+    expect(problemsOf({ ...VALID, DATABASE_URL: secret })).not.toContain('SECRET123');
+    expect(problemsOf({ ...VALID, JWT_ACCESS_SECRET: 'SECRET123' })).not.toContain('SECRET123');
   });
 });

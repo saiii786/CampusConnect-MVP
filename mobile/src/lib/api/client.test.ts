@@ -69,3 +69,59 @@ describe('api client', () => {
     await expect(api.get('/x')).rejects.toMatchObject({ status: 502, code: 'UNEXPECTED_RESPONSE' });
   });
 });
+
+describe('api client with auth', () => {
+  const tokenInvalid = () =>
+    jsonResponse(401, { error: { code: 'AUTH_TOKEN_INVALID', message: 'x', details: null, requestId: null } });
+
+  function provider(token: string | null, refreshed: string | null = 'fresh') {
+    return {
+      getAccessToken: jest.fn(async () => token),
+      refreshAccessToken: jest.fn(async () => refreshed),
+    };
+  }
+
+  it('attaches the bearer token, but not for auth: false requests', async () => {
+    const fetchImpl = jest.fn().mockImplementation(async () => jsonResponse(200, {}));
+    const api = createApiClient(() => BASE, fetchImpl);
+    api.setAuthProvider(provider('tok'));
+
+    await api.get('/me');
+    await api.post('/auth/login', {}, { auth: false });
+    expect(fetchImpl.mock.calls[0][1].headers.Authorization).toBe('Bearer tok');
+    expect(fetchImpl.mock.calls[1][1].headers.Authorization).toBeUndefined();
+  });
+
+  it('on 401 AUTH_TOKEN_INVALID refreshes once and retries with the new token', async () => {
+    const fetchImpl = jest
+      .fn()
+      .mockResolvedValueOnce(tokenInvalid())
+      .mockResolvedValueOnce(jsonResponse(200, { ok: true }));
+    const api = createApiClient(() => BASE, fetchImpl);
+    const auth = provider('old');
+    api.setAuthProvider(auth);
+
+    await expect(api.get('/me')).resolves.toEqual({ ok: true });
+    expect(auth.refreshAccessToken).toHaveBeenCalledTimes(1);
+    expect(fetchImpl.mock.calls[1][1].headers.Authorization).toBe('Bearer fresh');
+  });
+
+  it('does not loop: a second 401 is returned to the caller', async () => {
+    const fetchImpl = jest.fn().mockImplementation(async () => tokenInvalid());
+    const api = createApiClient(() => BASE, fetchImpl);
+    api.setAuthProvider(provider('old'));
+    await expect(api.get('/me')).rejects.toMatchObject({ status: 401, code: 'AUTH_TOKEN_INVALID' });
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not refresh for other errors (e.g. wrong password, suspended)', async () => {
+    const fetchImpl = jest.fn().mockResolvedValue(
+      jsonResponse(403, { error: { code: 'AUTH_ACCOUNT_SUSPENDED', message: 'x', details: null, requestId: null } }),
+    );
+    const api = createApiClient(() => BASE, fetchImpl);
+    const auth = provider('tok');
+    api.setAuthProvider(auth);
+    await expect(api.get('/me')).rejects.toMatchObject({ code: 'AUTH_ACCOUNT_SUSPENDED' });
+    expect(auth.refreshAccessToken).not.toHaveBeenCalled();
+  });
+});
