@@ -1,0 +1,627 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// CampusConnect database schema (Prisma 7, PostgreSQL)
+//
+// Specification: docs/ARCHITECTURE.md §5. Conventions:
+//  - ids are UUIDv7 (time-ordered) stored as native uuid
+//  - money is ALWAYS Int paise, field names end in "Paise" (ADR-006)
+//  - records other users depend on are never hard-deleted (status / deletedAt)
+//  - enum values must match packages/shared/src/enums.ts (checked by a unit test)
+// Connection URLs live in prisma.config.ts (Prisma 7), not here.
+// ─────────────────────────────────────────────────────────────────────────────
+
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ── Enums ────────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+enum ListingType {
+  SERVICE_OFFER
+  JOB_REQUEST
+  AVAILABLE_NOW
+  NEED_NOW
+}
+
+enum ListingStatus {
+  ACTIVE
+  PAUSED
+  CLOSED
+}
+
+enum PricingType {
+  FIXED
+  HOURLY
+  QUOTE
+}
+
+enum WorkMode {
+  REMOTE
+  ONSITE
+}
+
+enum QuoteStatus {
+  ACTIVE
+  WITHDRAWN
+  ACCEPTED
+  REJECTED
+  NOT_SELECTED
+}
+
+enum PaymentMode {
+  ESCROW
+  DIRECT
+}
+
+enum OrderStatus {
+  REQUESTED
+  AWAITING_PAYMENT
+  IN_PROGRESS
+  SUBMITTED
+  COMPLETED
+  CANCELLED
+  DECLINED
+  DISPUTED
+}
+
+enum DisputeStatus {
+  OPEN
+  RESOLVED_REFUND
+  RESOLVED_RELEASE
+}
+
+enum LedgerTransactionKind {
+  TOPUP
+  ESCROW_HOLD
+  ESCROW_RELEASE
+  ESCROW_REFUND
+  WITHDRAWAL
+}
+
+enum LedgerAccount {
+  WALLET
+  ESCROW
+  EXTERNAL
+}
+
+enum PaymentStatus {
+  CREATED
+  PAID
+  FAILED
+  EXPIRED
+}
+
+enum ReportTargetType {
+  USER
+  LISTING
+  MESSAGE
+  REVIEW
+}
+
+enum ReportStatus {
+  OPEN
+  ACTIONED
+  DISMISSED
+}
+
+enum EmailTokenPurpose {
+  VERIFY_EMAIL
+  RESET_PASSWORD
+}
+
+// ── Accounts & identity (PRD §7.1) ───────────────────────────────────────────
+
+model User {
+  id              String     @id @default(uuid(7)) @db.Uuid
+  email           String     @unique
+  passwordHash    String
+  emailVerifiedAt DateTime?
+  role            UserRole   @default(USER)
+  status          UserStatus @default(ACTIVE)
+  dateOfBirth     DateTime   @db.Date
+  termsAcceptedAt DateTime
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  profile             Profile?
+  wallet              Wallet?
+  refreshTokens       RefreshToken[]
+  emailTokens         EmailToken[]
+  studentVerification StudentVerification?
+  portfolioItems      PortfolioItem[]
+  listings            Listing[]
+  quotes              Quote[]
+  buyerConversations  Conversation[]      @relation("ConversationBuyer")
+  sellerConversations Conversation[]      @relation("ConversationSeller")
+  messages            Message[]
+  conversationReads   ConversationRead[]
+  buyerOrders         Order[]             @relation("OrderBuyer")
+  sellerOrders        Order[]             @relation("OrderSeller")
+  orderEvents         OrderEvent[]
+  disputesRaised      Dispute[]           @relation("DisputeRaisedBy")
+  disputesResolved    Dispute[]           @relation("DisputeResolvedBy")
+  ledgerEntries       LedgerEntry[]
+  payments            Payment[]
+  withdrawals         Withdrawal[]
+  reviewsWritten      Review[]            @relation("ReviewAuthor")
+  reviewsReceived     Review[]            @relation("ReviewSubject")
+  notifications       Notification[]
+  pushTokens          PushToken[]
+  reportsFiled        Report[]            @relation("ReportFiledBy")
+  reportsHandled      Report[]            @relation("ReportHandledBy")
+  blocksMade          Block[]             @relation("BlockBy")
+  blocksReceived      Block[]             @relation("BlockOf")
+}
+
+/// Public-facing profile (FR-050). Never contains email or phone.
+model Profile {
+  userId            String    @id @db.Uuid
+  displayName       String
+  avatarUrl         String?
+  bio               String?
+  city              String?
+  /// Approximate location (rounded) used for "near me"; never an exact address.
+  lat               Float?
+  lng               Float?
+  skills            String[]
+  languages         String[]
+  collegeName       String?
+  studentVerifiedAt DateTime?
+  updatedAt         DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([city])
+}
+
+/// Pending college-email verification for the Student badge (FR-004).
+model StudentVerification {
+  userId       String   @id @db.Uuid
+  collegeEmail String
+  codeHash     String
+  attempts     Int      @default(0)
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+/// Admin allow-list of college email domains (PRD Q5).
+model StudentDomain {
+  domain      String   @id
+  collegeName String
+  allowed     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+}
+
+/// Refresh tokens are stored hashed; `familyId` groups rotations for reuse detection (FR-002).
+model RefreshToken {
+  id           String    @id @default(uuid(7)) @db.Uuid
+  userId       String    @db.Uuid
+  tokenHash    String    @unique
+  familyId     String    @db.Uuid
+  expiresAt    DateTime
+  revokedAt    DateTime?
+  replacedById String?   @db.Uuid
+  createdAt    DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([familyId])
+}
+
+/// One-time codes for email verification and password reset (FR-003, FR-006).
+model EmailToken {
+  id        String            @id @default(uuid(7)) @db.Uuid
+  userId    String            @db.Uuid
+  purpose   EmailTokenPurpose
+  codeHash  String
+  attempts  Int               @default(0)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime          @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, purpose])
+}
+
+model PortfolioItem {
+  id          String   @id @default(uuid(7)) @db.Uuid
+  userId      String   @db.Uuid
+  title       String
+  description String?
+  imageUrl    String
+  position    Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, position])
+}
+
+// ── Categories & listings (PRD §7.3, §7.4) ───────────────────────────────────
+
+model Category {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  slug      String   @unique
+  name      String
+  groupName String
+  /// Hidden from posting/search until ID verification exists (FR-104, ADR-010).
+  sensitive Boolean  @default(false)
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  listings Listing[]
+}
+
+/// One table for every matching mode (PRD §6).
+model Listing {
+  id             String        @id @default(uuid(7)) @db.Uuid
+  ownerId        String        @db.Uuid
+  type           ListingType
+  categoryId     String        @db.Uuid
+  title          String
+  description    String
+  pricingType    PricingType
+  /// Service offers: the price (FIXED / HOURLY). Null when pricingType = QUOTE.
+  pricePaise     Int?
+  /// Job requests: optional budget range.
+  budgetMinPaise Int?
+  budgetMaxPaise Int?
+  workMode       WorkMode
+  city           String?
+  lat            Float?
+  lng            Float?
+  radiusKm       Int?
+  preferredDate  DateTime?
+  /// Instant-mode posts expire automatically (FR-300, v1.1).
+  expiresAt      DateTime?
+  status         ListingStatus @default(ACTIVE)
+  imageUrls      String[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  deletedAt      DateTime?
+
+  owner         User           @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+  category      Category       @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  quotes        Quote[]
+  conversations Conversation[]
+  orders        Order[]
+
+  @@index([status, type, categoryId, createdAt])
+  @@index([ownerId])
+  @@index([city])
+  @@index([lat, lng])
+}
+
+// ── Quotes (PRD §7.5) ────────────────────────────────────────────────────────
+
+model Quote {
+  id          String      @id @default(uuid(7)) @db.Uuid
+  listingId   String      @db.Uuid
+  sellerId    String      @db.Uuid
+  amountPaise Int
+  message     String
+  etaDate     DateTime?
+  status      QuoteStatus @default(ACTIVE)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Restrict)
+  seller  User    @relation(fields: [sellerId], references: [id], onDelete: Restrict)
+  order   Order?
+
+  /// One quote per seller per job request (FR-200).
+  @@unique([listingId, sellerId])
+  @@index([sellerId])
+}
+
+// ── Chat (PRD §7.6) ──────────────────────────────────────────────────────────
+
+model Conversation {
+  id            String    @id @default(uuid(7)) @db.Uuid
+  listingId     String    @db.Uuid
+  buyerId       String    @db.Uuid
+  sellerId      String    @db.Uuid
+  lastMessageAt DateTime?
+  createdAt     DateTime  @default(now())
+
+  listing  Listing            @relation(fields: [listingId], references: [id], onDelete: Restrict)
+  buyer    User               @relation("ConversationBuyer", fields: [buyerId], references: [id], onDelete: Restrict)
+  seller   User               @relation("ConversationSeller", fields: [sellerId], references: [id], onDelete: Restrict)
+  messages Message[]
+  reads    ConversationRead[]
+
+  @@unique([listingId, buyerId, sellerId])
+  @@index([buyerId, lastMessageAt])
+  @@index([sellerId, lastMessageAt])
+}
+
+model Message {
+  id             String   @id @default(uuid(7)) @db.Uuid
+  conversationId String   @db.Uuid
+  senderId       String   @db.Uuid
+  body           String
+  createdAt      DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User         @relation(fields: [senderId], references: [id], onDelete: Restrict)
+
+  @@index([conversationId, createdAt])
+}
+
+/// Unread count = messages from the other person created after lastReadAt.
+model ConversationRead {
+  conversationId String   @db.Uuid
+  userId         String   @db.Uuid
+  lastReadAt     DateTime
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([conversationId, userId])
+}
+
+// ── Orders (PRD §7.7, ARCHITECTURE §6) ───────────────────────────────────────
+
+model Order {
+  id             String      @id @default(uuid(7)) @db.Uuid
+  buyerId        String      @db.Uuid
+  sellerId       String      @db.Uuid
+  listingId      String      @db.Uuid
+  quoteId        String?     @unique @db.Uuid
+  title          String
+  requirements   String?
+  amountPaise    Int
+  paymentMode    PaymentMode
+  status         OrderStatus
+  deadline       DateTime?
+  changeRequests Int         @default(0)
+  /// On-site start/finish codes (FR-406), stored hashed.
+  startCodeHash  String?
+  finishCodeHash String?
+  startedAt      DateTime?
+  submittedAt    DateTime?
+  completedAt    DateTime?
+  /// Optimistic locking: every status change does `WHERE version = ?` and increments it.
+  version        Int         @default(0)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  buyer         User              @relation("OrderBuyer", fields: [buyerId], references: [id], onDelete: Restrict)
+  seller        User              @relation("OrderSeller", fields: [sellerId], references: [id], onDelete: Restrict)
+  listing       Listing           @relation(fields: [listingId], references: [id], onDelete: Restrict)
+  quote         Quote?            @relation(fields: [quoteId], references: [id], onDelete: Restrict)
+  events        OrderEvent[]
+  dispute       Dispute?
+  ledgerTxns    LedgerTransaction[]
+  ledgerEntries LedgerEntry[]
+  reviews       Review[]
+
+  @@index([buyerId, status, createdAt])
+  @@index([sellerId, status, createdAt])
+  @@index([status, submittedAt])
+}
+
+/// Timeline / audit trail of every order change (FR-408).
+model OrderEvent {
+  id         String       @id @default(uuid(7)) @db.Uuid
+  orderId    String       @db.Uuid
+  /// Null when the system acted (e.g. auto-approve).
+  actorId    String?      @db.Uuid
+  action     String
+  fromStatus OrderStatus?
+  toStatus   OrderStatus
+  note       String?
+  createdAt  DateTime     @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([orderId, createdAt])
+}
+
+model Dispute {
+  id             String        @id @default(uuid(7)) @db.Uuid
+  orderId        String        @unique @db.Uuid
+  raisedById     String        @db.Uuid
+  reason         String
+  status         DisputeStatus @default(OPEN)
+  resolvedById   String?       @db.Uuid
+  resolutionNote String?
+  createdAt      DateTime      @default(now())
+  resolvedAt     DateTime?
+
+  order      Order @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  raisedBy   User  @relation("DisputeRaisedBy", fields: [raisedById], references: [id], onDelete: Restrict)
+  resolvedBy User? @relation("DisputeResolvedBy", fields: [resolvedById], references: [id], onDelete: Restrict)
+
+  @@index([status])
+}
+
+// ── Wallet & money (PRD §7.8, ARCHITECTURE §7) ───────────────────────────────
+
+/// Cached balance. Updated ONLY in the same DB transaction as ledger entries.
+model Wallet {
+  userId       String   @id @db.Uuid
+  balancePaise Int      @default(0)
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+}
+
+/// A group of ledger entries that sum to zero (double-entry).
+model LedgerTransaction {
+  id             String                @id @default(uuid(7)) @db.Uuid
+  kind           LedgerTransactionKind
+  /// Unique per business event (e.g. "escrow-hold:<orderId>") → replays are no-ops (NFR-04).
+  idempotencyKey String                @unique
+  orderId        String?               @db.Uuid
+  paymentId      String?               @db.Uuid
+  withdrawalId   String?               @db.Uuid
+  description    String?
+  createdAt      DateTime              @default(now())
+
+  order      Order?        @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  payment    Payment?      @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+  withdrawal Withdrawal?   @relation(fields: [withdrawalId], references: [id], onDelete: Restrict)
+  entries    LedgerEntry[]
+
+  @@index([orderId])
+}
+
+model LedgerEntry {
+  id            String        @id @default(uuid(7)) @db.Uuid
+  transactionId String        @db.Uuid
+  account       LedgerAccount
+  /// Set for WALLET entries.
+  userId        String?       @db.Uuid
+  /// Set for ESCROW entries.
+  orderId       String?       @db.Uuid
+  /// Signed: negative = money leaves the account.
+  amountPaise   Int
+  createdAt     DateTime      @default(now())
+
+  transaction LedgerTransaction @relation(fields: [transactionId], references: [id], onDelete: Restrict)
+  user        User?             @relation(fields: [userId], references: [id], onDelete: Restrict)
+  order       Order?            @relation(fields: [orderId], references: [id], onDelete: Restrict)
+
+  @@index([account, userId, createdAt])
+  @@index([account, orderId])
+}
+
+/// Wallet top-ups through the payment gateway (test mode, FR-451).
+model Payment {
+  id           String        @id @default(uuid(7)) @db.Uuid
+  userId       String        @db.Uuid
+  gateway      String
+  /// Gateway's id for the checkout (e.g. Razorpay payment link id).
+  gatewayRef   String        @unique
+  amountPaise  Int
+  status       PaymentStatus @default(CREATED)
+  checkoutUrl  String
+  /// Last raw webhook/status payload, for debugging disputes.
+  rawLastEvent Json?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  user       User                @relation(fields: [userId], references: [id], onDelete: Restrict)
+  ledgerTxns LedgerTransaction[]
+
+  @@index([userId, createdAt])
+}
+
+/// Simulated withdrawals (FR-454) — no real money moves in test mode.
+model Withdrawal {
+  id          String   @id @default(uuid(7)) @db.Uuid
+  userId      String   @db.Uuid
+  amountPaise Int
+  status      String   @default("SIMULATED")
+  createdAt   DateTime @default(now())
+
+  user       User                @relation(fields: [userId], references: [id], onDelete: Restrict)
+  ledgerTxns LedgerTransaction[]
+
+  @@index([userId, createdAt])
+}
+
+// ── Reviews (PRD §7.9) ───────────────────────────────────────────────────────
+
+model Review {
+  id         String    @id @default(uuid(7)) @db.Uuid
+  orderId    String    @db.Uuid
+  reviewerId String    @db.Uuid
+  revieweeId String    @db.Uuid
+  rating     Int
+  comment    String?
+  reply      String?
+  repliedAt  DateTime?
+  createdAt  DateTime  @default(now())
+
+  order    Order @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  reviewer User  @relation("ReviewAuthor", fields: [reviewerId], references: [id], onDelete: Restrict)
+  reviewee User  @relation("ReviewSubject", fields: [revieweeId], references: [id], onDelete: Restrict)
+
+  /// One review per person per order (FR-500).
+  @@unique([orderId, reviewerId])
+  @@index([revieweeId, createdAt])
+}
+
+// ── Notifications (PRD §7.10) ────────────────────────────────────────────────
+
+model Notification {
+  id        String    @id @default(uuid(7)) @db.Uuid
+  userId    String    @db.Uuid
+  type      String
+  payload   Json
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+model PushToken {
+  token     String   @id
+  userId    String   @db.Uuid
+  platform  String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ── Trust & safety (PRD §7.11) ───────────────────────────────────────────────
+
+model Report {
+  id          String           @id @default(uuid(7)) @db.Uuid
+  reporterId  String           @db.Uuid
+  targetType  ReportTargetType
+  targetId    String           @db.Uuid
+  reason      String
+  details     String?
+  status      ReportStatus     @default(OPEN)
+  handledById String?          @db.Uuid
+  handledAt   DateTime?
+  createdAt   DateTime         @default(now())
+
+  reporter  User  @relation("ReportFiledBy", fields: [reporterId], references: [id], onDelete: Restrict)
+  handledBy User? @relation("ReportHandledBy", fields: [handledById], references: [id], onDelete: Restrict)
+
+  @@index([status, createdAt])
+  @@index([targetType, targetId])
+}
+
+model Block {
+  blockerId String   @db.Uuid
+  blockedId String   @db.Uuid
+  createdAt DateTime @default(now())
+
+  blocker User @relation("BlockBy", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked User @relation("BlockOf", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@id([blockerId, blockedId])
+  @@index([blockedId])
+}

@@ -1,0 +1,28 @@
+{
+  "name": "campusconnect-mvp",
+  "private": true,
+  "description": "Gig & freelance marketplace (monorepo root). See README.md and docs/.",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "workspaces": [
+    "packages/*",
+    "backend",
+    "mobile"
+  ],
+  "scripts": {
+    "build:shared": "npm run build -w @cc/shared",
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run build:shared && npm run typecheck --workspaces --if-present",
+    "test": "npm run build:shared && npm run test --workspaces --if-present",
+    "test:e2e": "npm run build:shared && npm run test:e2e -w @cc/backend",
+    "dev:api": "npm run build:shared && npm run start:dev -w @cc/backend",
+    "dev:mobile": "npm run start -w @cc/mobile",
+    "format": "prettier --write \"**/*.{ts,tsx,json,md}\""
+  },
+  "devDependencies": {
+    "prettier": "^3.4.2"
+  }
+}

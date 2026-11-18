@@ -1,0 +1,26 @@
+# Local development database (PostgreSQL), matching Supabase's Postgres major version.
+# Start: npm run db:up   Stop: npm run db:down
+# Creates two databases: campusconnect (dev) and campusconnect_test (automated tests).
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: campusconnect-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: cc
+      POSTGRES_PASSWORD: cc_local_dev_only
+      POSTGRES_DB: campusconnect
+    # Host port 5433 (not 5432) so it never clashes with a natively installed PostgreSQL.
+    ports:
+      - '5433:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./backend/prisma/docker-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U cc -d campusconnect']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:
