@@ -6,7 +6,7 @@ Every file we maintain, and what it is for. Not listed: generated/vendor files
 **Rule:** when you add, rename or delete a file, update this map in the same change. Function-level
 detail lives in each package/module `README.md` and in the file's header comment; this is the index.
 
-_Last updated: 2026-11-18 (end of Phase 4)._
+_Last updated: 2026-11-18 (end of Phase 5)._
 
 ---
 
@@ -28,7 +28,7 @@ _Last updated: 2026-11-18 (end of Phase 4)._
 | `docs/PRD.md` | Product requirements: problem, users, three matching modes, requirement IDs (FR/NFR), open questions Q1–Q7 |
 | `docs/ROADMAP.md` | Phased plan, task IDs and status, exit criteria, Definition of Done, parking lot |
 | `docs/ARCHITECTURE.md` | Technical design: stack, modules, data model, order state machine, money design, API & socket contracts, security, config, testing, deployment |
-| `docs/DECISIONS.md` | Decision log ADR-001…022, with reasons; how to change a decision |
+| `docs/DECISIONS.md` | Decision log ADR-001…023, with reasons; how to change a decision |
 | `docs/DEV_LOG.md` | Dated record of each work session: done, tests run, gaps, next |
 | `docs/FILE_MAP.md` | This file |
 
@@ -52,6 +52,7 @@ _Last updated: 2026-11-18 (end of Phase 4)._
 | `src/enums.ts` | Domain enums (statuses, types) — must match the Prisma schema |
 | `src/money.ts` | Paise helpers: `rupeesToPaise`, `formatPaise`, `isValidAmountPaise` |
 | `src/money.spec.ts` | Tests for money helpers |
+| `src/orders/schemas.ts` | Order request schemas and DTOs |
 | `src/orders/state-machine.ts` | Order lifecycle rules: `resolveOrderTransition`, `availableOrderActions`, `initialOrderStatus` |
 | `src/orders/state-machine.spec.ts` | Exhaustive test of every status × action × actor × payment mode against the documented table |
 
@@ -143,6 +144,10 @@ _Last updated: 2026-11-18 (end of Phase 4)._
 | `src/modules/conversations/conversations.module.ts` | Conversations module |
 | `src/modules/conversations/conversations.controller.ts` | `/conversations…` |
 | `src/modules/conversations/conversations.service.ts` | Conversations, messages, unread, read receipts |
+| `src/modules/orders/README.md` | Orders module docs |
+| `src/modules/orders/orders.module.ts` | Orders module + escrow hook binding |
+| `src/modules/orders/orders.controller.ts` | Order endpoints (incl. `POST /quotes/:id/accept`) |
+| `src/modules/orders/orders.service.ts` | Booking, quote acceptance, `transition()`, on-site codes, lists/detail |
 | `src/modules/quotes/README.md` | Quotes module docs |
 | `src/modules/quotes/quotes.module.ts` | Quotes module |
 | `src/modules/quotes/quotes.controller.ts` | Quote endpoints |
@@ -166,6 +171,7 @@ _Last updated: 2026-11-18 (end of Phase 4)._
 | `test/setup/users.ts` | `createUser()`, `uploadImage()`, `JPEG_BYTES` |
 | `test/auth.e2e-spec.ts` | Integration tests for signup, login, tokens, refresh reuse, verification, reset, suspension, rate limits |
 | `test/chat.e2e-spec.ts` | Integration tests: quotes, conversations, blocks, socket.io (handshake, rooms, live delivery) |
+| `test/orders.e2e-spec.ts` | Integration tests: booking, quote acceptance, lifecycle, permissions, limits, disputes, double tap, on-site codes |
 | `test/listings.e2e-spec.ts` | Integration tests for listings and search (rules, ownership, visibility, photos, filters, near-me, pagination) |
 | `test/profiles.e2e-spec.ts` | Integration tests for profile, uploads, portfolio, public profiles, student badge, categories, admin domains, account deletion |
 | `test/setup/test-env.ts` | Test configuration; points at the **test** database only |
@@ -205,6 +211,14 @@ _Last updated: 2026-11-18 (end of Phase 4)._
 | `src/app/(app)/inbox.tsx` | Conversations with unread counts |
 | `src/app/(app)/chat/[id].tsx` | Chat screen (live, read receipts, safety banner, block) |
 | `src/components/quotes/quote-card.tsx` | Quote card with seller trust signals |
+| `src/app/(app)/book.tsx` | Book a service (hours / agreed price, requirements, payment mode) |
+| `src/app/(app)/accept-quote.tsx` | Accept a quote → order |
+| `src/app/(app)/orders.tsx` | Orders list: I'm buying / I'm selling, active / all |
+| `src/app/(app)/orders/[id].tsx` | Order detail: actions, on-site codes, timeline |
+| `src/components/orders/payment-mode-picker.tsx` | Direct / wallet payment choice |
+| `src/lib/orders/orders-api.ts` | Order calls + hooks, `ESCROW_AVAILABLE` |
+| `src/lib/orders/format.ts` | Status/action/timeline labels |
+| `src/lib/orders/orders.test.ts` | Tests: labels cover every action/status, timeline sentences |
 | `src/lib/chat/chat-api.ts` | Chat calls, hooks, `addMessageToCache` |
 | `src/lib/chat/format.ts` | Chat time labels |
 | `src/lib/chat/chat.test.ts` | Tests: cache dedupe, socket origin, time labels |

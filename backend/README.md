@@ -82,7 +82,8 @@ Generate the SQL with `npx prisma migrate diff --from-config-datasource --to-sch
 | conversations | ✅ Phase 4 | [src/modules/conversations/README.md](src/modules/conversations/README.md) |
 | realtime | ✅ Phase 4 (socket.io) | [src/modules/realtime/README.md](src/modules/realtime/README.md) |
 | safety | 🟨 Phase 4: blocks; reports in Phase 8 | [src/modules/safety/README.md](src/modules/safety/README.md) |
-| orders, wallet, … | Planned — see [ROADMAP](../docs/ROADMAP.md) | — |
+| orders | ✅ Phase 5 (direct payment; escrow in Phase 6) | [src/modules/orders/README.md](src/modules/orders/README.md) |
+| wallet, payments, … | Planned — see [ROADMAP](../docs/ROADMAP.md) | — |
 
 ## Conventions
 - ESM: relative imports end in `.js` (even for `.ts` files).

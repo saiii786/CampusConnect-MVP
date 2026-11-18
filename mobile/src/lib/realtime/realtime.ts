@@ -4,7 +4,8 @@
  * `useRealtime()` is mounted once in the signed-in layout: it connects with the current access
  * token (re-read on every reconnect, so refreshed tokens are used), and on
  *   - message:new        → adds the message to the cached conversation and refreshes the inbox/unread badge;
- *   - conversation:read  → refreshes the inbox.
+ *   - conversation:read  → refreshes the inbox;
+ *   - order:updated      → refreshes order lists and details.
  * `joinConversation(id)` is called by the chat screen (the server checks I am a participant).
  * If the socket is down, screens still work: they refetch on focus/pull-to-refresh.
  */
@@ -15,6 +16,7 @@ import { io, type Socket } from 'socket.io-client';
 import { getApiBaseUrl } from '@/config/api-url';
 import { session } from '@/lib/auth/session';
 import { addMessageToCache, chatKeys } from '@/lib/chat/chat-api';
+import { orderKeys } from '@/lib/orders/orders-api';
 
 let socket: Socket | null = null;
 
@@ -44,6 +46,9 @@ export function useRealtime(): void {
       addMessageToCache(client, message);
       void client.invalidateQueries({ queryKey: chatKeys.conversations });
       void client.invalidateQueries({ queryKey: chatKeys.unread });
+    });
+    s.on(ServerEvent.ORDER_UPDATED, () => {
+      void client.invalidateQueries({ queryKey: orderKeys.all });
     });
     s.on(ServerEvent.CONVERSATION_READ, () => {
       void client.invalidateQueries({ queryKey: chatKeys.conversations });

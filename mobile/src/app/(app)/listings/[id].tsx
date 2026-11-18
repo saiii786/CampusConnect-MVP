@@ -1,8 +1,8 @@
 /**
  * Listing detail (T3.4): photos, title, price/budget, category, place/distance, description,
  * the person who posted it (→ public profile). Owners get Edit / Pause / Resume / Close and, for
- * job requests, "View quotes received". Others get "Send a quote" (job requests) and "Message";
- * "Book" (service offers) arrives in Phase 5.
+ * job requests, "View quotes received". Others get "Send a quote" (job requests) or "Book"
+ * (service offers), and "Message".
  */
 import { formatPaise, type ListingDetailDto } from '@cc/shared';
 import { Image } from 'expo-image';
@@ -52,7 +52,15 @@ function VisitorActions({ listing: l }: { listing: ListingDetailDto }) {
           />
         )
       ) : (
-        <Notice message="Booking arrives in the next update — message the seller to agree on details." />
+        <Button
+          label={l.pricingType === 'QUOTE' ? 'Book (agreed price)' : 'Book'}
+          onPress={() =>
+            router.push({
+              pathname: '/book',
+              params: { listingId: l.id, title: l.title, pricingType: l.pricingType, pricePaise: l.pricePaise ? String(l.pricePaise) : '' },
+            })
+          }
+        />
       )}
       <Button label="Message" variant={l.type === 'JOB_REQUEST' ? 'secondary' : 'primary'} loading={opening} onPress={() => void message()} />
     </View>

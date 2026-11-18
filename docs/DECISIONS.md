@@ -166,3 +166,16 @@ Format: **Context** (situation) → **Decision** → **Consequences** (trade-off
   - **Blocks** (either direction) stop messages, new conversations and quotes (and orders in Phase 5). Silent for the blocked person (they get 403 USER_BLOCKED when sending).
   - **Realtime:** socket.io on the API server (`/socket.io`). Handshake verifies the JWT signature + ACTIVE status (refused → `AUTH_FAILED`). Sockets auto-join `user:<id>`; `conversation:join` is membership-checked with an ack. **Writes are REST only**; the socket only delivers `message:new` / `conversation:read`. The HTTP throttler skips socket contexts (`AppThrottlerGuard`). The app refreshes on reconnect, so missed events are not lost.
 - **Consequences:** One code path for writes (validation + authorisation in one place). Single-instance socket.io; a Redis adapter is needed only when running more than one API instance (parking lot). Sockets stay open until disconnect even after the access token expires — acceptable because every write is re-authorised over REST.
+
+## ADR-023 — Orders implementation choices
+- **Date:** 2026-11-18 · **Status:** Accepted
+- **Context:** Phase 5 implements FR-400…409 on top of the shared state machine (ADR-012) before the wallet exists (Phase 6).
+- **Decision:**
+  - **Single entry point:** every status change goes through `OrdersService.transition()` → `resolveOrderTransition()` → `UPDATE … WHERE id AND version` + timeline event (+ dispute row, + escrow movement) in **one** transaction. Lost races return 409 `ORDER_CHANGED`. Errors: 409 invalid transition, 403 wrong actor, 422 rule violation (e.g. 4th change request).
+  - **Escrow hook:** `ORDER_MONEY` provider (`escrowEnabled`, `apply(tx, order, effect)`). Phase 5 binds a "disabled" implementation, so ESCROW orders are refused with 422 `PAYMENT_MODE_UNAVAILABLE` and only DIRECT orders exist; Phase 6 binds the wallet. The app shows "Wallet (soon)".
+  - **Booking price:** FIXED → listing price (no override); HOURLY → price × hours (1–200); QUOTE-priced offers → `amountPaise` agreed in chat. The seller still accepts or declines (FR-402).
+  - **Accepting a quote** is atomic: quote ACTIVE→ACCEPTED, job ACTIVE→CLOSED (both conditional), other ACTIVE quotes → NOT_SELECTED, order created — or nothing happens.
+  - **On-site codes (FR-406):** start/finish codes = HMAC(`CODE_HASH_SECRET`, `ORDER_START|FINISH:<orderId>`) mod 10,000 — deterministic, never stored, only returned to the **buyer**. Seller enters the start code (`POST /orders/:id/start`, rate-limited) and the finish code with `submit`. The unused `startCodeHash`/`finishCodeHash` columns stay null.
+  - Booking and quote acceptance post a short message in the buyer↔seller chat; every change emits `order:updated` to both users.
+  - Blocking prevents new orders but not finishing existing ones (cancel/dispute must stay possible).
+- **Consequences:** The money layer can be added without touching order rules. A 4-digit code can be guessed by brute force only via the rate-limited endpoint (10/min/IP) by the seller of that order — acceptable for a confirmation code, not a security credential.

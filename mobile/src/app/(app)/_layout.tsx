@@ -19,6 +19,10 @@ export default function AppLayout() {
       <Stack.Screen name="quote-form" options={{ title: 'Your quote' }} />
       <Stack.Screen name="my-quotes" options={{ title: 'My quotes' }} />
       <Stack.Screen name="my-listings" options={{ title: 'My listings' }} />
+      <Stack.Screen name="book" options={{ title: 'Book' }} />
+      <Stack.Screen name="accept-quote" options={{ title: 'Accept quote' }} />
+      <Stack.Screen name="orders" options={{ title: 'Orders' }} />
+      <Stack.Screen name="orders/[id]" options={{ title: 'Order' }} />
       <Stack.Screen name="inbox" options={{ title: 'Messages' }} />
       <Stack.Screen name="chat/[id]" options={{ title: 'Chat' }} />
       <Stack.Screen name="verify-email" options={{ title: 'Verify your email' }} />

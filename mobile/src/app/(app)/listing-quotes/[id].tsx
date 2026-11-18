@@ -1,7 +1,7 @@
 /**
  * Quotes received for my job request (FR-201, FR-203): compare price, message and each seller's
- * rating / completed jobs / badges; chat with a seller, open their profile, or decline the quote.
- * Accepting a quote (→ order) arrives in Phase 5.
+ * rating / completed jobs / badges; chat with a seller, open their profile, accept (→ order) or
+ * decline a quote.
  */
 import type { QuoteDto } from '@cc/shared';
 import { useQueryClient } from '@tanstack/react-query';
@@ -39,14 +39,28 @@ export default function ListingQuotesScreen() {
         data={quotes.data ?? []}
         keyExtractor={(q) => q.id}
         contentContainerStyle={{ gap: spacing.md, paddingVertical: spacing.md }}
-        ListHeaderComponent={<Notice message="Compare quotes, chat with sellers, then accept one (accepting arrives in the next update)." />}
+        ListHeaderComponent={<Notice message="Compare quotes and chat with sellers, then accept one. Accepting closes the job." />}
         renderItem={({ item: q }) => (
           <QuoteCard quote={q} showSeller onSellerPress={() => router.push({ pathname: '/users/[id]', params: { id: q.seller.id } })}>
             <View style={{ flexDirection: 'row', gap: spacing.sm, flexWrap: 'wrap' }}>
               {q.conversationId ? (
                 <Button label="Chat" variant="secondary" fullWidth={false} onPress={() => router.push({ pathname: '/chat/[id]', params: { id: q.conversationId! } })} />
               ) : null}
-              {q.status === 'ACTIVE' ? <Button label="Decline" variant="ghost" fullWidth={false} onPress={() => decline(q)} /> : null}
+              {q.status === 'ACTIVE' ? (
+                <>
+                  <Button
+                    label="Accept"
+                    fullWidth={false}
+                    onPress={() =>
+                      router.push({
+                        pathname: '/accept-quote',
+                        params: { quoteId: q.id, sellerName: q.seller.displayName, amountPaise: String(q.amountPaise), etaDate: q.etaDate ?? '' },
+                      })
+                    }
+                  />
+                  <Button label="Decline" variant="ghost" fullWidth={false} onPress={() => decline(q)} />
+                </>
+              ) : null}
             </View>
           </QuoteCard>
         )}

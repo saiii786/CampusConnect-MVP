@@ -129,14 +129,16 @@
 
 | ID | Task | Refs | Status |
 |---|---|---|---|
-| T5.1 | Book a service (REQUESTED) and accept a quote (→ order, other quotes NOT_SELECTED, listing closed) | FR-202, 400 | ⬜ |
-| T5.2 | `OrdersService.transition()` with shared state machine, optimistic locking, timeline events | FR-401, 408 | ⬜ |
-| T5.3 | Actions: accept, decline, submit, approve, request changes (≤3), cancel, dispute — **DIRECT payment mode** first | FR-402…405 | ⬜ |
-| T5.4 | Start/finish codes for on-site orders | FR-406 | ⬜ |
-| T5.5 | Mobile: my orders / my jobs, order detail with timeline and state-aware action buttons | FR-409 | ⬜ |
-| T5.6 | Tests: every transition allowed/denied, concurrency (double tap) | NFR-10 | ⬜ |
+| T5.1 | Book a service (REQUESTED) and accept a quote (→ order, other quotes NOT_SELECTED, listing closed) | FR-202, 400 | ✅ (ADR-023) |
+| T5.2 | `OrdersService.transition()` with shared state machine, optimistic locking, timeline events | FR-401, 408 | ✅ |
+| T5.3 | Actions: accept, decline, submit, approve, request changes (≤3), cancel, dispute — **DIRECT payment mode** first | FR-402…405 | ✅ (escrow refused until Phase 6) |
+| T5.4 | Start/finish codes for on-site orders | FR-406 | ✅ (HMAC-derived, buyer-only) |
+| T5.5 | Mobile: my orders / my jobs, order detail with timeline and state-aware action buttons | FR-409 | 🟨 built, tests green, bundle builds — not yet tried on phones |
+| T5.6 | Tests: every transition allowed/denied, concurrency (double tap) | NFR-10 | ✅ (all transitions in the shared exhaustive spec; API paths + double tap in `orders.e2e-spec.ts`) |
 
 **Exit:** a complete job can be run end-to-end with direct payment.
+
+**Exit status (2026-11-18):** ✅ 10 new integration tests + live run (book on-site hourly service → accept → start code → finish code → approve; accept a quote → job closed; approve before submit refused). ⚠ Phone test pending.
 
 ## Phase 6 — Wallet, escrow, payments (test mode)
 **Depends on:** Phase 5. **Needs from founder:** Razorpay test API keys (can start with `FakeGateway` before that).

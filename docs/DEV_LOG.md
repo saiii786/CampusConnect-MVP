@@ -15,6 +15,29 @@ A dated, append-only record of what was done in each working session: what chang
 
 ---
 
+## 2026-11-18 — Phase 5: orders (direct payment)
+**Roadmap tasks:** T5.1–T5.6
+
+**Done**
+- Shared: order schemas and DTOs (`orderActionBodySchema` treats a missing body as `{}` — Express 5 leaves it undefined).
+- Backend: `orders` module — booking (fixed / hourly × hours / agreed amount), atomic quote acceptance, `transition()` (state machine + optimistic lock + timeline + dispute row + escrow hook in one transaction), on-site start/finish codes (HMAC-derived, buyer-only), lists and detail with `availableActions`, chat notes, `order:updated` events. Escrow hook bound to "disabled" until Phase 6. Decisions in ADR-023.
+- Mobile: book screen, accept-quote screen, payment-mode picker (wallet shown as "soon"), Orders (I'm buying / I'm selling), order detail with state-aware buttons, input for dispute reason / change note / finish code, start-code entry, timeline; live refresh on `order:updated`.
+
+**Problems found and fixed during the session**
+- A test could fail by chance 1 in 10,000 runs (start and finish codes equal) → guarded.
+- Lint: numeric sort without comparator in a test → fixed.
+
+**Tests run (all executed this session)**
+- `npm test -w @cc/backend` → 56/56 · `npm run test:e2e -w @cc/backend` → 73/73 (10 new) · `npm test -w @cc/mobile` → 48/48 · shared 70/70
+- `npm run lint`, `npm run typecheck` → pass · `npx expo export --platform android` → bundle builds
+- Live (built server, port 3001): on-site hourly booking (2 h = ₹500) → accept → buyer sees start code, seller does not → start → finish code → approve (timeline book → accept → start → submit → approve); quote accepted → order IN_PROGRESS, job CLOSED; approve before submit refused. Smoke accounts removed with the scoped script.
+
+**Not verified / known gaps**
+- Not tried on phones. Auto-approve after 5 days (FR-407) runs in Phase 8 (scheduled jobs); the deadline is shown already.
+- Escrow orders wait for the wallet (Phase 6).
+
+**Next:** Phase 6 — wallet, escrow, payments (test mode). Uses the fake gateway until the founder provides Razorpay test keys.
+
 ## 2026-11-18 — Phase 4: quotes, conversations, realtime
 **Roadmap tasks:** T4.1–T4.5
 

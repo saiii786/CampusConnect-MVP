@@ -58,6 +58,7 @@ export default function BrowseScreen() {
           fullWidth={false}
           onPress={() => router.push('/inbox')}
         />
+        <Button label="Orders" variant="secondary" fullWidth={false} onPress={() => router.push('/orders')} />
         <Button label="My listings" variant="secondary" fullWidth={false} onPress={() => router.push('/my-listings')} />
         <Button label="My quotes" variant="secondary" fullWidth={false} onPress={() => router.push('/my-quotes')} />
         <Button label="Profile" variant="secondary" fullWidth={false} onPress={() => router.push('/profile')} />

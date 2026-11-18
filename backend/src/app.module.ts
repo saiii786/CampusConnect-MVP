@@ -22,6 +22,7 @@ import { ConversationsModule } from './modules/conversations/conversations.modul
 import { HealthModule } from './modules/health/health.module.js';
 import { ListingsModule } from './modules/listings/listings.module.js';
 import { MailModule } from './modules/mail/mail.module.js';
+import { OrdersModule } from './modules/orders/orders.module.js';
 import { QuotesModule } from './modules/quotes/quotes.module.js';
 import { RealtimeModule } from './modules/realtime/realtime.module.js';
 import { SafetyModule } from './modules/safety/safety.module.js';
@@ -64,6 +65,7 @@ export class AppModule implements NestModule {
         SafetyModule,
         ConversationsModule,
         QuotesModule,
+        OrdersModule,
         AdminModule,
       ],
       providers: [
