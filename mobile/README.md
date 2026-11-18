@@ -35,6 +35,8 @@ Studio / Xcode needed. Design: [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md).
 11. Reviews & notifications (Phase 7): after an order completes, both sides can leave stars + a comment on the
     order screen; replies and **Share my work record** are on My profile; the 🔔 button lists notifications
     (live). Phone push notifications need a real app build (Phase 10) — they are silently off in Expo Go.
+12. Safety (Phase 8): **Report** on listings, profiles and chats (long-press a message to report it);
+    Terms / Privacy / Guidelines from sign-up and My profile.
 
 To use a deployed API instead, copy `.env.example` to `.env` and set `EXPO_PUBLIC_API_URL`.
 
@@ -59,6 +61,8 @@ To use a deployed API instead, copy `.env.example` to `.env` and set `EXPO_PUBLI
 |---|---|
 | `src/app/` | **Screens = routes** (expo-router). `_layout.tsx` = providers + navigator. Nothing but screens here (tests go in `src/tests/`) |
 | `src/app/_layout.tsx` | Root providers (TanStack Query, theme) + session restore + protected route groups |
+| `src/app/legal/[doc].tsx` | Terms / Privacy / Guidelines (root route: reachable signed in and out) — text in `src/content/legal.ts` (drafts, lawyer review before launch) |
+| `src/app/(app)/report.tsx` | Report a user, listing, message or review |
 | `src/app/reconnect.tsx` | Shown when a saved session could not be restored because the server was unreachable |
 | `src/app/(auth)/` | Signed-out screens: `welcome`, `sign-in`, `sign-up`, `forgot-password`, `reset-password` (+ `_layout` stack) |
 | `src/app/(app)/` | Signed-in screens: `index` (Browse: search, type tabs, near me, endless list), `search-filters`, `listings/new`, `listings/[id]`, `listings/edit/[id]`, `my-listings`, `listing-quotes/[id]`, `quote-form`, `my-quotes`, `inbox`, `chat/[id]`, `book`, `accept-quote`, `orders`, `orders/[id]`, `wallet`, `add-money`, `withdraw`, `notifications`, `verify-email`, `profile` (my profile + portfolio + sign out), `profile/edit`, `profile/student`, `profile/add-work`, `profile/delete-account`, `users/[id]` (public profile) (+ `_layout` stack) |

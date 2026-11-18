@@ -38,6 +38,7 @@ import { decodeCursor, encodeCursor } from '../../common/pagination/cursor.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { CategoriesService } from '../categories/categories.service.js';
+import { assertContentAllowed, LISTING_LIMIT_PER_HOUR, tooManyRequests } from '../safety/content-guard.js';
 import { UploadsService, type ClaimedUpload } from '../uploads/uploads.service.js';
 import {
   LISTING_INCLUDE,
@@ -74,6 +75,9 @@ export class ListingsService {
   // ── Create / update / status ──────────────────────────────────────────────
 
   async create(userId: string, input: CreateListingInput): Promise<ListingDetailDto> {
+    assertContentAllowed(input.title, input.description);
+    const recent = await this.prisma.listing.count({ where: { ownerId: userId, createdAt: { gte: new Date(Date.now() - 3_600_000) } } });
+    if (recent >= LISTING_LIMIT_PER_HOUR) throw tooManyRequests('listings');
     await this.categories.getSelectable(input.categoryId);
     const images = await this.claimImages(userId, input.imageUploadKeys ?? []);
     try {
@@ -112,6 +116,7 @@ export class ListingsService {
     if (existing.status === ListingStatus.CLOSED) {
       throw AppError.conflict('LISTING_CLOSED', 'Closed listings cannot be edited');
     }
+    assertContentAllowed(input.title, input.description);
 
     // Merge, then re-check the cross-field rules on the result.
     const pick = <K extends keyof UpdateListingInput, T>(key: K, current: T) =>

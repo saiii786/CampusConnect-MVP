@@ -371,6 +371,8 @@ model Message {
   senderId       String   @db.Uuid
   body           String
   createdAt      DateTime @default(now())
+  /// Set when an admin removes the message after a report (Phase 8); shown as "removed".
+  hiddenAt       DateTime?
 
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   sender       User         @relation(fields: [senderId], references: [id], onDelete: Restrict)
@@ -565,6 +567,8 @@ model Review {
   reply      String?
   repliedAt  DateTime?
   createdAt  DateTime  @default(now())
+  /// Set when an admin hides the review after a report (Phase 8); excluded from lists and ratings.
+  hiddenAt   DateTime?
 
   order    Order @relation(fields: [orderId], references: [id], onDelete: Restrict)
   reviewer User  @relation("ReviewAuthor", fields: [reviewerId], references: [id], onDelete: Restrict)

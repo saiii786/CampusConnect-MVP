@@ -74,7 +74,7 @@ export class ProfileService {
     if (!user || user.status !== UserStatus.ACTIVE) throw AppError.notFound('USER_NOT_FOUND', 'User not found');
 
     const [rating, completedJobs] = await Promise.all([
-      this.prisma.review.aggregate({ where: { revieweeId: userId }, _avg: { rating: true }, _count: true }),
+      this.prisma.review.aggregate({ where: { revieweeId: userId, hiddenAt: null }, _avg: { rating: true }, _count: true }),
       this.prisma.order.count({ where: { sellerId: userId, status: OrderStatus.COMPLETED } }),
     ]);
     return toPublicProfile(user, {

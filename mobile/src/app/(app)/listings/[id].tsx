@@ -63,6 +63,11 @@ function VisitorActions({ listing: l }: { listing: ListingDetailDto }) {
         />
       )}
       <Button label="Message" variant={l.type === 'JOB_REQUEST' ? 'secondary' : 'primary'} loading={opening} onPress={() => void message()} />
+      <Button
+        label="Report this listing"
+        variant="ghost"
+        onPress={() => router.push({ pathname: '/report', params: { targetType: 'LISTING', targetId: l.id, label: `Report "${l.title}"` } })}
+      />
     </View>
   );
 }

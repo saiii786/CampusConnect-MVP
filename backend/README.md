@@ -77,18 +77,18 @@ Generate the SQL with `npx prisma migrate diff --from-config-datasource --to-sch
 | storage | ✅ Phase 2 (local ✅; Supabase built, not yet verified live) | [src/modules/storage/README.md](src/modules/storage/README.md) |
 | uploads | ✅ Phase 2 | [src/modules/uploads/README.md](src/modules/uploads/README.md) |
 | categories | ✅ Phase 2 | [src/modules/categories/README.md](src/modules/categories/README.md) |
-| admin | 🟨 Phase 2: student domains; rest in Phase 8 | [src/modules/admin/README.md](src/modules/admin/README.md) |
+| admin | ✅ Phases 2/6/8 (domains, ledger, reports, suspensions, disputes, jobs) — API only | [src/modules/admin/README.md](src/modules/admin/README.md) |
 | listings | ✅ Phase 3 | [src/modules/listings/README.md](src/modules/listings/README.md) |
 | quotes | ✅ Phase 4 (accept → Phase 5) | [src/modules/quotes/README.md](src/modules/quotes/README.md) |
 | conversations | ✅ Phase 4 | [src/modules/conversations/README.md](src/modules/conversations/README.md) |
 | realtime | ✅ Phase 4 (socket.io) | [src/modules/realtime/README.md](src/modules/realtime/README.md) |
-| safety | 🟨 Phase 4: blocks; reports in Phase 8 | [src/modules/safety/README.md](src/modules/safety/README.md) |
+| safety | ✅ Phases 4 + 8 (blocks, reports, suspension, spam guard) | [src/modules/safety/README.md](src/modules/safety/README.md) |
+| jobs | ✅ Phase 8 (auto-approve) | [src/modules/jobs/README.md](src/modules/jobs/README.md) |
 | orders | ✅ Phase 5 (direct payment; escrow in Phase 6) | [src/modules/orders/README.md](src/modules/orders/README.md) |
 | wallet | ✅ Phase 6 (ledger, escrow, simulated withdrawals) | [src/modules/wallet/README.md](src/modules/wallet/README.md) |
 | payments | ✅ Phase 6 (fake ✅; Razorpay test mode built, awaiting keys) | [src/modules/payments/README.md](src/modules/payments/README.md) |
 | reviews | ✅ Phase 7 (+ public work record) | [src/modules/reviews/README.md](src/modules/reviews/README.md) |
 | notifications | ✅ Phase 7 (in-app + live; phone push after the EAS build) | [src/modules/notifications/README.md](src/modules/notifications/README.md) |
-| reports, scheduled jobs, … | Planned — see [ROADMAP](../docs/ROADMAP.md) | — |
 
 ## Conventions
 - ESM: relative imports end in `.js` (even for `.ts` files).

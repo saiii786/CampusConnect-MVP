@@ -6,7 +6,7 @@ Every file we maintain, and what it is for. Not listed: generated/vendor files
 **Rule:** when you add, rename or delete a file, update this map in the same change. Function-level
 detail lives in each package/module `README.md` and in the file's header comment; this is the index.
 
-_Last updated: 2026-11-18 (end of Phase 7)._
+_Last updated: 2026-11-19 (end of Phase 8)._
 
 ---
 
@@ -28,7 +28,7 @@ _Last updated: 2026-11-18 (end of Phase 7)._
 | `docs/PRD.md` | Product requirements: problem, users, three matching modes, requirement IDs (FR/NFR), open questions Q1–Q7 |
 | `docs/ROADMAP.md` | Phased plan, task IDs and status, exit criteria, Definition of Done, parking lot |
 | `docs/ARCHITECTURE.md` | Technical design: stack, modules, data model, order state machine, money design, API & socket contracts, security, config, testing, deployment |
-| `docs/DECISIONS.md` | Decision log ADR-001…025, with reasons; how to change a decision |
+| `docs/DECISIONS.md` | Decision log ADR-001…026, with reasons; how to change a decision |
 | `docs/DEV_LOG.md` | Dated record of each work session: done, tests run, gaps, next |
 | `docs/FILE_MAP.md` | This file |
 
@@ -56,6 +56,7 @@ _Last updated: 2026-11-18 (end of Phase 7)._
 | `src/wallet/schemas.ts` | Wallet/top-up/withdrawal schemas and DTOs, reconcile DTO |
 | `src/reviews/schemas.ts` | Review/reply schemas, review + work-record DTOs |
 | `src/notifications/schemas.ts` | Notification types/DTOs, read + push-token schemas |
+| `src/safety/schemas.ts` | Report + admin moderation/dispute schemas and DTOs |
 | `src/orders/state-machine.ts` | Order lifecycle rules: `resolveOrderTransition`, `availableOrderActions`, `initialOrderStatus` |
 | `src/orders/state-machine.spec.ts` | Exhaustive test of every status × action × actor × payment mode against the documented table |
 
@@ -74,6 +75,7 @@ _Last updated: 2026-11-18 (end of Phase 7)._
 | `prisma/migrations/20261118132417_init/migration.sql` | First migration: creates all tables, enums, indexes |
 | `prisma/migrations/20261118210000_phase2_profile_storage_keys/migration.sql` | Phase 2 (additive): `Profile.avatarKey`, `Profile.studentEmail` (unique), `PortfolioItem.imageKey` |
 | `prisma/migrations/20261118230000_phase3_listing_image_keys/migration.sql` | Phase 3 (additive): `Listing.imageKeys` |
+| `prisma/migrations/20261119000000_phase8_moderation_hidden/migration.sql` | Phase 8 (additive): `Message.hiddenAt`, `Review.hiddenAt` |
 | `prisma/migrations/migration_lock.toml` | Prisma's provider lock (do not edit) |
 | `prisma/scripts/grant-admin.ts` | `npm run admin:grant -- <email> [--revoke]` |
 | `prisma/seed.ts` | Idempotent seed runner (`npm run db:seed`) |
@@ -139,6 +141,17 @@ _Last updated: 2026-11-18 (end of Phase 7)._
 | `src/modules/safety/safety.module.ts` | Safety module |
 | `src/modules/safety/blocks.controller.ts` | `/blocks` |
 | `src/modules/safety/blocks.service.ts` | Block checks and management |
+| `src/modules/safety/reports.controller.ts` | `POST /reports` |
+| `src/modules/safety/reports.service.ts` | Reports, moderation (hide/suspend), target lookup |
+| `src/modules/safety/content-guard.ts` | Scam/link/flood checks + per-user limits |
+| `src/modules/safety/blocked-terms.ts` | Editable scam-phrase list |
+| `src/modules/safety/content-guard.spec.ts` | Content guard unit tests |
+| `src/modules/admin/admin-safety.controller.ts` | Admin reports + suspend/unsuspend |
+| `src/modules/admin/admin-disputes.controller.ts` | Admin dispute list + resolution |
+| `src/modules/admin/admin-jobs.controller.ts` | Run auto-approve now |
+| `src/modules/jobs/README.md` | Scheduled jobs docs |
+| `src/modules/jobs/jobs.module.ts` | Jobs module |
+| `src/modules/jobs/jobs.service.ts` | Auto-approve interval + `autoApprove()` |
 | `src/modules/realtime/README.md` | Realtime (socket.io) docs |
 | `src/modules/realtime/realtime.module.ts` | Global realtime module |
 | `src/modules/realtime/realtime.gateway.ts` | socket.io gateway: verified handshake, rooms |
@@ -200,6 +213,7 @@ _Last updated: 2026-11-18 (end of Phase 7)._
 | `test/setup/users.ts` | `createUser()`, `uploadImage()`, `JPEG_BYTES` |
 | `test/auth.e2e-spec.ts` | Integration tests for signup, login, tokens, refresh reuse, verification, reset, suspension, rate limits |
 | `test/chat.e2e-spec.ts` | Integration tests: quotes, conversations, blocks, socket.io (handshake, rooms, live delivery) |
+| `test/safety.e2e-spec.ts` | Integration tests: reports, admin moderation, suspension, hidden reviews, disputes, auto-approve, spam guard, per-user limits |
 | `test/reviews.e2e-spec.ts` | Integration tests: reviews, replies, window, work record privacy/escaping, notifications, push tokens |
 | `test/wallet.e2e-spec.ts` | Integration tests: top-ups, escrow flows, refunds, double tap, withdrawals, reconciliation, Razorpay webhooks (mocked API) |
 | `test/orders.e2e-spec.ts` | Integration tests: booking, quote acceptance, lifecycle, permissions, limits, disputes, double tap, on-site codes |
@@ -254,6 +268,10 @@ _Last updated: 2026-11-18 (end of Phase 7)._
 | `src/lib/wallet/wallet-api.ts` | Wallet calls + hooks, labels |
 | `src/lib/wallet/wallet.test.ts` | Every transaction kind has a label |
 | `src/app/(app)/notifications.tsx` | Notifications list (tap to open, mark all read) |
+| `src/app/(app)/report.tsx` | Report screen (reason + details) |
+| `src/app/legal/[doc].tsx` | Terms / Privacy / Guidelines (always reachable) |
+| `src/content/legal.ts` | Legal texts (drafts — lawyer review before launch) |
+| `src/content/legal.test.ts` | Legal docs exist and state key promises |
 | `src/components/reviews/review-card.tsx` | Review with stars and reply |
 | `src/components/reviews/review-form.tsx` | Star picker + comment |
 | `src/components/reviews/my-reviews.tsx` | Reviews about me (reply) + share work record |

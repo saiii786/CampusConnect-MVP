@@ -3,12 +3,13 @@
  * skills, languages and portfolio. Never shows email/phone (the API does not send them).
  * Shows the reviews the person received (Phase 7).
  */
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { View } from 'react-native';
 import { ProfileSummary } from '@/components/profile/profile-summary';
 import { ReviewCard } from '@/components/reviews/review-card';
 import { useUserReviews } from '@/lib/reviews/reviews-api';
-import { AppText, EmptyState, ErrorState, ImageTile, LoadingState, Screen } from '@/components/ui';
+import { AppText, Button, EmptyState, ErrorState, ImageTile, LoadingState, Screen } from '@/components/ui';
+import { useSession } from '@/lib/auth/session';
 import { ApiError } from '@/lib/api/api-error';
 import { usePublicProfile } from '@/lib/users/users-api';
 import { useTheme } from '@/theme/use-theme';
@@ -34,6 +35,7 @@ function ReviewsSection({ userId }: { userId: string }) {
 export default function PublicProfileScreen() {
   const { spacing } = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const myId = useSession((s) => s.user?.id);
   const query = usePublicProfile(id);
 
   if (query.isPending) return <LoadingState />;
@@ -71,6 +73,13 @@ export default function PublicProfileScreen() {
         Member since {new Date(p.memberSince).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}
       </AppText>
       <ReviewsSection userId={p.id} />
+      {p.id !== myId ? (
+        <Button
+          label="Report this person"
+          variant="ghost"
+          onPress={() => router.push({ pathname: '/report', params: { targetType: 'USER', targetId: p.id, label: `Report ${p.displayName}` } })}
+        />
+      ) : null}
       <View style={{ gap: spacing.md }}>
         <AppText variant="heading">Portfolio</AppText>
         {p.portfolio.length === 0 ? (

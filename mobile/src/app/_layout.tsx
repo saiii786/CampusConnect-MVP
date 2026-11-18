@@ -55,6 +55,8 @@ export default function RootLayout() {
           <Stack.Protected guard={status === 'restoreFailed'}>
             <Stack.Screen name="reconnect" />
           </Stack.Protected>
+          {/* Terms / privacy / guidelines: always reachable (FR-604). */}
+          <Stack.Screen name="legal/[doc]" options={{ headerShown: true, title: '' }} />
         </Stack>
       </ThemeProvider>
     </QueryClientProvider>

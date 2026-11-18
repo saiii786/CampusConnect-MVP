@@ -103,6 +103,18 @@ export default function MyProfileScreen() {
 
       <MyReviews userId={user.id} displayName={profile.displayName} />
 
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
+        {(['terms', 'privacy', 'guidelines'] as const).map((doc) => (
+          <Button
+            key={doc}
+            label={doc === 'terms' ? 'Terms' : doc === 'privacy' ? 'Privacy' : 'Guidelines'}
+            variant="ghost"
+            fullWidth={false}
+            onPress={() => router.push({ pathname: '/legal/[doc]', params: { doc } })}
+          />
+        ))}
+      </View>
+
       {__DEV__ ? <ServerStatusCard /> : null}
       <Button label="Sign out" variant="secondary" onPress={() => session.signOut()} />
       <Button label="Delete my account" variant="ghost" onPress={() => router.push('/profile/delete-account')} />

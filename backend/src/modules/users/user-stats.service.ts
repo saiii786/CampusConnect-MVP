@@ -24,7 +24,7 @@ export class UserStatsService {
     const [ratings, completed] = await Promise.all([
       this.prisma.review.groupBy({
         by: ['revieweeId'],
-        where: { revieweeId: { in: ids } },
+        where: { revieweeId: { in: ids }, hiddenAt: null },
         _avg: { rating: true },
         _count: { _all: true },
       }),

@@ -112,7 +112,7 @@ export class ReviewsService {
     const limit = query.limit ?? 20;
     const cursor = decodeCursor(query.cursor, 'id');
     const rows = await this.prisma.review.findMany({
-      where: { revieweeId: userId, ...(cursor ? { id: { lt: cursor.v as string } } : {}) },
+      where: { revieweeId: userId, hiddenAt: null, ...(cursor ? { id: { lt: cursor.v as string } } : {}) },
       orderBy: { id: 'desc' },
       take: limit + 1,
       include: REVIEW_INCLUDE,
@@ -126,7 +126,7 @@ export class ReviewsService {
 
   /** Review state for one order, as seen by `userId` (used by the order detail). */
   async forOrder(userId: string, order: { id: string; status: OrderStatus; completedAt: Date | null }): Promise<OrderReviewsDto> {
-    const rows = await this.prisma.review.findMany({ where: { orderId: order.id }, include: REVIEW_INCLUDE });
+    const rows = await this.prisma.review.findMany({ where: { orderId: order.id, hiddenAt: null }, include: REVIEW_INCLUDE });
     const mine = rows.find((r) => r.reviewerId === userId) ?? null;
     const theirs = rows.find((r) => r.reviewerId !== userId) ?? null;
     const deadline = order.completedAt ? new Date(order.completedAt.getTime() + REVIEW_WINDOW_DAYS * DAY_MS) : null;
@@ -159,7 +159,7 @@ export class ReviewsService {
           id: true,
           completedAt: true,
           listing: { select: { category: { select: { name: true } } } },
-          reviews: { where: { revieweeId: userId }, select: { rating: true, comment: true } },
+          reviews: { where: { revieweeId: userId, hiddenAt: null }, select: { rating: true, comment: true } },
         },
       }),
       this.stats.forUsers([userId]),

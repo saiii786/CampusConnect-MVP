@@ -15,6 +15,31 @@ A dated, append-only record of what was done in each working session: what chang
 
 ---
 
+## 2026-11-19 — Phase 8: safety, admin, scheduled jobs, legal screens
+**Roadmap tasks:** T8.1–T8.6
+
+**Done**
+- Follow-up to Phase 7: the Phase 7 commit contained a test line that failed `tsc` (the test passed); fixed in commit `9f28bae`. Cause: the commit ran in the same command even though typecheck had failed. Commits are now gated on typecheck + lint + tests passing.
+- Shared: report/admin/dispute schemas and DTOs.
+- Database: additive migration `Message.hiddenAt`, `Review.hiddenAt`.
+- Backend: reports (`POST /reports`), admin moderation (list/resolve with hide + suspend, suspend/unsuspend), admin disputes (REFUND/RELEASE via `OrdersService.transition()`), `jobs` module (auto-approve every 15 min + 30 s after start; admin run-now), content guard (scam phrases, link spam, floods) on listings/quotes/messages, per-user limits (30 messages/min, 10 listings/h), hidden messages/reviews handled everywhere (removed text, excluded from ratings, work record). Route-safety test now enforces `@Roles('ADMIN')` on every `/admin` route. New env: `JOBS_ENABLED`, `JOBS_INTERVAL_MINUTES`. Decisions in ADR-026.
+- Mobile: Report screen (listings, profiles, chat, long-press message), Terms/Privacy/Guidelines screens (root route; links on sign-up and My profile). Legal texts are drafts → lawyer review added as ROADMAP T10.7.
+
+**Problems found and fixed during the session**
+- Test helper declared `async` hid supertest's `.expect()` (all 7 tests failed at once) → plain function.
+- Smoke cleanup did not know about reports → rolled back (nothing deleted), extended, re-run.
+
+**Tests run (all executed this session)**
+- shared 70/70 · backend unit 67/67 (incl. admin-route check, content guard) · backend integration 94/94 (7 new) · mobile 53/53
+- `npm run lint`, `npm run typecheck` → pass · `npx expo export --platform android` → bundle builds
+- Live (built server, port 3001): scam listing → 422 → report → non-admin 403 → admin (granted with `npm run admin:grant`) hides listing → 404 for others → escrow order disputed → admin REFUND → buyer refunded → ledger reconcile ok → auto-approve run. Smoke data removed.
+
+**Not verified / known gaps**
+- Not tried on a phone. Legal texts need a lawyer before a public launch.
+- Admin works through the API only (examples in `backend/src/modules/admin/README.md`).
+
+**Next:** Phase 9 — quality pass (UX states, accessibility, security review, load test, E2E).
+
 ## 2026-11-18 — Phase 7: reviews, work record, notifications
 **Roadmap tasks:** T7.1–T7.5
 

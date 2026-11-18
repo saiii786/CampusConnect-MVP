@@ -23,6 +23,7 @@ import { PrismaService } from '../../prisma/prisma.service.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { conversationRoom, RealtimeService, userRoom } from '../realtime/realtime.service.js';
 import { BlocksService } from '../safety/blocks.service.js';
+import { assertContentAllowed, MESSAGE_LIMIT_PER_MINUTE, tooManyRequests } from '../safety/content-guard.js';
 
 const PAGE_DEFAULT = 20;
 const notFound = () => AppError.notFound('CONVERSATION_NOT_FOUND', 'Conversation not found');
@@ -39,8 +40,16 @@ type ConversationWithPeople = Conversation & {
   seller: { id: string; profile: { displayName: string; avatarUrl: string | null } | null };
 };
 
+export const REMOVED_MESSAGE = '[This message was removed by a moderator]';
+
 export function toMessageDto(m: Message): MessageDto {
-  return { id: m.id, conversationId: m.conversationId, senderId: m.senderId, body: m.body, createdAt: m.createdAt.toISOString() };
+  return {
+    id: m.id,
+    conversationId: m.conversationId,
+    senderId: m.senderId,
+    body: m.hiddenAt ? REMOVED_MESSAGE : m.body,
+    createdAt: m.createdAt.toISOString(),
+  };
 }
 
 @Injectable()
@@ -135,6 +144,9 @@ export class ConversationsService {
     if (other?.status !== UserStatus.ACTIVE) {
       throw AppError.conflict('RECIPIENT_UNAVAILABLE', 'This person can no longer receive messages');
     }
+    assertContentAllowed(body);
+    const recent = await this.prisma.message.count({ where: { senderId: userId, createdAt: { gte: new Date(Date.now() - 60_000) } } });
+    if (recent >= MESSAGE_LIMIT_PER_MINUTE) throw tooManyRequests('messages');
     return this.postMessage(c, userId, body);
   }
 
@@ -213,8 +225,8 @@ export class ConversationsService {
     if (rows.length === 0) return [];
     const ids = rows.map((r) => r.id);
     const [lastMessages, unread, blocked] = await Promise.all([
-      this.prisma.$queryRaw<{ conversationId: string; body: string; senderId: string; createdAt: Date }[]>`
-        SELECT DISTINCT ON ("conversationId") "conversationId", body, "senderId", "createdAt"
+      this.prisma.$queryRaw<{ conversationId: string; body: string; senderId: string; createdAt: Date; hiddenAt: Date | null }[]>`
+        SELECT DISTINCT ON ("conversationId") "conversationId", body, "senderId", "createdAt", "hiddenAt"
         FROM "Message" WHERE "conversationId" = ANY(${ids}::uuid[])
         ORDER BY "conversationId", "createdAt" DESC, id DESC`,
       this.prisma.$queryRaw<{ conversationId: string; unread: number }[]>`
@@ -240,7 +252,9 @@ export class ConversationsService {
         listing: { id: c.listing.id, title: c.listing.title, type: c.listing.type as ConversationDto['listing']['type'] },
         myRole: iAmBuyer ? 'BUYER' : 'SELLER',
         other: { id: other.id, displayName: other.profile?.displayName ?? '', avatarUrl: other.profile?.avatarUrl ?? null },
-        lastMessage: last ? { body: last.body, senderId: last.senderId, createdAt: last.createdAt.toISOString() } : null,
+        lastMessage: last
+          ? { body: last.hiddenAt ? REMOVED_MESSAGE : last.body, senderId: last.senderId, createdAt: last.createdAt.toISOString() }
+          : null,
         unreadCount: unreadBy.get(c.id) ?? 0,
         blocked: blocked.has(other.id),
         createdAt: c.createdAt.toISOString(),

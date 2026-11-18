@@ -247,7 +247,7 @@ Terminal states: **COMPLETED, CANCELLED, DECLINED.** A buyer who wants to stop m
 | Payment pages | `GET /payments/fake/:id` + `POST …/pay` / `…/cancel` (fake gateway only, token-protected) · `GET /payments/return` |
 | Notifications | `GET /notifications` · `GET /notifications/unread-count` · `POST /notifications/read` · `POST /me/push-tokens` · `DELETE /me/push-tokens` |
 | Safety | `POST /reports` (Phase 8) · `GET /blocks` · `POST /blocks` · `DELETE /blocks/:userId` |
-| Admin | `GET /admin/reports` · `POST /admin/reports/:id/resolve` · `POST /admin/users/:id/suspend` · `POST /admin/disputes/:orderId/resolve` · `GET/POST /admin/student-domains` · `GET /admin/ledger/reconcile` |
+| Admin | `GET /admin/reports` · `POST /admin/reports/:id/resolve` · `POST /admin/users/:id/suspend` · `POST /admin/users/:id/unsuspend` · `GET /admin/disputes` · `POST /admin/disputes/:orderId/resolve` · `POST /admin/jobs/auto-approve` · `GET/POST /admin/student-domains` · `GET /admin/ledger/reconcile` (all `@Roles('ADMIN')`, ADR-026) |
 
 ## 9. Realtime (socket.io)
 
@@ -301,6 +301,7 @@ Validated in `backend/src/config/env.ts`; the server exits with a clear message 
 | `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` / `RAZORPAY_WEBHOOK_SECRET` | if razorpay | **test** keys only — a key not starting with `rzp_test_` is refused |
 | `PUBLIC_API_URL` | no | public https URL of the API; used for the "back to the app" page after checkout |
 | `PUSH_DRIVER` | no | `log` (default) · `expo` (production) · `none` (tests) — ADR-025 |
+| `JOBS_ENABLED` / `JOBS_INTERVAL_MINUTES` | no | `true` / `15` — auto-approve job (ADR-026); `false` in tests |
 | `STORAGE_DRIVER` | no | `local` (default; refused in production) or `supabase` (ADR-019) |
 | `STORAGE_LOCAL_DIR` | no | `.uploads` (local driver folder, git-ignored) |
 | `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` / `STORAGE_BUCKET` | if `supabase` | server-side only, never in the app; bucket public, 5 MB limit, image types only |

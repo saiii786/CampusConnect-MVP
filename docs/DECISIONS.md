@@ -201,3 +201,16 @@ Format: **Context** (situation) → **Decision** → **Consequences** (trade-off
   - **Notifications:** `NotificationsService.notify()` (global module) is called after a feature's change commits; stores the notification, emits `notification:new`, sends a push; never throws. Events: quote received, quote accepted, booking request, every order status change (to the other side), payment received (escrow release), top-up paid, review received, chat messages. Chat messages update one unread notification per conversation instead of creating one per message; quote/booking chat notes do not double-notify.
   - **Push:** Expo's free push API (`PUSH_DRIVER=expo`), `log` in development, `none` in tests. Tokens are registered only from real app builds with an EAS project id — Expo Go (Android) has no remote push since SDK 53 — so push becomes testable in Phase 10. Tokens move to the last user who signed in on a device and are removed on sign-out; `DeviceNotRegistered` tokens are deleted.
 - **Consequences:** In-app notifications and live updates work everywhere now; phone push needs the EAS build (Phase 10).
+
+## ADR-026 — Moderation, spam guard, scheduled jobs and legal texts
+- **Date:** 2026-11-19 · **Status:** Accepted
+- **Context:** Phase 8 (FR-407, FR-600, FR-601, FR-603, FR-604) for a pilot run by one founder, at ₹0, with no admin UI yet.
+- **Decision:**
+  - **Reports:** users report a USER, LISTING, MESSAGE (participants only) or REVIEW they can see; one OPEN report per reporter+target; not your own content.
+  - **Admin moderation via API** (admin UI is in the parking lot): list reports with a short target summary; resolve DISMISS or ACTION with optional *hide content* (listing → CLOSED + deletedAt; message/review → `hiddenAt`, shown as "removed" / excluded from ratings) and/or *suspend* (status SUSPENDED + all refresh tokens revoked; admins cannot be suspended this way). Additive migration: `Message.hiddenAt`, `Review.hiddenAt`.
+  - **Disputes:** admin resolves REFUND/RELEASE through `OrdersService.transition()` (same state machine + escrow + notifications), then marks the dispute resolved; once only.
+  - **Auto-approve (FR-407):** in-process interval (`JOBS_ENABLED`, every `JOBS_INTERVAL_MINUTES`, first run 30 s after start so a sleeping free server catches up when it wakes) + admin "run now" endpoint. Safe to run twice/concurrently (optimistic lock). No extra scheduler dependency.
+  - **Spam guard (FR-603):** small editable list of Indian job-scam phrases (registration/joining fee, OTP/UPI PIN requests…), more than 3 links, character floods → 422 `CONTENT_NOT_ALLOWED`, applied to listings, quotes and messages. Per-user limits counted in the database (multi-instance safe): 30 messages/minute, 10 listings/hour → 429.
+  - **Route safety test** now also fails if any `/admin` route is not `@Roles('ADMIN')`.
+  - **Legal (FR-604):** plain-language Terms, Privacy Policy and Community Guidelines in the app (`mobile/src/content/legal.ts`), reachable signed in and out. They are **drafts — a lawyer must review them before a public launch** (ROADMAP T10.7).
+- **Consequences:** The pilot can be moderated with a few API calls (examples in `backend/src/modules/admin/README.md`). Keyword guards are intentionally narrow; reports + admin review are the main safety net.

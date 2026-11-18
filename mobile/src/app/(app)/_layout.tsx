@@ -29,6 +29,7 @@ export default function AppLayout() {
       <Stack.Screen name="orders" options={{ title: 'Orders' }} />
       <Stack.Screen name="orders/[id]" options={{ title: 'Order' }} />
       <Stack.Screen name="notifications" options={{ title: 'Notifications' }} />
+      <Stack.Screen name="report" options={{ title: 'Report' }} />
       <Stack.Screen name="wallet" options={{ title: 'Wallet' }} />
       <Stack.Screen name="add-money" options={{ title: 'Add money' }} />
       <Stack.Screen name="withdraw" options={{ title: 'Withdraw' }} />

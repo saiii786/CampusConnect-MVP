@@ -4,7 +4,8 @@
  *   1. any @Body / @Query / @Param parameter has no zod schema — an unvalidated parameter is
  *      silently accepted as-is (the old demo-connect bug that allowed negative prices);
  *   2. the set of @Public() routes differs from the reviewed list below — making a route public
- *      must be a deliberate, reviewed change (update PUBLIC_ROUTES in the same commit).
+ *      must be a deliberate, reviewed change (update PUBLIC_ROUTES in the same commit);
+ *   3. any route under /admin is not `@Roles('ADMIN')` (or is public).
  *
  * New controllers are picked up automatically (glob below); no registration needed.
  */
@@ -14,7 +15,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { RequestMethod } from '@nestjs/common';
 import { METHOD_METADATA, PATH_METADATA, ROUTE_ARGS_METADATA } from '@nestjs/common/constants.js';
 import { RouteParamtypes } from '@nestjs/common/enums/route-paramtypes.enum.js';
-import { IS_PUBLIC_KEY } from '../modules/auth/auth.decorators.js';
+import { IS_PUBLIC_KEY, ROLES_KEY } from '../modules/auth/auth.decorators.js';
 
 /** Reviewed list of routes reachable without signing in. Keep sorted. */
 const PUBLIC_ROUTES = [
@@ -46,6 +47,7 @@ interface RouteInfo {
   controller: string;
   handler: string;
   isPublic: boolean;
+  roles: string[];
   unvalidated: string[];
 }
 
@@ -91,6 +93,7 @@ function collectRoutes(controllers: Ctor[]): RouteInfo[] {
         controller: controller.name,
         handler: name,
         isPublic: classPublic || Reflect.getMetadata(IS_PUBLIC_KEY, handler) === true,
+        roles: ((Reflect.getMetadata(ROLES_KEY, handler) ?? Reflect.getMetadata(ROLES_KEY, controller) ?? []) as string[]),
         unvalidated,
       });
     }
@@ -130,6 +133,13 @@ describe('route safety (T1.9)', () => {
       .map((r) => r.route)
       .sort();
     expect(actual).toEqual(PUBLIC_ROUTES);
+  });
+
+  it('every /admin route is admin-only and none is public', () => {
+    const admin = routes.filter((r) => r.route.split(' ')[1]!.startsWith('/admin'));
+    expect(admin.length).toBeGreaterThanOrEqual(10);
+    const offenders = admin.filter((r) => r.isPublic || !r.roles.includes('ADMIN')).map((r) => r.route);
+    expect(offenders).toEqual([]);
   });
 
   it('detects an unvalidated parameter (self-test of this checker)', async () => {

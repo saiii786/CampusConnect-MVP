@@ -29,6 +29,7 @@ import { PrismaService } from '../../prisma/prisma.service.js';
 import { ConversationsService } from '../conversations/conversations.service.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { BlocksService } from '../safety/blocks.service.js';
+import { assertContentAllowed } from '../safety/content-guard.js';
 import { UserStatsService, type UserStats } from '../users/user-stats.service.js';
 
 const QUOTE_INCLUDE = {
@@ -84,6 +85,7 @@ export class QuotesService {
       throw AppError.unprocessable('CANNOT_QUOTE_OWN_LISTING', 'You cannot quote on your own job request');
     }
     await this.blocks.assertNotBlocked(sellerId, listing.ownerId);
+    assertContentAllowed(input.message);
 
     const data = { amountPaise: input.amountPaise, message: input.message, etaDate: dateOrNull(input.etaDate) };
     const existing = await this.prisma.quote.findUnique({
@@ -153,6 +155,7 @@ export class QuotesService {
     const quote = await this.prisma.quote.findFirst({ where: { id: quoteId, sellerId }, include: { listing: { select: { status: true } } } });
     if (!quote) throw notFound();
     if (quote.listing.status !== ListingStatus.ACTIVE) throw AppError.conflict('LISTING_NOT_ACTIVE', 'This job is no longer open');
+    assertContentAllowed(input.message);
     const changed = await this.prisma.quote.updateMany({
       where: { id: quoteId, status: QuoteStatus.ACTIVE },
       data: {

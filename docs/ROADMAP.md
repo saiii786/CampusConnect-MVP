@@ -175,12 +175,14 @@
 
 | ID | Task | Refs | Status |
 |---|---|---|---|
-| T8.1 | Reports + blocks | FR-600, 253 | ⬜ |
-| T8.2 | Admin endpoints: reports, suspend, dispute resolution (with escrow refund/release), student domains, ledger reconcile | FR-601 | ⬜ |
-| T8.3 | Scheduled jobs: auto-approve after 5 days | FR-407 | ⬜ |
-| T8.4 | Spam/profanity guard + message/listing rate limits | FR-603 | ⬜ |
-| T8.5 | Terms, privacy, community guidelines screens | FR-604 | ⬜ |
-| T8.6 | Tests | NFR-10 | ⬜ |
+| T8.1 | Reports + blocks | FR-600, 253 | ✅ (ADR-026) |
+| T8.2 | Admin endpoints: reports, suspend, dispute resolution (with escrow refund/release), student domains, ledger reconcile | FR-601 | ✅ (API only; admin UI in parking lot) |
+| T8.3 | Scheduled jobs: auto-approve after 5 days | FR-407 | ✅ (in-process interval + admin run-now) |
+| T8.4 | Spam/profanity guard + message/listing rate limits | FR-603 | ✅ (scam phrases, link spam, floods; 30 msg/min, 10 listings/h) |
+| T8.5 | Terms, privacy, community guidelines screens | FR-604 | ✅ drafts in the app — ⚠ lawyer review before public launch (T10.7) |
+| T8.6 | Tests | NFR-10 | ✅ |
+
+**Exit status (2026-11-19):** ✅ 7 new integration tests + 4 unit tests + live run (scam listing refused → report → admin hides listing → escrow dispute refunded → ledger reconciles → auto-approve run). ⚠ Not tried on a phone.
 
 ## Phase 9 — Quality pass
 **Depends on:** Phase 8.
@@ -222,6 +224,7 @@
 | T10.4 | Backup/restore procedure documented and tested | ⬜ |
 | T10.5 | Runbook: how to operate, rotate secrets, handle disputes | ⬜ |
 | T10.6 | MVP Definition of Done checklist signed off | ⬜ |
+| T10.7 | Lawyer review of Terms / Privacy / Guidelines (`mobile/src/content/legal.ts`) before any public launch | ⬜ |
 
 ## v1.1 — Instant mode (after pilot feedback)
 FR-300…303: AVAILABLE_NOW / NEED_NOW listings with expiry, nearby push matching, map view. Data model already supports the listing types.
@@ -241,4 +244,5 @@ FR-300…303: AVAILABLE_NOW / NEED_NOW listings with expiry, nearby push matchin
 - Map view / location pin picker for listings (MVP uses "use my current location")
 - socket.io Redis adapter (only when running more than one API instance, ADR-022)
 - Work record opt-out / secret share link (ADR-025)
+- Admin web dashboard (moderation is API-only in the MVP, ADR-026)
 - Native date picker for date of birth (MVP uses a typed YYYY-MM-DD field); absolute max session lifetime (refresh tokens currently slide 30 days)

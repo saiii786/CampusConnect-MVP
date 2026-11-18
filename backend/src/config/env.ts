@@ -94,6 +94,11 @@ export const envSchema = z.object({
   // ── Push notifications (Phase 7, FR-551) ────────────────────────────────
   /** `expo` = send via Expo's free push API · `log` = only log (development) · `none` = off (tests). */
   PUSH_DRIVER: z.enum(['expo', 'log', 'none']).default('log'),
+
+  // ── Scheduled jobs (Phase 8, FR-407) ────────────────────────────────────
+  /** Run background jobs (auto-approve) in this process. `false` in tests. */
+  JOBS_ENABLED: booleanFromString.default(true),
+  JOBS_INTERVAL_MINUTES: z.coerce.number().int().min(1).max(1440).default(15),
 }).superRefine((env, ctx) => {
   if (env.PAYMENT_GATEWAY === 'razorpay') {
     for (const key of ['RAZORPAY_KEY_ID', 'RAZORPAY_KEY_SECRET', 'RAZORPAY_WEBHOOK_SECRET'] as const) {

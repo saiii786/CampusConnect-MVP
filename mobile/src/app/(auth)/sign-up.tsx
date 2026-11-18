@@ -6,6 +6,7 @@
  */
 import { zodResolver } from '@hookform/resolvers/zod';
 import { signupSchema } from '@cc/shared';
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { View } from 'react-native';
@@ -127,6 +128,16 @@ export default function SignUpScreen() {
             />
           )}
         />
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
+          <Button label="Terms" variant="ghost" fullWidth={false} onPress={() => router.push({ pathname: '/legal/[doc]', params: { doc: 'terms' } })} />
+          <Button label="Privacy" variant="ghost" fullWidth={false} onPress={() => router.push({ pathname: '/legal/[doc]', params: { doc: 'privacy' } })} />
+          <Button
+            label="Guidelines"
+            variant="ghost"
+            fullWidth={false}
+            onPress={() => router.push({ pathname: '/legal/[doc]', params: { doc: 'guidelines' } })}
+          />
+        </View>
         <Button label="Create account" loading={formState.isSubmitting} onPress={onSubmit} />
       </View>
     </Screen>

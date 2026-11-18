@@ -7,7 +7,7 @@ import { MESSAGE_MAX } from '@cc/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Alert, FlatList, KeyboardAvoidingView, Platform, TextInput, View } from 'react-native';
+import { Alert, FlatList, KeyboardAvoidingView, Platform, Pressable, TextInput, View } from 'react-native';
 import { AppText, Button, ErrorState, LoadingState, Notice, Screen } from '@/components/ui';
 import { describeError } from '@/lib/api/api-error';
 import { useSession } from '@/lib/auth/session';
@@ -99,6 +99,12 @@ export default function ChatScreen() {
           <Button label="Listing" variant="secondary" fullWidth={false} onPress={() => router.push({ pathname: '/listings/[id]', params: { id: c.listing.id } })} />
           <Button label="Profile" variant="secondary" fullWidth={false} onPress={() => router.push({ pathname: '/users/[id]', params: { id: c.other.id } })} />
           <Button label={c.blocked ? 'Unblock' : 'Block'} variant="ghost" fullWidth={false} onPress={toggleBlock} />
+          <Button
+            label="Report"
+            variant="ghost"
+            fullWidth={false}
+            onPress={() => router.push({ pathname: '/report', params: { targetType: 'USER', targetId: c.other.id, label: `Report ${c.other.displayName}` } })}
+          />
         </View>
       </View>
 
@@ -122,7 +128,19 @@ export default function ChatScreen() {
         renderItem={({ item: m }) => {
           const mine = m.senderId === me;
           return (
-            <View
+            <Pressable
+              disabled={mine}
+              onLongPress={() =>
+                Alert.alert('Report this message?', m.body.slice(0, 120), [
+                  { text: 'Cancel', style: 'cancel' },
+                  {
+                    text: 'Report',
+                    style: 'destructive',
+                    onPress: () => router.push({ pathname: '/report', params: { targetType: 'MESSAGE', targetId: m.id, label: 'Report a message' } }),
+                  },
+                ])
+              }
+              accessibilityHint={mine ? undefined : 'Long press to report'}
               style={{
                 alignSelf: mine ? 'flex-end' : 'flex-start',
                 maxWidth: '82%',
@@ -140,7 +158,7 @@ export default function ChatScreen() {
               <AppText variant="caption" style={{ color: mine ? colors.onPrimary : colors.textMuted, opacity: 0.8, alignSelf: 'flex-end' }}>
                 {formatShortTime(m.createdAt)}
               </AppText>
-            </View>
+            </Pressable>
           );
         }}
       />
