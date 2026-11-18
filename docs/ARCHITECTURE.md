@@ -238,14 +238,14 @@ Terminal states: **COMPLETED, CANCELLED, DECLINED.** A buyer who wants to stop m
 | Categories | `GET /categories` |
 | Uploads | `POST /uploads/sign` · local driver only: `PUT /uploads/local/:token`, `GET /uploads/files/<key>` (public) |
 | Listings | `GET /listings` (search: `q, type, categoryId, city, workMode, minPricePaise, maxPricePaise, lat, lng, radiusKm, sort, cursor, limit`) · `GET /listings/:id[?lat&lng]` · `POST /listings` (verified email) · `PATCH /listings/:id` · `POST /listings/:id/pause` · `POST /listings/:id/resume` · `POST /listings/:id/close` · `GET /me/listings?status=` (ADR-021) |
-| Quotes | `GET /listings/:id/quotes` (owner only) · `POST /listings/:id/quotes` · `PATCH /quotes/:id` · `POST /quotes/:id/withdraw` · `POST /quotes/:id/accept` · `POST /quotes/:id/reject` |
-| Conversations | `POST /conversations` · `GET /conversations` · `GET /conversations/:id/messages` · `POST /conversations/:id/messages` · `POST /conversations/:id/read` |
+| Quotes | `GET /listings/:id/quotes` (owner only) · `POST /listings/:id/quotes` · `GET /me/quotes` · `PATCH /quotes/:id` · `POST /quotes/:id/withdraw` · `POST /quotes/:id/reject` · `POST /quotes/:id/accept` (Phase 5) — ADR-022 |
+| Conversations | `POST /conversations` · `GET /conversations` · `GET /conversations/unread` · `GET /conversations/:id` · `GET /conversations/:id/messages` · `POST /conversations/:id/messages` · `POST /conversations/:id/read` |
 | Orders | `POST /orders` (book a service) · `GET /orders?role=buyer|seller&status=` · `GET /orders/:id` · `POST /orders/:id/actions/:action` (accept, decline, fund, submit, approve, request-changes, cancel, dispute) · `POST /orders/:id/review` |
 | Reviews | `POST /reviews/:id/reply` |
 | Wallet | `GET /wallet` · `GET /wallet/transactions` · `POST /wallet/topups` · `POST /wallet/topups/:id/verify` · `POST /wallet/withdrawals` |
 | Webhooks | `POST /webhooks/razorpay` (no JWT; signature verified) |
 | Notifications | `GET /notifications` · `POST /notifications/read` |
-| Safety | `POST /reports` · `POST /blocks` · `DELETE /blocks/:userId` |
+| Safety | `POST /reports` (Phase 8) · `GET /blocks` · `POST /blocks` · `DELETE /blocks/:userId` |
 | Admin | `GET /admin/reports` · `POST /admin/reports/:id/resolve` · `POST /admin/users/:id/suspend` · `POST /admin/disputes/:orderId/resolve` · `GET/POST /admin/student-domains` · `GET /admin/ledger/reconcile` |
 
 ## 9. Realtime (socket.io)

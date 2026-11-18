@@ -6,8 +6,9 @@
  */
 import { Module, type DynamicModule, type MiddlewareConsumer, type NestModule } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD, APP_PIPE } from '@nestjs/core';
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { AllExceptionsFilter } from './common/errors/all-exceptions.filter.js';
+import { AppThrottlerGuard } from './common/http/app-throttler.guard.js';
 import { RequestContextMiddleware } from './common/http/request-context.middleware.js';
 import { createValidationPipe } from './common/validation/validation.pipe.js';
 import { ConfigModule } from './config/config.module.js';
@@ -17,9 +18,13 @@ import { hasAuthRateLimit } from './modules/auth/auth.decorators.js';
 import { AuthGuard } from './modules/auth/auth.guard.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { CategoriesModule } from './modules/categories/categories.module.js';
+import { ConversationsModule } from './modules/conversations/conversations.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 import { ListingsModule } from './modules/listings/listings.module.js';
 import { MailModule } from './modules/mail/mail.module.js';
+import { QuotesModule } from './modules/quotes/quotes.module.js';
+import { RealtimeModule } from './modules/realtime/realtime.module.js';
+import { SafetyModule } from './modules/safety/safety.module.js';
 import { StorageModule } from './modules/storage/storage.module.js';
 import { UploadsModule } from './modules/uploads/uploads.module.js';
 import { UsersModule } from './modules/users/users.module.js';
@@ -55,12 +60,16 @@ export class AppModule implements NestModule {
         UsersModule,
         CategoriesModule,
         ListingsModule,
+        RealtimeModule,
+        SafetyModule,
+        ConversationsModule,
+        QuotesModule,
         AdminModule,
       ],
       providers: [
         { provide: APP_PIPE, useFactory: createValidationPipe },
         { provide: APP_FILTER, useClass: AllExceptionsFilter },
-        { provide: APP_GUARD, useClass: ThrottlerGuard },
+        { provide: APP_GUARD, useClass: AppThrottlerGuard },
         { provide: APP_GUARD, useExisting: AuthGuard },
       ],
     };

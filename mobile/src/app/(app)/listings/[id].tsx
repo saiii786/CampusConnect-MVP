@@ -1,11 +1,13 @@
 /**
  * Listing detail (T3.4): photos, title, price/budget, category, place/distance, description,
- * the person who posted it (→ public profile). Owners get Edit / Pause / Resume / Close.
- * Others will get "Send a quote" / "Book" in Phases 4–5.
+ * the person who posted it (→ public profile). Owners get Edit / Pause / Resume / Close and, for
+ * job requests, "View quotes received". Others get "Send a quote" (job requests) and "Message";
+ * "Book" (service offers) arrives in Phase 5.
  */
-import { formatPaise } from '@cc/shared';
+import { formatPaise, type ListingDetailDto } from '@cc/shared';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
+import { useState } from 'react';
 import { Alert, Pressable, ScrollView, View } from 'react-native';
 import { AppText, Avatar, Button, Chip, EmptyState, ErrorState, LoadingState, Notice, Screen } from '@/components/ui';
 import { ApiError, describeError } from '@/lib/api/api-error';
@@ -13,7 +15,49 @@ import { resolveMediaUrl } from '@/lib/api/media-url';
 import { formatDistance, formatListingPrice, LISTING_TYPE_LABEL, WORK_MODE_LABEL } from '@/lib/listings/format';
 import { useListing, useListingStatus } from '@/lib/listings/listings-api';
 import { useSearchFilters } from '@/lib/listings/search-filters';
+import { chatApi } from '@/lib/chat/chat-api';
+import { useMyQuoteFor } from '@/lib/quotes/quotes-api';
 import { useTheme } from '@/theme/use-theme';
+
+/** What someone who does not own the listing can do: message, and quote (job requests). */
+function VisitorActions({ listing: l }: { listing: ListingDetailDto }) {
+  const { spacing } = useTheme();
+  const myQuote = useMyQuoteFor(l.id);
+  const [opening, setOpening] = useState(false);
+
+  const message = async () => {
+    setOpening(true);
+    try {
+      const c = await chatApi.start(l.id);
+      router.push({ pathname: '/chat/[id]', params: { id: c.id } });
+    } catch (error) {
+      Alert.alert('Could not open chat', describeError(error));
+    } finally {
+      setOpening(false);
+    }
+  };
+
+  if (l.status !== 'ACTIVE') return <Notice message="This listing is not open right now." />;
+  return (
+    <View style={{ gap: spacing.sm }}>
+      {l.type === 'JOB_REQUEST' ? (
+        myQuote.data && myQuote.data.status === 'ACTIVE' ? (
+          <Notice title={`Your quote: ${formatPaise(myQuote.data.amountPaise)}`} message="You can edit or withdraw it in My quotes.">
+            <Button label="My quotes" variant="secondary" fullWidth={false} onPress={() => router.push('/my-quotes')} />
+          </Notice>
+        ) : (
+          <Button
+            label="Send a quote"
+            onPress={() => router.push({ pathname: '/quote-form', params: { listingId: l.id, title: l.title } })}
+          />
+        )
+      ) : (
+        <Notice message="Booking arrives in the next update — message the seller to agree on details." />
+      )}
+      <Button label="Message" variant={l.type === 'JOB_REQUEST' ? 'secondary' : 'primary'} loading={opening} onPress={() => void message()} />
+    </View>
+  );
+}
 
 export default function ListingDetailScreen() {
   const { colors, radius, spacing } = useTheme();
@@ -107,15 +151,15 @@ export default function ListingDetailScreen() {
           {l.status !== 'CLOSED' ? <Button label="Close listing" variant="ghost" onPress={confirmClose} /> : null}
         </View>
       ) : (
-        <Notice
-          title={l.type === 'JOB_REQUEST' ? 'Want this job?' : 'Want to book this?'}
-          message={
-            l.type === 'JOB_REQUEST'
-              ? 'Sending quotes and chatting arrive in the next update.'
-              : `Booking and chat arrive in the next updates.${l.pricePaise ? ` Price: ${formatPaise(l.pricePaise)}.` : ''}`
-          }
-        />
+        <VisitorActions listing={l} />
       )}
+      {l.isOwner && l.type === 'JOB_REQUEST' ? (
+        <Button
+          label="View quotes received"
+          variant="secondary"
+          onPress={() => router.push({ pathname: '/listing-quotes/[id]', params: { id: l.id } })}
+        />
+      ) : null}
     </Screen>
   );
 }

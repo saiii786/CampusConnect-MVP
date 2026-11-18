@@ -23,6 +23,9 @@ Studio / Xcode needed. Design: [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md).
 7. Listings (Phase 3): **+ Post** a service or a job request (needs a verified email; "Use my current location"
    for on-site work), browse Services / Job requests, search, **Near me**, **Filters**, open a listing,
    and manage yours in **My listings** (edit, pause, resume, close).
+8. Quotes & chat (Phase 4, best with two phones/accounts): on a job request tap **Send a quote**
+   (opens the chat), as the job owner tap **View quotes received**, on any listing tap **Message**;
+   **Messages** shows unread counts and updates live; block/unblock from a chat.
 
 To use a deployed API instead, copy `.env.example` to `.env` and set `EXPO_PUBLIC_API_URL`.
 
@@ -49,7 +52,7 @@ To use a deployed API instead, copy `.env.example` to `.env` and set `EXPO_PUBLI
 | `src/app/_layout.tsx` | Root providers (TanStack Query, theme) + session restore + protected route groups |
 | `src/app/reconnect.tsx` | Shown when a saved session could not be restored because the server was unreachable |
 | `src/app/(auth)/` | Signed-out screens: `welcome`, `sign-in`, `sign-up`, `forgot-password`, `reset-password` (+ `_layout` stack) |
-| `src/app/(app)/` | Signed-in screens: `index` (Browse: search, type tabs, near me, endless list), `search-filters`, `listings/new`, `listings/[id]`, `listings/edit/[id]`, `my-listings`, `verify-email`, `profile` (my profile + portfolio + sign out), `profile/edit`, `profile/student`, `profile/add-work`, `profile/delete-account`, `users/[id]` (public profile) (+ `_layout` stack) |
+| `src/app/(app)/` | Signed-in screens: `index` (Browse: search, type tabs, near me, endless list), `search-filters`, `listings/new`, `listings/[id]`, `listings/edit/[id]`, `my-listings`, `listing-quotes/[id]`, `quote-form`, `my-quotes`, `inbox`, `chat/[id]`, `verify-email`, `profile` (my profile + portfolio + sign out), `profile/edit`, `profile/student`, `profile/add-work`, `profile/delete-account`, `users/[id]` (public profile) (+ `_layout` stack) |
 | `src/components/listings/` | `listing-card`, `category-picker`, `listing-form` (shared by new/edit; `buildListingBody`, `listingToFormValues`) |
 | `src/components/ui/` | Base UI kit — `AppText`, `Avatar`, `Button`, `TextField`, `Checkbox`, `Chip`/`ChipList`, `ImageTile`, `Notice`, `Screen`, `Segmented`, `LoadingState` / `ErrorState` / `EmptyState`. Import from `@/components/ui` |
 | `src/components/profile/profile-summary.tsx` | Profile header shared by "My profile" and public profiles |
@@ -65,6 +68,10 @@ To use a deployed API instead, copy `.env.example` to `.env` and set `EXPO_PUBLI
 | `src/lib/api/media-url.ts` | `resolveMediaUrl()` — image URLs from the API (absolute, or "/…" for local dev storage) |
 | `src/lib/uploads/upload-image.ts` | `pickImage()` (photo library + resize to ≤ 1280 px JPEG) and `uploadImage()` (sign → PUT → key) |
 | `src/lib/listings/` | `listings-api.ts` (calls + infinite-query hooks), `search-filters.ts` (filter store → API query), `format.ts` (price/budget/distance labels) |
+| `src/lib/chat/` | `chat-api.ts` (conversations, messages, unread, blocks + hooks, `addMessageToCache`), `format.ts` (time labels) |
+| `src/lib/quotes/quotes-api.ts` | Quote calls + hooks (`useListingQuotes`, `useMyQuotes`, `useMyQuoteFor`) |
+| `src/lib/realtime/realtime.ts` | `useRealtime()` (socket.io connection while signed in; updates caches on `message:new` / `conversation:read`), `joinConversation`, `leaveConversation` |
+| `src/components/quotes/quote-card.tsx` | Quote with seller trust signals and actions |
 | `src/lib/location/current-location.ts` | Phone location with permission ("while using the app") + best-effort city |
 | `src/lib/users/users-api.ts` | Profile/student/portfolio/public-profile/categories calls + query hooks; keeps the session's user in sync |
 | `src/lib/query-client.ts` | TanStack Query setup (retries only network/5xx errors) |

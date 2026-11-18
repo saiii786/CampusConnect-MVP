@@ -15,6 +15,31 @@ A dated, append-only record of what was done in each working session: what chang
 
 ---
 
+## 2026-11-18 — Phase 4: quotes, conversations, realtime
+**Roadmap tasks:** T4.1–T4.5
+
+**Done**
+- Shared: quote and chat/block schemas, DTOs, socket event names.
+- Backend: `quotes` (send/edit/withdraw/re-send, owner list with seller trust stats, reject), `conversations` (find-or-create, list with unread + last message, messages with keyset paging, send, read receipts, unread summary), `safety` (blocks), `realtime` (socket.io gateway with verified handshake and membership-checked rooms; `RealtimeService.emit`), `UserStatsService`, `AppThrottlerGuard` (HTTP-only rate limits). Decisions in ADR-022.
+- New dependencies: `@nestjs/websockets` + `@nestjs/platform-socket.io` 12.5.1 (backend), `socket.io-client` 4.8.4 (mobile; backend dev for tests).
+- Mobile: live socket connection while signed in; inbox; chat (inverted list, older messages on scroll, read receipts, safety banner, block/unblock); send/edit quote; quotes received (compare, chat, decline); my quotes (edit, withdraw); listing detail actions (Send a quote / Message / View quotes); Messages button with unread count.
+
+**Problems found and fixed during the session**
+- A cleanup command I wrote truncated the chat tables of the dev database (would have removed the founder's own messages too). The permission system blocked it before it ran. Replaced with a scoped SQL script that deletes only `smoke…@example.com` accounts and their rows (in a transaction). Lesson recorded: smoke-test cleanup must always be scoped to the test accounts.
+- A helper exported from a route file → moved to `lib/chat/format.ts` (route files export only screens).
+- Jest warned about an open timer from a test QueryClient → `gcTime: Infinity` in tests.
+
+**Tests run (all executed this session)**
+- `npm test -w @cc/shared` → 70/70 · `npm test -w @cc/backend` → 56/56 · `npm run test:e2e -w @cc/backend` → 63/63 (9 new, real sockets) · `npm test -w @cc/mobile` → 45/45
+- `npm run lint`, `npm run typecheck` → pass · `npx expo export --platform android` → bundle builds
+- Live (built server, port 3001, real socket client): quote → conversation opened → owner sees seller badges → room join ack ok → seller's message delivered live to the buyer → unread 2 → forged token refused. Smoke accounts removed with the scoped script.
+
+**Not verified / known gaps**
+- Not tried with two phones yet.
+- Single API instance only for sockets (Redis adapter in parking lot).
+
+**Next:** Phase 5 — orders (job lifecycle, direct payment mode first).
+
 ## 2026-11-18 — Phase 3: listings & search
 **Roadmap tasks:** T3.1–T3.5
 

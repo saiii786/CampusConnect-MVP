@@ -6,7 +6,7 @@ Every file we maintain, and what it is for. Not listed: generated/vendor files
 **Rule:** when you add, rename or delete a file, update this map in the same change. Function-level
 detail lives in each package/module `README.md` and in the file's header comment; this is the index.
 
-_Last updated: 2026-11-18 (end of Phase 3)._
+_Last updated: 2026-11-18 (end of Phase 4)._
 
 ---
 
@@ -28,7 +28,7 @@ _Last updated: 2026-11-18 (end of Phase 3)._
 | `docs/PRD.md` | Product requirements: problem, users, three matching modes, requirement IDs (FR/NFR), open questions Q1–Q7 |
 | `docs/ROADMAP.md` | Phased plan, task IDs and status, exit criteria, Definition of Done, parking lot |
 | `docs/ARCHITECTURE.md` | Technical design: stack, modules, data model, order state machine, money design, API & socket contracts, security, config, testing, deployment |
-| `docs/DECISIONS.md` | Decision log ADR-001…021, with reasons; how to change a decision |
+| `docs/DECISIONS.md` | Decision log ADR-001…022, with reasons; how to change a decision |
 | `docs/DEV_LOG.md` | Dated record of each work session: done, tests run, gaps, next |
 | `docs/FILE_MAP.md` | This file |
 
@@ -45,6 +45,8 @@ _Last updated: 2026-11-18 (end of Phase 3)._
 | `src/uploads/schemas.ts` | Upload signing schema, upload-key pattern, image types, 5 MB limit, `UploadTarget` |
 | `src/categories/types.ts` | Category response types |
 | `src/listings/schemas.ts` | Listing create/update/search schemas, listing rules, DTOs, `Page<T>`, distance helpers |
+| `src/quotes/schemas.ts` | Quote request schemas and DTOs |
+| `src/conversations/schemas.ts` | Chat/block schemas, DTOs, socket event names |
 | `src/listings/schemas.spec.ts` | Tests: offer/job rules, on-site location, search query coercion, haversine, rounding |
 | `src/admin/schemas.ts` | Student-domain admin schema + DTO |
 | `src/enums.ts` | Domain enums (statuses, types) — must match the Prisma schema |
@@ -127,6 +129,24 @@ _Last updated: 2026-11-18 (end of Phase 3)._
 | `src/modules/categories/categories.controller.ts` | `GET /categories` (public, cached) |
 | `src/modules/categories/categories.module.ts` | Exports `CategoriesService` |
 | `src/common/pagination/cursor.ts` | Opaque keyset/offset pagination cursors |
+| `src/common/http/app-throttler.guard.ts` | Rate-limit guard for HTTP only (skips socket contexts) |
+| `src/modules/users/user-stats.service.ts` | Batched rating/review count/completed jobs per user |
+| `src/modules/safety/README.md` | Safety module docs (blocks) |
+| `src/modules/safety/safety.module.ts` | Safety module |
+| `src/modules/safety/blocks.controller.ts` | `/blocks` |
+| `src/modules/safety/blocks.service.ts` | Block checks and management |
+| `src/modules/realtime/README.md` | Realtime (socket.io) docs |
+| `src/modules/realtime/realtime.module.ts` | Global realtime module |
+| `src/modules/realtime/realtime.gateway.ts` | socket.io gateway: verified handshake, rooms |
+| `src/modules/realtime/realtime.service.ts` | `emit()` helper + room names |
+| `src/modules/conversations/README.md` | Chat module docs |
+| `src/modules/conversations/conversations.module.ts` | Conversations module |
+| `src/modules/conversations/conversations.controller.ts` | `/conversations…` |
+| `src/modules/conversations/conversations.service.ts` | Conversations, messages, unread, read receipts |
+| `src/modules/quotes/README.md` | Quotes module docs |
+| `src/modules/quotes/quotes.module.ts` | Quotes module |
+| `src/modules/quotes/quotes.controller.ts` | Quote endpoints |
+| `src/modules/quotes/quotes.service.ts` | Quote rules and DTOs |
 | `src/modules/listings/README.md` | Listings module docs: endpoints, rules, files |
 | `src/modules/listings/listings.module.ts` | Listings module |
 | `src/modules/listings/listings.controller.ts` | `/listings…` and `/me/listings` |
@@ -145,6 +165,7 @@ _Last updated: 2026-11-18 (end of Phase 3)._
 | `test/setup/db.ts` | `resetUserData()` (truncates user data in the **test** DB), `seedCategories()` |
 | `test/setup/users.ts` | `createUser()`, `uploadImage()`, `JPEG_BYTES` |
 | `test/auth.e2e-spec.ts` | Integration tests for signup, login, tokens, refresh reuse, verification, reset, suspension, rate limits |
+| `test/chat.e2e-spec.ts` | Integration tests: quotes, conversations, blocks, socket.io (handshake, rooms, live delivery) |
 | `test/listings.e2e-spec.ts` | Integration tests for listings and search (rules, ownership, visibility, photos, filters, near-me, pagination) |
 | `test/profiles.e2e-spec.ts` | Integration tests for profile, uploads, portfolio, public profiles, student badge, categories, admin domains, account deletion |
 | `test/setup/test-env.ts` | Test configuration; points at the **test** database only |
@@ -178,6 +199,17 @@ _Last updated: 2026-11-18 (end of Phase 3)._
 | `src/app/(app)/listings/[id].tsx` | Listing detail; owner actions (edit/pause/resume/close) |
 | `src/app/(app)/listings/edit/[id].tsx` | Edit my listing |
 | `src/app/(app)/my-listings.tsx` | My listings with status filter |
+| `src/app/(app)/listing-quotes/[id].tsx` | Quotes received for my job (compare, chat, decline) |
+| `src/app/(app)/quote-form.tsx` | Send / edit my quote |
+| `src/app/(app)/my-quotes.tsx` | My quotes as a seller (edit, withdraw) |
+| `src/app/(app)/inbox.tsx` | Conversations with unread counts |
+| `src/app/(app)/chat/[id].tsx` | Chat screen (live, read receipts, safety banner, block) |
+| `src/components/quotes/quote-card.tsx` | Quote card with seller trust signals |
+| `src/lib/chat/chat-api.ts` | Chat calls, hooks, `addMessageToCache` |
+| `src/lib/chat/format.ts` | Chat time labels |
+| `src/lib/chat/chat.test.ts` | Tests: cache dedupe, socket origin, time labels |
+| `src/lib/quotes/quotes-api.ts` | Quote calls and hooks |
+| `src/lib/realtime/realtime.ts` | socket.io client hook + room join/leave |
 | `src/components/listings/listing-card.tsx` | Listing row for lists |
 | `src/components/listings/category-picker.tsx` | Grouped category chooser |
 | `src/components/listings/listing-form.tsx` | Create/edit listing form + `buildListingBody`, `listingToFormValues` |

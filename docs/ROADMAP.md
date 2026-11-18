@@ -114,13 +114,15 @@
 
 | ID | Task | Refs | Status |
 |---|---|---|---|
-| T4.1 | Quotes: create/edit/withdraw, list for owner, reject | FR-200, 201, 203 | ⬜ |
-| T4.2 | Conversations + messages REST, unread tracking, block check | FR-250, 252, 253 | ⬜ |
-| T4.3 | socket.io gateway: verified JWT handshake, membership-checked rooms, events | FR-251 | ⬜ |
-| T4.4 | Mobile: send quote, compare quotes screen, inbox, chat (realtime + fallback refetch), block user | — | ⬜ |
-| T4.5 | Tests (incl. non-participant cannot read/join, forged token rejected) | NFR-10 | ⬜ |
+| T4.1 | Quotes: create/edit/withdraw, list for owner, reject | FR-200, 201, 203 | ✅ (ADR-022) |
+| T4.2 | Conversations + messages REST, unread tracking, block check | FR-250, 252, 253 | ✅ (+ `/blocks` endpoints) |
+| T4.3 | socket.io gateway: verified JWT handshake, membership-checked rooms, events | FR-251 | ✅ |
+| T4.4 | Mobile: send quote, compare quotes screen, inbox, chat (realtime + fallback refetch), block user | — | 🟨 built, tests green, bundle builds — not yet tried on phones (needs two devices/accounts) |
+| T4.5 | Tests (incl. non-participant cannot read/join, forged token rejected) | NFR-10 | ✅ |
 
 **Exit:** buyer and seller can negotiate in real time; quotes visible and comparable.
+
+**Exit status (2026-11-18):** ✅ 9 new integration tests (real sockets) + live run (quote → chat opened → owner sees seller badges → room join → live message delivered → unread 2 → forged token refused). ⚠ Two-phone test pending.
 
 ## Phase 5 — Orders (job lifecycle)
 **Depends on:** Phase 4.
@@ -231,4 +233,5 @@ FR-300…303: AVAILABLE_NOW / NEED_NOW listings with expiry, nearby push matchin
 - Cleanup job for signed-but-never-used uploads (ADR-019)
 - Search scaling: `pg_trgm` indexes for keywords, PostGIS for near-me (ADR-021) — only when data volume needs it
 - Map view / location pin picker for listings (MVP uses "use my current location")
+- socket.io Redis adapter (only when running more than one API instance, ADR-022)
 - Native date picker for date of birth (MVP uses a typed YYYY-MM-DD field); absolute max session lifetime (refresh tokens currently slide 30 days)

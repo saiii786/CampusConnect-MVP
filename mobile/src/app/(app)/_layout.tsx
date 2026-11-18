@@ -1,10 +1,13 @@
 /**
  * Signed-in area. Only reachable while signed in (guarded in the root layout).
+ * Opens the realtime connection for as long as the user is signed in.
  * Phase 9A turns this into bottom tabs (Home, Search, Post, Messages, Profile).
  */
 import { Stack } from 'expo-router';
+import { useRealtime } from '@/lib/realtime/realtime';
 
 export default function AppLayout() {
+  useRealtime();
   return (
     <Stack screenOptions={{ headerBackTitle: 'Back' }}>
       <Stack.Screen name="index" options={{ title: 'CampusConnect' }} />
@@ -12,7 +15,12 @@ export default function AppLayout() {
       <Stack.Screen name="listings/new" options={{ title: 'Post' }} />
       <Stack.Screen name="listings/[id]" options={{ title: 'Listing' }} />
       <Stack.Screen name="listings/edit/[id]" options={{ title: 'Edit listing' }} />
+      <Stack.Screen name="listing-quotes/[id]" options={{ title: 'Quotes received' }} />
+      <Stack.Screen name="quote-form" options={{ title: 'Your quote' }} />
+      <Stack.Screen name="my-quotes" options={{ title: 'My quotes' }} />
       <Stack.Screen name="my-listings" options={{ title: 'My listings' }} />
+      <Stack.Screen name="inbox" options={{ title: 'Messages' }} />
+      <Stack.Screen name="chat/[id]" options={{ title: 'Chat' }} />
       <Stack.Screen name="verify-email" options={{ title: 'Verify your email' }} />
       <Stack.Screen name="profile" options={{ title: 'My profile' }} />
       <Stack.Screen name="profile/edit" options={{ title: 'Edit profile' }} />

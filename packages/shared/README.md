@@ -13,6 +13,8 @@ names, statuses or rules (ADR-007 — the old demo-connect broke because they di
 | `src/users/schemas.ts` | Profile/student/portfolio/deletion request schemas (`updateProfileSchema` cleans tags and turns "" into null), `idParamSchema`, `emailDomain()`, `STUDENT_EMAIL_SUFFIXES`, limits (`PORTFOLIO_MAX_ITEMS`…), response types `MeResponse`, `OwnProfile`, `StudentStatus`, `PublicProfile`, `PortfolioItemDto`, `UserBadge` |
 | `src/uploads/schemas.ts` | `signUploadSchema`, `uploadKeySchema` / `UPLOAD_KEY_PATTERN`, `UploadPurpose`, `IMAGE_CONTENT_TYPES`, `MAX_UPLOAD_BYTES`, `UploadTarget` |
 | `src/listings/schemas.ts` | `createListingSchema` (offer/job union), `updateListingSchema`, `checkListingRules()`, `searchListingsSchema`, `listingDetailQuerySchema`, `myListingsSchema`, `ListingSort`, `Page<T>`, `ListingSummaryDto`, `ListingDetailDto`, `distanceKm()` (haversine), `roundCoordinate()`, limits |
+| `src/quotes/schemas.ts` | `createQuoteSchema`, `updateQuoteSchema`, `QuoteDto`, `MyQuoteDto`, `QuoteSellerDto` |
+| `src/conversations/schemas.ts` | `startConversationSchema`, `sendMessageSchema`, `pageQuerySchema`, `blockUserSchema`, DTOs, socket event names `ServerEvent` / `ClientEvent`, `SocketAck` |
 | `src/categories/types.ts` | `CategoriesResponse`, `CategoryGroupDto`, `CategoryDto` |
 | `src/admin/schemas.ts` | `domainSchema`, `upsertStudentDomainSchema`, `StudentDomainDto` |
 | `src/**/*.spec.ts` | Vitest tests. `state-machine.spec.ts` checks every status × action × actor × payment-mode combination against an independent copy of the documented table |

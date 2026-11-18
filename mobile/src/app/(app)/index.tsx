@@ -10,6 +10,7 @@ import { ListingCard } from '@/components/listings/listing-card';
 import { AppText, Button, EmptyState, ErrorState, LoadingState, Notice, Screen, Segmented, TextField } from '@/components/ui';
 import { describeError } from '@/lib/api/api-error';
 import { useSession } from '@/lib/auth/session';
+import { useUnread } from '@/lib/chat/chat-api';
 import { useListingSearch } from '@/lib/listings/listings-api';
 import { activeFilterCount, toSearchQuery, useSearchFilters } from '@/lib/listings/search-filters';
 import { getCurrentLocation } from '@/lib/location/current-location';
@@ -23,6 +24,7 @@ export default function BrowseScreen() {
   const [locating, setLocating] = useState(false);
   const query = toSearchQuery(filters);
   const results = useListingSearch(query);
+  const unread = useUnread();
   const items = results.data?.pages.flatMap((p) => p.items) ?? [];
   const filterCount = activeFilterCount(filters);
 
@@ -50,7 +52,14 @@ export default function BrowseScreen() {
     <View style={{ gap: spacing.md, paddingBottom: spacing.md }}>
       <View style={{ flexDirection: 'row', gap: spacing.sm, flexWrap: 'wrap' }}>
         <Button label="+ Post" fullWidth={false} onPress={() => router.push('/listings/new')} />
+        <Button
+          label={unread.data?.unreadMessages ? `Messages (${unread.data.unreadMessages})` : 'Messages'}
+          variant={unread.data?.unreadMessages ? 'primary' : 'secondary'}
+          fullWidth={false}
+          onPress={() => router.push('/inbox')}
+        />
         <Button label="My listings" variant="secondary" fullWidth={false} onPress={() => router.push('/my-listings')} />
+        <Button label="My quotes" variant="secondary" fullWidth={false} onPress={() => router.push('/my-quotes')} />
         <Button label="Profile" variant="secondary" fullWidth={false} onPress={() => router.push('/profile')} />
       </View>
 

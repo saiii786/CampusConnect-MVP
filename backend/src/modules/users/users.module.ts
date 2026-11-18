@@ -1,5 +1,5 @@
 /**
- * Users module: own account (/me), student badge, portfolio, public profiles.
+ * Users module: own account (/me), student badge, portfolio, public profiles, trust stats.
  */
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module.js';
@@ -9,12 +9,13 @@ import { PortfolioController } from './portfolio.controller.js';
 import { PortfolioService } from './portfolio.service.js';
 import { ProfileService } from './profile.service.js';
 import { StudentVerificationService } from './student-verification.service.js';
+import { UserStatsService } from './user-stats.service.js';
 import { UsersController } from './users.controller.js';
 
 @Module({
   imports: [AuthModule, UploadsModule],
   controllers: [MeController, PortfolioController, UsersController],
-  providers: [ProfileService, StudentVerificationService, PortfolioService],
-  exports: [ProfileService, StudentVerificationService],
+  providers: [ProfileService, StudentVerificationService, PortfolioService, UserStatsService],
+  exports: [ProfileService, StudentVerificationService, UserStatsService],
 })
 export class UsersModule {}
