@@ -177,7 +177,7 @@ describe('notifications (FR-550)', () => {
     await api().post(`/api/v1/orders/${order.id}/actions/fund`).set(buyer.auth).expect(200);
     expect((await notifications(seller)).items[0]).toMatchObject({ type: 'ORDER_STATUS', title: expect.stringContaining('paid into escrow') });
     await api().post(`/api/v1/orders/${order.id}/actions/submit`).set(seller.auth).expect(200);
-    expect((await notifications(buyer)).items[0].title).toContain('marked the work as done');
+    expect((await notifications(buyer)).items[0]!.title).toContain('marked the work as done');
     await api().post(`/api/v1/orders/${order.id}/actions/approve`).set(buyer.auth).expect(200);
     const sellerN = await notifications(seller);
     expect(sellerN.items.slice(0, 2).map((x) => x.type).sort()).toEqual(['ORDER_STATUS', 'PAYMENT_RECEIVED']);
