@@ -320,6 +320,10 @@ model Listing {
   @@index([ownerId])
   @@index([city])
   @@index([lat, lng])
+  /// Trigram indexes so text search (`ILIKE '%word%'`) does not scan every listing (Phase 9 load test, ADR-027).
+  /// Needs the pg_trgm extension — created in migration 20261119100000_phase9_listing_trgm.
+  @@index([title(ops: raw("gin_trgm_ops"))], type: Gin, map: "Listing_title_trgm_idx")
+  @@index([description(ops: raw("gin_trgm_ops"))], type: Gin, map: "Listing_description_trgm_idx")
 }
 
 // ── Quotes (PRD §7.5) ────────────────────────────────────────────────────────
@@ -410,6 +414,8 @@ model Order {
   /// On-site start/finish codes (FR-406), stored hashed.
   startCodeHash  String?
   finishCodeHash String?
+  /// On-site code tries used (start + finish); capped at MAX_ORDER_CODE_ATTEMPTS against brute force (Phase 9).
+  codeAttempts   Int         @default(0)
   startedAt      DateTime?
   submittedAt    DateTime?
   completedAt    DateTime?

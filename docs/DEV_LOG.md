@@ -15,6 +15,33 @@ A dated, append-only record of what was done in each working session: what chang
 
 ---
 
+## 2026-11-19 — Phase 9 (part 1): security review + load test
+**Roadmap tasks:** T9.3, T9.4
+
+**Done**
+- **Security review (T9.3):** an independent read-only review of the backend against ARCHITECTURE §10. No critical/high. Fixed the 3 medium findings (ADR-027): on-site code brute force (`Order.codeAttempts`, max 10, `ORDER_CODE_LOCKED`), email/student code guess race + unlimited re-issue (reserve-before-compare, 10 codes/day), sockets outliving their token/suspension (close at token expiry and on suspend/password reset; app reconnects itself). Lows and unconfirmed items are tracked in ADR-027 and ROADMAP T10.x. Found while reviewing: **production cannot boot yet** (no real mail driver) → ROADMAP T10.0.
+- **Load test (T9.4):** `npm run load:test` (fetch-based; no k6 install needed) on a separate `campusconnect_load` database with 20,000 listings, 20 concurrent clients, 10 s per endpoint.
+  | Endpoint | p95 before | p95 after |
+  |---|---|---|
+  | text search, no match | 323 ms | 101 ms (pg_trgm GIN indexes) |
+  | near me 10 km | 597 ms | 214 ms (two-pass geo search) |
+  | browse / search / category+price / detail / me / conversations / unread | 51–157 ms | unchanged |
+- Additive migrations: `phase9_listing_trgm`, `phase9_order_code_attempts` (applied to the dev and test databases).
+
+**Problems found and fixed during the session**
+- First load runs returned 400s: my script sent `sort=PRICE_ASC`, the API expects `price_asc` (script bug, not an API bug).
+- My first email-code fix still reported "4 tries left" to every parallel guess (it computed from the value read before reserving) → switched to an `update` that returns the reserved slot. Caught by the new parallel-guess test.
+- Keeping expired codes (instead of deleting them) made "latest code" ambiguous when two had the same timestamp → tie-break on the time-ordered id.
+- The commit gate grepped test output for "failed" and matched an expected log line ("Supabase sign upload failed") → gate now uses exit codes.
+
+**Tests run (all executed this session)**
+- backend unit 67/67 · backend integration **100/100** (6 new: code lock + parallel guesses, buyer can't burn finish tries, email-code parallel guesses, daily code cap, socket closed on suspend, socket closed at token expiry) · mobile 53/53 · lint + typecheck clean.
+- Load test: PASS (worst p95 214 ms).
+
+**Not verified / known gaps**
+- Load numbers are from a laptop; free-tier hosting will differ (re-run in T10.2).
+- Mobile reconnect-after-server-disconnect is typechecked and linted, not tried on a phone.
+
 ## 2026-11-19 — Phase 8: safety, admin, scheduled jobs, legal screens
 **Roadmap tasks:** T8.1–T8.6
 

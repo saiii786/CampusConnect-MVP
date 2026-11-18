@@ -328,7 +328,9 @@ export class ListingsService {
       },
       orderBy: { id: 'desc' },
       take: GEO_CANDIDATE_LIMIT,
-      include: LISTING_INCLUDE,
+      // Pass 1 is light (no joins): up to 1000 rows are filtered and sorted here, but only one page
+      // is loaded with owner/category below (Phase 9 load test: p95 597 → see DEV_LOG).
+      select: { id: true, lat: true, lng: true, pricePaise: true },
     });
     const inRange = candidates
       .map((l) => ({ l, d: listingDistance(l, from)! }))
@@ -344,8 +346,17 @@ export class ListingsService {
     }
     const offset = (decodeCursor(rawCursor, 'off')?.v as number | undefined) ?? 0;
     const page = inRange.slice(offset, offset + limit);
+    // Pass 2: full rows for this page only, returned in the computed order.
+    const full = new Map(
+      (await this.prisma.listing.findMany({ where: { id: { in: page.map((x) => x.l.id) } }, include: LISTING_INCLUDE })).map(
+        (l) => [l.id, l],
+      ),
+    );
     return {
-      items: page.map((x) => toListingSummary(x.l, from)),
+      items: page.flatMap((x) => {
+        const l = full.get(x.l.id);
+        return l ? [toListingSummary(l, from)] : []; // gone between the two reads → skip
+      }),
       nextCursor: offset + limit < inRange.length ? encodeCursor({ k: 'off', v: offset + limit }) : null,
     };
   }

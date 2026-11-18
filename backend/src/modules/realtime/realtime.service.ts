@@ -21,6 +21,14 @@ export class RealtimeService {
     this.server = server;
   }
 
+  /**
+   * Drop every live socket of a user (suspension, password reset, stolen session). The app reconnects
+   * with a fresh token if it still has a valid session; otherwise the handshake is refused.
+   */
+  disconnectUser(userId: string): void {
+    this.server?.in(userRoom(userId)).disconnectSockets(true);
+  }
+
   /** Emit once per socket even if it is in several of the rooms. */
   emit(rooms: string[], event: string, payload: unknown): void {
     if (!this.server || rooms.length === 0) return;

@@ -273,7 +273,8 @@ Terminal states: **COMPLETED, CANCELLED, DECLINED.** A buyer who wants to stop m
 | Broken object-level authorization (IDOR) | Every service method takes the `actor` and filters by it; integration tests per endpoint for "other user gets 404/403" |
 | Forged tokens | JWT verified everywhere (HTTP + sockets); secrets ≥ 32 chars validated at startup; no fallback secrets |
 | Token theft | Short access token; refresh rotation with reuse detection (revoke family); tokens in SecureStore on device |
-| Brute force | Throttler on auth endpoints (e.g. 5/min/IP for login) + argon2id |
+| Brute force | Throttler on auth endpoints (10/min/IP) + argon2id; every one-time code reserves an attempt **before** it is compared (5 per email code, max 10 codes/day per purpose; 10 per order for on-site codes) — ADR-027 |
+| Live-socket hijack | Sockets close when their access token expires and at once on suspension / password reset (ADR-027) |
 | Mass assignment | zod schemas with `.strict()`; services map fields explicitly |
 | Injection | Prisma parameterised queries; raw SQL only via tagged templates |
 | Money manipulation | Server computes all amounts; positive-integer validation; conditional balance updates; idempotency keys; webhook signature check |
@@ -306,7 +307,7 @@ Validated in `backend/src/config/env.ts`; the server exits with a clear message 
 | `STORAGE_LOCAL_DIR` | no | `.uploads` (local driver folder, git-ignored) |
 | `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` / `STORAGE_BUCKET` | if `supabase` | server-side only, never in the app; bucket public, 5 MB limit, image types only |
 | `MAIL_DRIVER` | no | `console` (default; dev/test only — refused when `NODE_ENV=production`). Provider driver added when PRD Q3 is decided |
-| `PUBLIC_WEB_BASE_URL` | yes | base for public work-record links |
+| ~~`PUBLIC_WEB_BASE_URL`~~ | — | Not used: the public work-record page is served by the API itself (`GET /work-record/:id`, ADR-025) |
 
 Mobile: `EXPO_PUBLIC_API_URL` (required for builds). In development it may be left empty: the app derives `http://<dev-computer>:3000/api/v1` from the Expo dev server address (ADR-015). No hard-coded IPs anywhere.
 

@@ -93,6 +93,8 @@ const ACTION_SENTENCE: Partial<Record<OrderAction, string>> = {
 };
 const dateOrNull = (d: string | null | undefined) => (d ? new Date(`${d}T00:00:00.000Z`) : null);
 const DAY_MS = 24 * 60 * 60 * 1000;
+/** Wrong + right on-site code tries allowed per order (start and finish together). */
+export const MAX_ORDER_CODE_ATTEMPTS = 10;
 
 /**
  * Applies escrow money movements inside the order's transaction. Provided by the wallet module
@@ -235,9 +237,9 @@ export class OrdersService {
     }
     if (action === OrderAction.SUBMIT && order.listing.workMode === WorkMode.ONSITE) {
       if (!order.startedAt) throw AppError.unprocessable('ORDER_NOT_STARTED', 'Enter the start code from the buyer first');
-      if (!body.code || !this.codeMatches(order.id, 'finish', body.code)) {
-        throw AppError.badRequest('ORDER_CODE_INVALID', 'That finish code is not correct');
-      }
+      // Only the seller submits; the state machine would refuse the buyer anyway, but don't let them burn attempts.
+      if (actor !== OrderActor.SELLER) throw AppError.forbidden('ORDER_ACTION_NOT_ALLOWED', 'Only the seller marks the work done');
+      await this.assertCode(order.id, 'finish', body.code);
     }
 
     await this.transition(order, action, actor, userId, body.reason ?? body.note ?? null);
@@ -311,7 +313,7 @@ export class OrdersService {
     if (order.listing.workMode !== WorkMode.ONSITE) throw AppError.unprocessable('ORDER_NOT_ONSITE', 'Start codes are only for on-site jobs');
     if (order.status !== OrderStatus.IN_PROGRESS) throw AppError.conflict('ORDER_INVALID_TRANSITION', 'The order is not in progress');
     if (order.startedAt) throw AppError.conflict('ORDER_ALREADY_STARTED', 'This job was already started');
-    if (!this.codeMatches(order.id, 'start', code)) throw AppError.badRequest('ORDER_CODE_INVALID', 'That start code is not correct');
+    await this.assertCode(order.id, 'start', code);
 
     const now = new Date();
     await this.prisma.$transaction([
@@ -421,10 +423,23 @@ export class OrdersService {
     return String(digest.readUInt32BE(0) % 10_000).padStart(4, '0');
   }
 
-  private codeMatches(orderId: string, kind: 'start' | 'finish', code: string): boolean {
+  /**
+   * Check an on-site code. Each try first reserves one of MAX_ORDER_CODE_ATTEMPTS per order (atomic, so
+   * parallel guesses cannot skip the limit) — 4-digit codes must not be brute-forceable (Phase 9 security review).
+   */
+  private async assertCode(orderId: string, kind: 'start' | 'finish', code: string | undefined): Promise<void> {
+    const reserved = await this.prisma.order.updateMany({
+      where: { id: orderId, codeAttempts: { lt: MAX_ORDER_CODE_ATTEMPTS } },
+      data: { codeAttempts: { increment: 1 } },
+    });
+    if (reserved.count === 0) {
+      throw AppError.unprocessable('ORDER_CODE_LOCKED', 'Too many wrong codes for this order. Ask the buyer to approve the work or report a problem.');
+    }
     const a = Buffer.from(this.code(orderId, kind));
-    const b = Buffer.from(code);
-    return a.length === b.length && timingSafeEqual(a, b);
+    const b = Buffer.from(code ?? '');
+    if (!(a.length === b.length && timingSafeEqual(a, b))) {
+      throw AppError.badRequest('ORDER_CODE_INVALID', `That ${kind} code is not correct`);
+    }
   }
 
   private async notifyInChat(order: { listingId: string; buyerId: string; sellerId: string }, senderId: string, text: string) {

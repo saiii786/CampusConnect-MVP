@@ -37,10 +37,25 @@ Uploaded images are stored in `backend/.uploads/` (`STORAGE_DRIVER=local`, git-i
 | `db:seed` | Upsert reference data |
 | `db:studio` | Browse the database in a web UI |
 | `admin:grant -- <email> [--revoke]` | Give/remove the ADMIN role (no API for this on purpose) |
+| `load:test -- --base <url> [--listings 20000] [--seconds 15] [--workers 20]` | Seeds fake listings and measures p50/p95/p99 per endpoint (NFR-03). **Only runs against a database named `*_load`** — see "Load test" below |
 
 **Migrations in a non-interactive shell** (e.g. an AI assistant or CI): `prisma migrate dev` refuses to run.
 Generate the SQL with `npx prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --script -o prisma/migrations/<timestamp>_<name>/migration.sql`,
 **review it** (no drops without approval), then `npm run db:deploy`.
+
+## Load test (NFR-03)
+Uses its own database so your dev data is never touched (PowerShell shown; same idea in bash):
+```powershell
+docker exec campusconnect-postgres psql -U cc -d campusconnect -c "CREATE DATABASE campusconnect_load"   # once
+$env:DATABASE_URL = "postgresql://cc:<password>@localhost:5433/campusconnect_load"; $env:DIRECT_URL = $env:DATABASE_URL
+npx prisma migrate deploy; npm run db:seed
+npm run build
+# API under test on port 3001, same database, rate limits raised (otherwise most requests get 429):
+$env:PORT = "3001"; $env:RATE_LIMIT_PER_MINUTE = "10000000"; $env:AUTH_RATE_LIMIT_PER_MINUTE = "1000"; $env:JOBS_ENABLED = "false"; $env:LOG_LEVEL = "warn"
+Start-Process node dist/main.js
+npm run load:test -- --base http://localhost:3001 --seconds 10
+```
+Exit code 1 if any endpoint's p95 ≥ 300 ms or returns errors. Results of the last run: docs/DEV_LOG.md (Phase 9).
 
 ## Folder structure
 | Path | Purpose |
@@ -62,6 +77,7 @@ Generate the SQL with `npx prisma migrate diff --from-config-datasource --to-sch
 | `prisma/migrations/` | SQL migrations — never edit an applied migration; create a new one |
 | `prisma/seed.ts`, `prisma/seed-data/` | Idempotent reference data (categories) |
 | `prisma/scripts/grant-admin.ts` | `npm run admin:grant` |
+| `prisma/scripts/load-test.ts` | `npm run load:test` (Phase 9, ADR-027) |
 | `prisma/docker-init/` | SQL run once when the local Docker DB is created (creates the test DB) |
 | `prisma.config.ts` | Prisma 7 CLI config (schema path, migrations, seed, `DIRECT_URL`) |
 | `test/setup/` | Integration-test helpers: test env, global setup (runs migrations), `createTestApp()`, `resetUserData()`, `seedCategories()`, `createUser()`, `uploadImage()` |

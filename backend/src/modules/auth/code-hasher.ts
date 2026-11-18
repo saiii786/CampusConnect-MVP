@@ -14,6 +14,8 @@ import type { AppEnv } from '../../config/env.js';
 
 export const CODE_MAX_ATTEMPTS = 5;
 export const CODE_RESEND_COOLDOWN_SECONDS = 60;
+/** Codes one user may be sent per purpose in 24 h — caps total guesses (5 × 10/day; Phase 9 security review). */
+export const CODE_MAX_PER_DAY = 10;
 
 @Injectable()
 export class CodeHasher {

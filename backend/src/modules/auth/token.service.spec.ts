@@ -24,7 +24,8 @@ describe('TokenService', () => {
   it('signs an access token that verifies back to the user id, expiring after the TTL', async () => {
     const now = new Date();
     const { token, expiresAt } = await tokens.signAccessToken(USER_ID, now);
-    expect(await tokens.verifyAccessToken(token)).toEqual({ userId: USER_ID });
+    // expiresAt is used to close sockets when their token expires (Phase 9).
+    expect(await tokens.verifyAccessToken(token)).toEqual({ userId: USER_ID, expiresAt });
     const ttlSeconds = (expiresAt.getTime() - Math.floor(now.getTime() / 1000) * 1000) / 1000;
     expect(ttlSeconds).toBe(15 * 60);
   });

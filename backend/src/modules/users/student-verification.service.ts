@@ -108,12 +108,21 @@ export class StudentVerificationService {
     if (!pending) throw invalidCode();
     if (pending.expiresAt <= now || pending.attempts >= CODE_MAX_ATTEMPTS) throw expiredCode();
 
-    if (!this.codes.matches(pending.codeHash, scopeOf(userId, pending.collegeEmail), code)) {
-      await this.prisma.studentVerification.updateMany({
-        where: { userId, attempts: { lt: CODE_MAX_ATTEMPTS } },
+    // Reserve an attempt before comparing, so parallel guesses cannot exceed the limit (Phase 9 security review).
+    const reserved = await this.prisma.studentVerification
+      .update({
+        where: { userId, createdAt: pending.createdAt, attempts: { lt: CODE_MAX_ATTEMPTS } },
         data: { attempts: { increment: 1 } },
+        select: { attempts: true },
+      })
+      .catch((error: unknown) => {
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') return null; // no slot left
+        throw error;
       });
-      const attemptsLeft = Math.max(0, CODE_MAX_ATTEMPTS - pending.attempts - 1);
+    if (!reserved) throw expiredCode();
+
+    if (!this.codes.matches(pending.codeHash, scopeOf(userId, pending.collegeEmail), code)) {
+      const attemptsLeft = Math.max(0, CODE_MAX_ATTEMPTS - reserved.attempts);
       if (attemptsLeft === 0) throw expiredCode();
       throw invalidCode(attemptsLeft);
     }

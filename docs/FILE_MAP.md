@@ -28,7 +28,7 @@ _Last updated: 2026-11-19 (end of Phase 8)._
 | `docs/PRD.md` | Product requirements: problem, users, three matching modes, requirement IDs (FR/NFR), open questions Q1–Q7 |
 | `docs/ROADMAP.md` | Phased plan, task IDs and status, exit criteria, Definition of Done, parking lot |
 | `docs/ARCHITECTURE.md` | Technical design: stack, modules, data model, order state machine, money design, API & socket contracts, security, config, testing, deployment |
-| `docs/DECISIONS.md` | Decision log ADR-001…026, with reasons; how to change a decision |
+| `docs/DECISIONS.md` | Decision log ADR-001…027, with reasons; how to change a decision |
 | `docs/DEV_LOG.md` | Dated record of each work session: done, tests run, gaps, next |
 | `docs/FILE_MAP.md` | This file |
 
@@ -76,8 +76,11 @@ _Last updated: 2026-11-19 (end of Phase 8)._
 | `prisma/migrations/20261118210000_phase2_profile_storage_keys/migration.sql` | Phase 2 (additive): `Profile.avatarKey`, `Profile.studentEmail` (unique), `PortfolioItem.imageKey` |
 | `prisma/migrations/20261118230000_phase3_listing_image_keys/migration.sql` | Phase 3 (additive): `Listing.imageKeys` |
 | `prisma/migrations/20261119000000_phase8_moderation_hidden/migration.sql` | Phase 8 (additive): `Message.hiddenAt`, `Review.hiddenAt` |
+| `prisma/migrations/20261119100000_phase9_listing_trgm/migration.sql` | Phase 9 (additive): pg_trgm + trigram indexes on listing title/description |
+| `prisma/migrations/20261119110000_phase9_order_code_attempts/migration.sql` | Phase 9 (additive): `Order.codeAttempts` |
 | `prisma/migrations/migration_lock.toml` | Prisma's provider lock (do not edit) |
 | `prisma/scripts/grant-admin.ts` | `npm run admin:grant -- <email> [--revoke]` |
+| `prisma/scripts/load-test.ts` | `npm run load:test` — seeds a `*_load` database and measures p50/p95/p99 per endpoint |
 | `prisma/seed.ts` | Idempotent seed runner (`npm run db:seed`) |
 | `prisma/seed-data/categories.ts` | Category tree (PRD Appendix A); `sensitive` flags gated categories |
 | `prisma/docker-init/01-create-test-db.sql` | Creates `campusconnect_test` when the Docker DB is first created |

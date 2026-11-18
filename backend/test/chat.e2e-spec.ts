@@ -10,6 +10,7 @@ import request from 'supertest';
 import type { App } from 'supertest/types.js';
 import type { ConversationDto, ListingDetailDto, MessageDto, Page, QuoteDto } from '@cc/shared';
 import { TokenService } from '../src/modules/auth/token.service.js';
+import { ReportsService } from '../src/modules/safety/reports.service.js';
 import { PrismaService } from '../src/prisma/prisma.service.js';
 import { resetUserData, seedCategories } from './setup/db.js';
 import { createTestApp } from './setup/test-app.js';
@@ -302,5 +303,24 @@ describe('realtime (FR-251, ARCHITECTURE §9)', () => {
     await prisma.user.update({ where: { id: u.id }, data: { status: 'SUSPENDED' } });
     const s = connect(u.token);
     expect((await waitFor<Error>(s, 'connect_error')).message).toBe('AUTH_FAILED');
+  });
+
+  // Phase 9 security review: sockets used to live forever after the handshake.
+  it('suspending a user closes their live sockets at once', async () => {
+    const u = await verifiedUser();
+    const s = connect(u.token);
+    await waitFor(s, 'connect');
+    const closed = waitFor<string>(s, 'disconnect');
+    await app.get(ReportsService).suspend(u.id);
+    expect(await closed).toBe('io server disconnect');
+  });
+
+  it('closes a socket when its access token expires', async () => {
+    const u = await verifiedUser();
+    // A token issued almost 15 minutes ago → expires in ~1.5 s.
+    const { token } = await app.get(TokenService).signAccessToken(u.id, new Date(Date.now() - (15 * 60 - 1.5) * 1000));
+    const s = connect(token);
+    await waitFor(s, 'connect');
+    expect(await waitFor<string>(s, 'disconnect', 4000)).toBe('io server disconnect');
   });
 });

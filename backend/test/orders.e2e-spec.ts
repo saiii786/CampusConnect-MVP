@@ -7,6 +7,7 @@ import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import type { App } from 'supertest/types.js';
 import type { ListingDetailDto, OrderDetailDto, OrderSummaryDto, Page, QuoteDto } from '@cc/shared';
+import { MAX_ORDER_CODE_ATTEMPTS } from '../src/modules/orders/orders.service.js';
 import { PrismaService } from '../src/prisma/prisma.service.js';
 import { resetUserData, seedCategories } from './setup/db.js';
 import { createTestApp } from './setup/test-app.js';
@@ -289,5 +290,30 @@ describe('on-site start/finish codes (FR-406)', () => {
     }
     await act(seller, order.id, 'submit', { code: afterStart.onsite.finishCode }).expect(200);
     expect((await detail(buyer, order.id)).timeline.map((e) => e.action)).toContain('start');
+  });
+
+  // Phase 9 security review: 4-digit codes must not be brute-forceable, even with parallel guesses.
+  it('locks the codes after MAX_ORDER_CODE_ATTEMPTS tries, also under parallel guessing', async () => {
+    const { seller, buyer, order } = await inProgressOrder({ workMode: 'ONSITE', city: 'Hyderabad', location: { lat: 17.4, lng: 78.5 } });
+    const real = (await detail(buyer, order.id)).onsite.startCode as string;
+    const guesses = Array.from({ length: 30 }, (_, i) => String(i).padStart(4, '0')).filter((c) => c !== real).slice(0, 25);
+    const results = await Promise.all(
+      guesses.map((code) => api().post(`/api/v1/orders/${order.id}/start`).set(seller.auth).send({ code })),
+    );
+    const codes = results.map((r) => r.body.error?.code as string);
+    expect(codes.filter((c) => c === 'ORDER_CODE_INVALID')).toHaveLength(MAX_ORDER_CODE_ATTEMPTS);
+    expect(codes.filter((c) => c === 'ORDER_CODE_LOCKED')).toHaveLength(guesses.length - MAX_ORDER_CODE_ATTEMPTS);
+    // Even the right code is refused now; the buyer can still report a problem.
+    const locked = await api().post(`/api/v1/orders/${order.id}/start`).set(seller.auth).send({ code: real }).expect(422);
+    expect(locked.body.error.code).toBe('ORDER_CODE_LOCKED');
+    await act(buyer, order.id, 'dispute', { reason: 'The seller never came' }).expect(200);
+  });
+
+  it('only the seller can try the finish code (the buyer cannot use up the tries)', async () => {
+    const { seller, buyer, order } = await inProgressOrder({ workMode: 'ONSITE', city: 'Hyderabad', location: { lat: 17.4, lng: 78.5 } });
+    const startCode = (await detail(buyer, order.id)).onsite.startCode as string;
+    await api().post(`/api/v1/orders/${order.id}/start`).set(seller.auth).send({ code: startCode }).expect(200);
+    await act(buyer, order.id, 'submit', { code: '0000' }).expect(403);
+    expect((await prisma.order.findUniqueOrThrow({ where: { id: order.id } })).codeAttempts).toBe(1);
   });
 });

@@ -25,6 +25,7 @@ import { AppError } from '../../common/errors/app-error.js';
 import { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { MailService } from '../mail/mail.service.js';
+import { RealtimeService } from '../realtime/realtime.service.js';
 import { ME_INCLUDE, toMeResponse, type UserForMe } from '../users/user.mapper.js';
 import { EMAIL_CODE_TTL_MINUTES, EmailCodeService } from './email-code.service.js';
 import { PasswordHasher } from './password-hasher.js';
@@ -49,6 +50,7 @@ export class AuthService {
     private readonly tokens: TokenService,
     private readonly codes: EmailCodeService,
     private readonly mail: MailService,
+    private readonly realtime: RealtimeService,
   ) {}
 
   /** FR-001/005: create the account (+ profile + empty wallet), sign in, email a verification code. */
@@ -207,6 +209,8 @@ export class AuthService {
         data: { revokedAt: now },
       }),
     ]);
+    // Close live sockets opened with old tokens; the real user's app reconnects after signing in again.
+    this.realtime.disconnectUser(user.id);
   }
 
   // ── internals ────────────────────────────────────────────────────────────

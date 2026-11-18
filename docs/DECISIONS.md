@@ -214,3 +214,21 @@ Format: **Context** (situation) → **Decision** → **Consequences** (trade-off
   - **Route safety test** now also fails if any `/admin` route is not `@Roles('ADMIN')`.
   - **Legal (FR-604):** plain-language Terms, Privacy Policy and Community Guidelines in the app (`mobile/src/content/legal.ts`), reachable signed in and out. They are **drafts — a lawyer must review them before a public launch** (ROADMAP T10.7).
 - **Consequences:** The pilot can be moderated with a few API calls (examples in `backend/src/modules/admin/README.md`). Keyword guards are intentionally narrow; reports + admin review are the main safety net.
+
+## ADR-027 — Phase 9 hardening: security review fixes and performance
+- **Date:** 2026-11-19 · **Status:** Accepted
+- **Context:** T9.3 independent security review of the backend against ARCHITECTURE §10 (no critical/high findings; 3 medium, 5 low, 2 unconfirmed) and T9.4 load test (NFR-03: p95 < 300 ms).
+- **Decision — fixed now (medium):**
+  - **On-site codes** (4 digits) could be brute-forced by the seller (~42 min from one IP). Now `Order.codeAttempts` caps tries at 10 per order (start + finish together; reserved atomically *before* comparing). After that `422 ORDER_CODE_LOCKED`; the buyer can still approve or report a problem. Only the seller may try the finish code.
+  - **Email/student codes:** parallel guesses could all be compared before the counter moved, and reset codes could be re-requested forever. Each check now reserves one of 5 attempts before comparing; at most 10 codes per user per purpose per day (old codes are expired, not deleted, so they can be counted).
+  - **Live sockets** were checked only at connect. They now close when their access token expires (≤ 15 min) and immediately on suspension or password reset; the app reconnects itself with a fresh token.
+- **Decision — accepted / deferred (low), tracked here:**
+  - L1 price shown vs. price at accept/book is not pinned (buyer still sees and must fund/approve) → add `expectedAmountPaise` with the UI/UX phase (9A).
+  - L2 "verified work record" counts DIRECT (off-app paid) orders; self-dealing with a second account is possible → label DIRECT entries before public launch (T10.6 checklist).
+  - L3 login is limited per IP only, not per account → per-email backoff before public launch (T10.6).
+  - L4 an Expo push token can be re-registered by another account (silences, does not leak) → accepted for the pilot.
+  - L5 Supabase upload content is checked by bucket rules only → verify bucket MIME/size limits during T10.1.
+  - U1 `trust proxy 1` must match Render's real proxy hops → verify `req.ip` on Render during T10.2.
+  - U2 **production cannot start yet**: `MAIL_DRIVER` has only the `console` driver, which production refuses. A real email provider (PRD Q3) is a Phase 10 blocker (T10.0).
+- **Decision — performance:** load-tested with 20,000 listings (`npm run load:test`, its own `*_load` database). Text search with no matches scanned every row (p95 323 ms) → **pg_trgm GIN indexes** on title and description (pg_trgm ships with Postgres and is available on Supabase free). "Near me" loaded 1,000 full rows with joins (p95 597 ms) → two passes: light candidate rows, then full rows for one page only. Load-test tooling is a ~150-line script with `fetch` (no k6 install needed).
+- **Consequences:** All 12 tested endpoints p95 ≤ 214 ms locally with 20 concurrent clients. Free-tier hosting will be slower (shared CPU, cold starts) — re-run against the deployed API in T10.2.

@@ -21,6 +21,7 @@ import {
 import { AppError } from '../../common/errors/app-error.js';
 import type { Report } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
+import { RealtimeService } from '../realtime/realtime.service.js';
 
 function toReportDto(r: Report): ReportDto {
   return {
@@ -38,7 +39,10 @@ const targetNotFound = () => AppError.notFound('REPORT_TARGET_NOT_FOUND', 'What 
 
 @Injectable()
 export class ReportsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly realtime: RealtimeService,
+  ) {}
 
   /** POST /reports */
   async create(reporterId: string, input: CreateReportInput): Promise<ReportDto> {
@@ -114,6 +118,7 @@ export class ReportsService {
       this.prisma.user.update({ where: { id: userId }, data: { status: UserStatus.SUSPENDED } }),
       this.prisma.refreshToken.updateMany({ where: { userId, revokedAt: null }, data: { revokedAt: new Date() } }),
     ]);
+    this.realtime.disconnectUser(userId); // live sockets too (reconnect is refused: not ACTIVE)
   }
 
   async unsuspend(userId: string): Promise<void> {

@@ -15,6 +15,7 @@ import {
   SubscribeMessage,
   WebSocketGateway,
   type OnGatewayConnection,
+  type OnGatewayDisconnect,
   type OnGatewayInit,
 } from '@nestjs/websockets';
 import { Logger } from '@nestjs/common';
@@ -29,10 +30,13 @@ const joinSchema = z.object({ conversationId: z.uuid() }).strict();
 
 interface SocketData {
   userId: string;
+  /** When the access token used for the handshake expires — the socket is closed then (Phase 9). */
+  expiresAt: Date;
 }
 
 @WebSocketGateway({ cors: false, serveClient: false })
-export class RealtimeGateway implements OnGatewayInit, OnGatewayConnection {
+export class RealtimeGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
+  private readonly expiryTimers = new Map<string, NodeJS.Timeout>();
   private readonly logger = new Logger('Realtime');
 
   constructor(
@@ -51,8 +55,18 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayConnection {
   }
 
   async handleConnection(socket: Socket): Promise<void> {
-    const { userId } = socket.data as SocketData;
+    const { userId, expiresAt } = socket.data as SocketData;
     await socket.join(userRoom(userId));
+    // A socket lives no longer than its token: the app reconnects with a fresh one (or cannot, if the
+    // session was ended), so a stolen or revoked access token gives at most ~15 minutes of live events.
+    const timer = setTimeout(() => socket.disconnect(true), Math.max(0, expiresAt.getTime() - Date.now()));
+    timer.unref();
+    this.expiryTimers.set(socket.id, timer);
+  }
+
+  handleDisconnect(socket: Socket): void {
+    clearTimeout(this.expiryTimers.get(socket.id));
+    this.expiryTimers.delete(socket.id);
   }
 
   @SubscribeMessage(ClientEvent.CONVERSATION_JOIN)
@@ -79,9 +93,9 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayConnection {
   private async authenticate(socket: Socket): Promise<void> {
     const token: unknown = (socket.handshake.auth as Record<string, unknown> | undefined)?.token;
     if (typeof token !== 'string' || token.length > 4096) throw new Error('no token');
-    const { userId } = await this.tokens.verifyAccessToken(token);
+    const { userId, expiresAt } = await this.tokens.verifyAccessToken(token);
     const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { status: true } });
     if (user?.status !== UserStatus.ACTIVE) throw new Error('inactive user');
-    (socket.data as SocketData).userId = userId;
+    Object.assign(socket.data as SocketData, { userId, expiresAt });
   }
 }

@@ -22,7 +22,8 @@
     "db:deploy": "prisma migrate deploy",
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
-    "admin:grant": "tsx prisma/scripts/grant-admin.ts"
+    "admin:grant": "tsx prisma/scripts/grant-admin.ts",
+    "load:test": "tsx prisma/scripts/load-test.ts"
   },
   "dependencies": {
     "@cc/shared": "*",

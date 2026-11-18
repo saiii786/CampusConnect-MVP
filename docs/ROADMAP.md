@@ -191,8 +191,8 @@
 |---|---|---|---|
 | T9.1 | UX pass: loading/empty/error states everywhere, offline banner, consistent design | NFR-06 | ⬜ |
 | T9.2 | Accessibility pass (labels, font scaling, contrast, touch targets) | NFR-07 | ⬜ |
-| T9.3 | Security review against ARCHITECTURE §10 + authorization matrix complete | NFR-01 | ⬜ |
-| T9.4 | Load test (k6) and query/index tuning | NFR-03 | ⬜ |
+| T9.3 | Security review against ARCHITECTURE §10 + authorization matrix complete | NFR-01 | ✅ 3 medium fixed; lows tracked in ADR-027 |
+| T9.4 | Load test and query/index tuning | NFR-03 | ✅ 20k listings, worst p95 214 ms (`npm run load:test`, ADR-027) |
 | T9.5 | Maestro E2E for both main journeys | NFR-10 | ⬜ |
 
 ## Phase 9A — UI/UX design & polish (ADR-018)
@@ -218,12 +218,13 @@
 
 | ID | Task | Status |
 |---|---|---|
-| T10.1 | Supabase production project + migrations | ⬜ |
-| T10.2 | Render deploy (`render.yaml`), env secrets, health check | ⬜ |
+| T10.0 | **Blocker:** real email provider driver (PRD Q3) — production refuses the console mail driver, so the API cannot start in production without it (ADR-027 U2) | ⬜ |
+| T10.1 | Supabase production project + migrations; verify storage bucket MIME/size limits (ADR-027 L5) | ⬜ |
+| T10.2 | Render deploy (`render.yaml`), env secrets, health check; check `req.ip` behind Render's proxy (ADR-027 U1); re-run `npm run load:test` against it | ⬜ |
 | T10.3 | EAS build profiles, Android APK for testers | ⬜ |
 | T10.4 | Backup/restore procedure documented and tested | ⬜ |
 | T10.5 | Runbook: how to operate, rotate secrets, handle disputes | ⬜ |
-| T10.6 | MVP Definition of Done checklist signed off | ⬜ |
+| T10.6 | MVP Definition of Done checklist signed off — incl. ADR-027 L2 (label off-app-paid work) and L3 (per-account login backoff) | ⬜ |
 | T10.7 | Lawyer review of Terms / Privacy / Guidelines (`mobile/src/content/legal.ts`) before any public launch | ⬜ |
 
 ## v1.1 — Instant mode (after pilot feedback)

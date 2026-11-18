@@ -4,15 +4,16 @@
  * - Codes are stored as an HMAC (see code-hasher.ts) scoped to "<purpose>:<userId>", so a database
  *   leak alone cannot reveal or brute-force them, and a code only works for its user + purpose.
  * - Each code allows CODE_MAX_ATTEMPTS wrong guesses, then it is dead and a new one must be requested.
- * - Issuing a new code deletes older unused codes of the same purpose (only the latest works).
- * - A user can request at most one code per purpose every CODE_RESEND_COOLDOWN_SECONDS.
+ * - Issuing a new code expires older unused codes of the same purpose (only the latest works).
+ * - A user can request at most one code per purpose every CODE_RESEND_COOLDOWN_SECONDS, and CODE_MAX_PER_DAY per day.
+ * - Every check reserves an attempt before comparing, so concurrent guesses cannot exceed the limit.
  * - Consuming is atomic (`usedAt IS NULL` condition), so a code cannot be used twice.
  */
 import { Injectable } from '@nestjs/common';
 import { AppError } from '../../common/errors/app-error.js';
-import type { EmailTokenPurpose } from '../../generated/prisma/client.js';
+import { Prisma, type EmailTokenPurpose } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
-import { CODE_MAX_ATTEMPTS, CODE_RESEND_COOLDOWN_SECONDS, CodeHasher } from './code-hasher.js';
+import { CODE_MAX_ATTEMPTS, CODE_MAX_PER_DAY, CODE_RESEND_COOLDOWN_SECONDS, CodeHasher } from './code-hasher.js';
 
 /** Kept for readability at call sites and in tests. */
 export const EMAIL_CODE_MAX_ATTEMPTS = CODE_MAX_ATTEMPTS;
@@ -45,9 +46,15 @@ export class EmailCodeService {
       throw codeCooldown();
     }
 
+    const sentToday = await this.prisma.emailToken.count({
+      where: { userId, purpose, createdAt: { gt: new Date(now.getTime() - 24 * 60 * 60 * 1000) } },
+    });
+    if (sentToday >= CODE_MAX_PER_DAY) throw codeDailyLimit();
+
     const code = this.codes.generate();
     await this.prisma.$transaction([
-      this.prisma.emailToken.deleteMany({ where: { userId, purpose, usedAt: null } }),
+      // Older unused codes stop working (expired, not deleted, so the daily count above stays correct).
+      this.prisma.emailToken.updateMany({ where: { userId, purpose, usedAt: null, expiresAt: { gt: now } }, data: { expiresAt: now } }),
       this.prisma.emailToken.create({
         data: {
           userId,
@@ -68,18 +75,29 @@ export class EmailCodeService {
   async consume(userId: string, purpose: EmailTokenPurpose, code: string, now: Date = new Date()): Promise<void> {
     const token = await this.prisma.emailToken.findFirst({
       where: { userId, purpose, usedAt: null },
-      orderBy: { createdAt: 'desc' },
+      // Older codes are kept (expired) for the daily count; UUIDv7 ids are time-ordered, so `id` breaks ties.
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
     });
     if (!token) throw invalidCode();
     if (token.expiresAt <= now || token.attempts >= EMAIL_CODE_MAX_ATTEMPTS) throw expiredCode();
 
-    if (!this.codes.matches(token.codeHash, scopeOf(purpose, userId), code)) {
-      // Count the failed attempt atomically (concurrent guesses cannot exceed the limit).
-      await this.prisma.emailToken.updateMany({
-        where: { id: token.id, attempts: { lt: EMAIL_CODE_MAX_ATTEMPTS } },
+    // Reserve an attempt BEFORE comparing: parallel guesses each need their own slot, so no more than
+    // EMAIL_CODE_MAX_ATTEMPTS codes are ever compared per issued code (Phase 9 security review).
+    const reserved = await this.prisma.emailToken
+      .update({
+        where: { id: token.id, usedAt: null, attempts: { lt: EMAIL_CODE_MAX_ATTEMPTS } },
         data: { attempts: { increment: 1 } },
+        select: { attempts: true },
+      })
+      .catch((error: unknown) => {
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') return null; // no slot left
+        throw error;
       });
-      const attemptsLeft = Math.max(0, EMAIL_CODE_MAX_ATTEMPTS - token.attempts - 1);
+    if (!reserved) throw expiredCode();
+
+    if (!this.codes.matches(token.codeHash, scopeOf(purpose, userId), code)) {
+      // Counted from this request's own slot, so parallel guesses report correctly too.
+      const attemptsLeft = Math.max(0, EMAIL_CODE_MAX_ATTEMPTS - reserved.attempts);
       if (attemptsLeft === 0) throw expiredCode();
       throw invalidCode(attemptsLeft);
     }
@@ -102,6 +120,12 @@ export function invalidCode(attemptsLeft?: number): AppError {
 
 export function expiredCode(): AppError {
   return AppError.badRequest('AUTH_CODE_EXPIRED', 'This code has expired. Please request a new one.');
+}
+
+export function codeDailyLimit(): AppError {
+  return new AppError('AUTH_CODE_COOLDOWN', 'Too many codes requested today. Please try again tomorrow.', 429, {
+    retryAfterSeconds: 24 * 60 * 60,
+  });
 }
 
 export function codeCooldown(): AppError {

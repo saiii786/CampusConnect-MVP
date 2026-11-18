@@ -64,6 +64,18 @@ export function useRealtime(): void {
     });
     // After a reconnect we may have missed events: refresh what is on screen.
     s.io.on('reconnect', () => void client.invalidateQueries({ queryKey: chatKeys.all }));
+    // The server closes a socket when its access token expires or the session is ended. socket.io does not
+    // retry after a server-side disconnect, so reconnect ourselves (the auth callback fetches a fresh token;
+    // if the session is gone the handshake is refused and we stay offline).
+    s.on('disconnect', (reason) => {
+      if (reason !== 'io server disconnect') return;
+      setTimeout(() => {
+        if (socket === s) {
+          s.connect();
+          void client.invalidateQueries({ queryKey: chatKeys.all });
+        }
+      }, 1_000);
+    });
 
     return () => {
       s.removeAllListeners();

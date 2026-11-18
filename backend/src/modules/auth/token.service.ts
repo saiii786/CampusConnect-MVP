@@ -57,7 +57,7 @@ export class TokenService {
    * else (bad signature, expired, wrong algorithm/issuer/audience/type, malformed).
    * The mobile app reacts to 401 by refreshing once, then signing out.
    */
-  async verifyAccessToken(token: string): Promise<{ userId: string }> {
+  async verifyAccessToken(token: string): Promise<{ userId: string; expiresAt: Date }> {
     try {
       const { payload } = await jwtVerify(token, this.accessKey, {
         algorithms: ['HS256'],
@@ -68,7 +68,7 @@ export class TokenService {
       if (payload.typ !== 'access' || typeof payload.sub !== 'string' || !UUID.test(payload.sub)) {
         throw new Error('unexpected token claims');
       }
-      return { userId: payload.sub };
+      return { userId: payload.sub, expiresAt: new Date((payload.exp as number) * 1000) };
     } catch (error) {
       const expired = error instanceof joseErrors.JWTExpired;
       throw AppError.unauthorized(

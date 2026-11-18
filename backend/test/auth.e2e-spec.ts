@@ -8,6 +8,8 @@ import type { App } from 'supertest/types.js';
 import type { AuthSessionResponse } from '@cc/shared';
 import { ConsoleMailService, MailService } from '../src/modules/mail/mail.service.js';
 import { TokenService } from '../src/modules/auth/token.service.js';
+import { CODE_MAX_PER_DAY } from '../src/modules/auth/code-hasher.js';
+import { EMAIL_CODE_MAX_ATTEMPTS } from '../src/modules/auth/email-code.service.js';
 import { PrismaService } from '../src/prisma/prisma.service.js';
 import { resetUserData } from './setup/db.js';
 import { createTestApp } from './setup/test-app.js';
@@ -289,6 +291,37 @@ describe('password reset (FR-006)', () => {
       .post('/api/v1/auth/reset-password')
       .send({ email: s.email, code, newPassword: 'yet another password' })
       .expect(400);
+  });
+
+  // Phase 9 security review: guesses sent in parallel used to all be checked before the counter moved.
+  it('parallel wrong guesses cannot exceed the attempt limit', async () => {
+    const s = await signup();
+    await expireCooldown(s.user.id);
+    await api().post('/api/v1/auth/forgot-password').send({ email: s.email }).expect(202);
+    const code = lastCode(s.email);
+    const guesses = Array.from({ length: 12 }, (_, i) => String(100000 + i)).filter((g) => g !== code);
+    const results = await Promise.all(
+      guesses.map((g) => api().post('/api/v1/auth/reset-password').send({ email: s.email, code: g, newPassword: 'a brand new password' })),
+    );
+    // 5 tries per code: the first 4 wrong ones say "invalid", every other one "expired" — none got through.
+    expect(results.filter((r) => r.body.error?.code === 'AUTH_CODE_INVALID')).toHaveLength(EMAIL_CODE_MAX_ATTEMPTS - 1);
+    expect(results.every((r) => r.status === 400)).toBe(true);
+    // The real code is dead too: a new one must be requested.
+    const res = await api().post('/api/v1/auth/reset-password').send({ email: s.email, code, newPassword: 'a brand new password' }).expect(400);
+    expect(res.body.error.code).toBe('AUTH_CODE_EXPIRED');
+  });
+
+  it('caps codes per day (CODE_MAX_PER_DAY) so guesses cannot be renewed forever', async () => {
+    const s = await signup(); // sends verification code #1
+    for (let i = 1; i < CODE_MAX_PER_DAY; i++) {
+      await expireCooldown(s.user.id);
+      await api().post('/api/v1/auth/resend-verification').set(bearer(s.tokens.accessToken)).expect(202);
+    }
+    await expireCooldown(s.user.id);
+    const res = await api().post('/api/v1/auth/resend-verification').set(bearer(s.tokens.accessToken)).expect(429);
+    expect(res.body.error.message).toContain('today');
+    // The latest code still works.
+    await api().post('/api/v1/auth/verify-email').set(bearer(s.tokens.accessToken)).send({ code: lastCode(s.email) }).expect(200);
   });
 
   it('a verification code cannot be used as a reset code', async () => {
