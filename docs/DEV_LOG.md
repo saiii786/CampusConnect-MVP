@@ -15,6 +15,33 @@ A dated, append-only record of what was done in each working session: what chang
 
 ---
 
+## 2026-11-18 — Phase 3: listings & search
+**Roadmap tasks:** T3.1–T3.5
+
+**Done**
+- GitHub: the founder signed in once and pushed; `main` on github.com/saiii786/CampusConnect-MVP now matches local (Phases 0–2). Founder asked to continue phase after phase automatically; each phase is committed and pushed when finished.
+- Shared: listing schemas (offer/job union with cross-field rules), search/my-listings/detail query schemas, DTOs, `Page<T>`, haversine `distanceKm`, `roundCoordinate`; upload purpose `LISTING`.
+- Database: additive migration `Listing.imageKeys` (generated with `migrate diff`, reviewed, applied).
+- Backend: `listings` module (create/edit with merge + rule re-check and photo diff, pause/resume/close with conditional updates, visibility rules, search with keyword/filters/near-me/sorts, `/me/listings`), opaque cursor helper. Decisions in ADR-021.
+- Mobile: Browse home (search, Services/Job requests, Near me, Filters, endless list, pull-to-refresh), filters screen, listing detail (owner actions), post/edit form (rupees → paise, shared-schema validation, current location, up to 5 photos), My listings; `Segmented` control; `expo-location` added (in Expo Go). Sign-out moved to My profile.
+
+**Problems found and fixed during the session**
+- Two test-authoring mistakes caught by running the tests: a category slug that does not exist (`logo-design` → `graphic-design`), and a price-range expectation that ignored inclusive bounds (the code was right).
+- Search test setup could not delete listings with quotes (FK RESTRICT, by design) → resets user data instead.
+- Editing photos needs their storage keys → listing detail returns `imageKeys` to the owner only (others get `[]`, tested).
+
+**Tests run (all executed this session)**
+- `npm test -w @cc/shared` → 70/70 · `npm test -w @cc/backend` → 56/56 · `npm run test:e2e -w @cc/backend` → 54/54 (14 new) · `npm test -w @cc/mobile` → 41/41
+- `npm run lint`, `npm run typecheck` → pass · `npx expo export --platform android` → bundle builds
+- Live (built server, port 3001): sign up → verify → post on-site hourly offer → near-me search from ~4 km finds it (4.3 km) → search from another city finds nothing → close. Smoke data deleted.
+
+**Not verified / known gaps**
+- Not tried on a phone (location permission, photo picking, list scrolling).
+- Keyword search uses `contains` (sequential scan) — fine for a pilot; `pg_trgm` later (parking lot).
+- "Send a quote" / "Book" buttons arrive in Phases 4–5 (detail screen says so).
+
+**Next:** Phase 4 — quotes, conversations, realtime.
+
 ## 2026-11-18 — Phase 2: profiles, student badge, categories, uploads (+ UI/UX phase planned)
 **Roadmap tasks:** T2.1–T2.8; new Phase 9A
 

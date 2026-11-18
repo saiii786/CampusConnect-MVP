@@ -7,5 +7,6 @@ export { Chip, ChipList } from './chip';
 export { ImageTile } from './image-tile';
 export { Notice } from './notice';
 export { Screen } from './screen';
+export { Segmented, type SegmentedOption } from './segmented';
 export { EmptyState, ErrorState, LoadingState } from './state-views';
 export { TextField } from './text-field';

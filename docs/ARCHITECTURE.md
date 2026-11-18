@@ -130,7 +130,7 @@ Source of truth: `backend/prisma/schema.prisma`. Summary:
 | **EmailToken** | userId, purpose (VERIFY/RESET), codeHash, expiresAt | |
 | **PortfolioItem** | userId, title, description, imageUrl, imageKey, position | max 10 |
 | **Category** | id, slug, name, groupName, sensitive (bool), position | `sensitive` → hidden until ID verification (FR-104) |
-| **Listing** | id, ownerId, type (SERVICE_OFFER / JOB_REQUEST / AVAILABLE_NOW / NEED_NOW), categoryId, title, description, pricingType (FIXED/HOURLY/QUOTE), pricePaise, budgetMinPaise/MaxPaise, workMode (REMOTE/ONSITE), city, lat, lng, radiusKm, preferredDate, expiresAt, status (ACTIVE/PAUSED/CLOSED), imageUrls[], deletedAt | One table for all modes. Indexed on (status, type, categoryId), (city), (lat, lng) |
+| **Listing** | id, ownerId, type (SERVICE_OFFER / JOB_REQUEST / AVAILABLE_NOW / NEED_NOW), categoryId, title, description, pricingType (FIXED/HOURLY/QUOTE), pricePaise, budgetMinPaise/MaxPaise, workMode (REMOTE/ONSITE), city, lat, lng, radiusKm, preferredDate, expiresAt, status (ACTIVE/PAUSED/CLOSED), imageUrls[], imageKeys[], deletedAt | One table for all modes. Indexed on (status, type, categoryId), (city), (lat, lng). lat/lng rounded to 3 decimals, never returned (ADR-021) |
 | **Quote** | id, listingId, sellerId, amountPaise, message, etaDate, status (ACTIVE/WITHDRAWN/ACCEPTED/REJECTED/NOT_SELECTED) | unique(listingId, sellerId) |
 | **Conversation** | id, listingId, buyerId, sellerId, lastMessageAt | unique(listingId, buyerId, sellerId) |
 | **Message** | id, conversationId, senderId, body, createdAt | |
@@ -237,7 +237,7 @@ Terminal states: **COMPLETED, CANCELLED, DECLINED.** A buyer who wants to stop m
 | Users | `GET /users/:id` · `GET /users/:id/reviews` · `GET /users/:id/work-record` (public, no auth) |
 | Categories | `GET /categories` |
 | Uploads | `POST /uploads/sign` · local driver only: `PUT /uploads/local/:token`, `GET /uploads/files/<key>` (public) |
-| Listings | `GET /listings` (search: `q, type, categoryId, city, workMode, minPricePaise, maxPricePaise, lat, lng, radiusKm, cursor`) · `GET /listings/:id` · `POST /listings` · `PATCH /listings/:id` · `POST /listings/:id/close` |
+| Listings | `GET /listings` (search: `q, type, categoryId, city, workMode, minPricePaise, maxPricePaise, lat, lng, radiusKm, sort, cursor, limit`) · `GET /listings/:id[?lat&lng]` · `POST /listings` (verified email) · `PATCH /listings/:id` · `POST /listings/:id/pause` · `POST /listings/:id/resume` · `POST /listings/:id/close` · `GET /me/listings?status=` (ADR-021) |
 | Quotes | `GET /listings/:id/quotes` (owner only) · `POST /listings/:id/quotes` · `PATCH /quotes/:id` · `POST /quotes/:id/withdraw` · `POST /quotes/:id/accept` · `POST /quotes/:id/reject` |
 | Conversations | `POST /conversations` · `GET /conversations` · `GET /conversations/:id/messages` · `POST /conversations/:id/messages` · `POST /conversations/:id/read` |
 | Orders | `POST /orders` (book a service) · `GET /orders?role=buyer|seller&status=` · `GET /orders/:id` · `POST /orders/:id/actions/:action` (accept, decline, fund, submit, approve, request-changes, cancel, dispute) · `POST /orders/:id/review` |

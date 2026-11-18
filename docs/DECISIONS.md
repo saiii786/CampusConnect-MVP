@@ -145,3 +145,14 @@ Format: **Context** (situation) → **Decision** → **Consequences** (trade-off
   - **Public profiles** (`GET /users/:id`) require sign-in (the no-login shareable page is the work record, FR-053, Phase 7). Suspended/deleted users → 404. Never email, phone, DOB, college email or coordinates.
   - **Account deletion** needs the password again and is refused while any order is open (REQUESTED, AWAITING_PAYMENT, IN_PROGRESS, SUBMITTED, DISPUTED). It **anonymises** (email → `deleted+<id>@deleted.invalid`, name → "Deleted user", profile cleared, tokens/portfolio/student data deleted, listings closed) and keeps orders/reviews for the other party. The email can be reused for a new account. Wallet balance is ignored while money is test-mode only.
 - **Consequences:** Clear, testable rules (all covered by integration tests). Revisit wallet handling on deletion if real money is ever introduced.
+
+## ADR-021 — Listings: visibility, location privacy and search without PostGIS
+- **Date:** 2026-11-18 · **Status:** Accepted
+- **Context:** FR-101…103 and FR-150…153 need keyword/filter/near-me search with pagination on a free Postgres, and FR-054 forbids exposing exact locations.
+- **Decision:**
+  - **Location privacy:** on-site pins are stored rounded to 3 decimals (≈110 m) and **never returned**; responses carry the city and a computed `distanceKm` (0.1 km). Remote listings store no location.
+  - **Visibility:** non-owners see only ACTIVE, non-deleted listings of ACTIVE users in non-gated categories (404 otherwise). Owners see theirs in any status. No hard delete — close is final and marks open quotes NOT_SELECTED.
+  - **Posting** requires a verified email (FR-003). Every rule is in the shared `createListingSchema`/`checkListingRules`; updates are merged with the stored listing and re-checked.
+  - **Search:** plain Prisma queries — keyword = every word in title or description (case-insensitive `contains`); price filter uses the price for offers and the budget range for job requests. Near-me: bounding-box prefilter in SQL + exact haversine in code, capped at 1,000 candidates. **Cursors are opaque**: keyset on UUIDv7 id for "newest", offset for price/distance sorts.
+  - Listing detail includes photo storage keys **for the owner only** (needed to edit photos).
+- **Consequences:** No extensions or paid services. `contains` does sequential scans — fine for a pilot (thousands of listings); upgrade path is `pg_trgm` indexes / PostGIS when needed (parking lot). Offset cursors can skip/repeat an item if listings change between pages (acceptable for these sorts).

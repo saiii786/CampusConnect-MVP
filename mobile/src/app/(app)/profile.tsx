@@ -1,6 +1,6 @@
 /**
  * My profile (T2.7): summary, student badge status, portfolio (add/remove, max 10), and links to
- * edit, preview the public profile, and delete the account.
+ * edit, preview the public profile, sign out and delete the account (+ server status in dev builds).
  */
 import { PORTFOLIO_MAX_ITEMS } from '@cc/shared';
 import { router } from 'expo-router';
@@ -8,7 +8,8 @@ import { Alert, View } from 'react-native';
 import { ProfileSummary } from '@/components/profile/profile-summary';
 import { AppText, Button, EmptyState, ErrorState, ImageTile, LoadingState, Notice, Screen } from '@/components/ui';
 import { describeError } from '@/lib/api/api-error';
-import { useSession } from '@/lib/auth/session';
+import { ServerStatusCard } from '@/components/server-status-card';
+import { session, useSession } from '@/lib/auth/session';
 import { useDeletePortfolioItem, usePortfolio } from '@/lib/users/users-api';
 import { useTheme } from '@/theme/use-theme';
 
@@ -99,6 +100,8 @@ export default function MyProfileScreen() {
         ) : null}
       </View>
 
+      {__DEV__ ? <ServerStatusCard /> : null}
+      <Button label="Sign out" variant="secondary" onPress={() => session.signOut()} />
       <Button label="Delete my account" variant="ghost" onPress={() => router.push('/profile/delete-account')} />
     </Screen>
   );

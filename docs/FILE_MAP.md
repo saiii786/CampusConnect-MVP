@@ -6,7 +6,7 @@ Every file we maintain, and what it is for. Not listed: generated/vendor files
 **Rule:** when you add, rename or delete a file, update this map in the same change. Function-level
 detail lives in each package/module `README.md` and in the file's header comment; this is the index.
 
-_Last updated: 2026-11-18 (end of Phase 2)._
+_Last updated: 2026-11-18 (end of Phase 3)._
 
 ---
 
@@ -28,7 +28,7 @@ _Last updated: 2026-11-18 (end of Phase 2)._
 | `docs/PRD.md` | Product requirements: problem, users, three matching modes, requirement IDs (FR/NFR), open questions Q1–Q7 |
 | `docs/ROADMAP.md` | Phased plan, task IDs and status, exit criteria, Definition of Done, parking lot |
 | `docs/ARCHITECTURE.md` | Technical design: stack, modules, data model, order state machine, money design, API & socket contracts, security, config, testing, deployment |
-| `docs/DECISIONS.md` | Decision log ADR-001…020, with reasons; how to change a decision |
+| `docs/DECISIONS.md` | Decision log ADR-001…021, with reasons; how to change a decision |
 | `docs/DEV_LOG.md` | Dated record of each work session: done, tests run, gaps, next |
 | `docs/FILE_MAP.md` | This file |
 
@@ -44,6 +44,8 @@ _Last updated: 2026-11-18 (end of Phase 2)._
 | `src/users/schemas.spec.ts` | Tests for users/uploads/admin schemas (tag cleaning, limits, upload keys, domains, ids) |
 | `src/uploads/schemas.ts` | Upload signing schema, upload-key pattern, image types, 5 MB limit, `UploadTarget` |
 | `src/categories/types.ts` | Category response types |
+| `src/listings/schemas.ts` | Listing create/update/search schemas, listing rules, DTOs, `Page<T>`, distance helpers |
+| `src/listings/schemas.spec.ts` | Tests: offer/job rules, on-site location, search query coercion, haversine, rounding |
 | `src/admin/schemas.ts` | Student-domain admin schema + DTO |
 | `src/enums.ts` | Domain enums (statuses, types) — must match the Prisma schema |
 | `src/money.ts` | Paise helpers: `rupeesToPaise`, `formatPaise`, `isValidAmountPaise` |
@@ -65,6 +67,7 @@ _Last updated: 2026-11-18 (end of Phase 2)._
 | `prisma/schema.prisma` | **Database schema** — full MVP data model |
 | `prisma/migrations/20261118132417_init/migration.sql` | First migration: creates all tables, enums, indexes |
 | `prisma/migrations/20261118210000_phase2_profile_storage_keys/migration.sql` | Phase 2 (additive): `Profile.avatarKey`, `Profile.studentEmail` (unique), `PortfolioItem.imageKey` |
+| `prisma/migrations/20261118230000_phase3_listing_image_keys/migration.sql` | Phase 3 (additive): `Listing.imageKeys` |
 | `prisma/migrations/migration_lock.toml` | Prisma's provider lock (do not edit) |
 | `prisma/scripts/grant-admin.ts` | `npm run admin:grant -- <email> [--revoke]` |
 | `prisma/seed.ts` | Idempotent seed runner (`npm run db:seed`) |
@@ -123,6 +126,12 @@ _Last updated: 2026-11-18 (end of Phase 2)._
 | `src/modules/categories/categories.service.ts` | Grouped list without gated categories; `getSelectable()` |
 | `src/modules/categories/categories.controller.ts` | `GET /categories` (public, cached) |
 | `src/modules/categories/categories.module.ts` | Exports `CategoriesService` |
+| `src/common/pagination/cursor.ts` | Opaque keyset/offset pagination cursors |
+| `src/modules/listings/README.md` | Listings module docs: endpoints, rules, files |
+| `src/modules/listings/listings.module.ts` | Listings module |
+| `src/modules/listings/listings.controller.ts` | `/listings…` and `/me/listings` |
+| `src/modules/listings/listings.service.ts` | Create/update/status/detail/search (database + geo paths) |
+| `src/modules/listings/listing.mapper.ts` | Listing response mappers (no coordinates) |
 | `src/modules/admin/README.md` | Admin module docs + how to grant admin |
 | `src/modules/admin/admin.module.ts` | Registers admin controllers |
 | `src/modules/admin/student-domains.controller.ts` | `GET/POST /admin/student-domains` |
@@ -136,6 +145,7 @@ _Last updated: 2026-11-18 (end of Phase 2)._
 | `test/setup/db.ts` | `resetUserData()` (truncates user data in the **test** DB), `seedCategories()` |
 | `test/setup/users.ts` | `createUser()`, `uploadImage()`, `JPEG_BYTES` |
 | `test/auth.e2e-spec.ts` | Integration tests for signup, login, tokens, refresh reuse, verification, reset, suspension, rate limits |
+| `test/listings.e2e-spec.ts` | Integration tests for listings and search (rules, ownership, visibility, photos, filters, near-me, pagination) |
 | `test/profiles.e2e-spec.ts` | Integration tests for profile, uploads, portfolio, public profiles, student badge, categories, admin domains, account deletion |
 | `test/setup/test-env.ts` | Test configuration; points at the **test** database only |
 | `test/setup/global-setup.ts` | Runs migrations on the test DB before integration tests; refuses non-test DBs |
@@ -162,9 +172,23 @@ _Last updated: 2026-11-18 (end of Phase 2)._
 | `src/app/(auth)/forgot-password.tsx` | Request a password-reset code |
 | `src/app/(auth)/reset-password.tsx` | Enter code + new password |
 | `src/app/(app)/_layout.tsx` | Signed-in stack |
-| `src/app/(app)/index.tsx` | Home (placeholder until Phase 3): greeting, verify-email + complete-profile prompts, server status (dev), sign out |
+| `src/app/(app)/index.tsx` | Browse (home): post/my listings/profile links, verify prompt, search, type tabs, near me, filters, endless list |
+| `src/app/(app)/search-filters.tsx` | Filters: category, remote/on-site, price, sort, distance |
+| `src/app/(app)/listings/new.tsx` | Post a service offer or job request |
+| `src/app/(app)/listings/[id].tsx` | Listing detail; owner actions (edit/pause/resume/close) |
+| `src/app/(app)/listings/edit/[id].tsx` | Edit my listing |
+| `src/app/(app)/my-listings.tsx` | My listings with status filter |
+| `src/components/listings/listing-card.tsx` | Listing row for lists |
+| `src/components/listings/category-picker.tsx` | Grouped category chooser |
+| `src/components/listings/listing-form.tsx` | Create/edit listing form + `buildListingBody`, `listingToFormValues` |
+| `src/components/ui/segmented.tsx` | Segmented (radio) control |
+| `src/lib/listings/listings-api.ts` | Listings calls + query hooks |
+| `src/lib/listings/search-filters.ts` | Search filter store + `toSearchQuery` |
+| `src/lib/listings/format.ts` | Price/budget/distance labels |
+| `src/lib/listings/listings.test.ts` | Tests: labels, filter → query, form body conversion |
+| `src/lib/location/current-location.ts` | Phone location (permission, last known/current, city) |
 | `src/app/(app)/verify-email.tsx` | Enter the 6-digit email code / resend |
-| `src/app/(app)/profile.tsx` | My profile: summary, student badge status, portfolio list/add/remove, links |
+| `src/app/(app)/profile.tsx` | My profile: summary, student badge status, portfolio list/add/remove, links, sign out, server status (dev) |
 | `src/app/(app)/profile/edit.tsx` | Edit profile + change/remove photo |
 | `src/app/(app)/profile/student.tsx` | Student badge: college email → code |
 | `src/app/(app)/profile/add-work.tsx` | Add a portfolio item (photo + title + description) |

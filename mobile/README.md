@@ -20,6 +20,9 @@ Studio / Xcode needed. Design: [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md).
    Close and reopen the app: you stay signed in. **Sign out** returns to the welcome screen.
 6. Profile (Phase 2): **My profile** → add a photo, edit details, add portfolio work, get the Student
    badge (code goes to the college email — printed in the API terminal in development), see your public profile.
+7. Listings (Phase 3): **+ Post** a service or a job request (needs a verified email; "Use my current location"
+   for on-site work), browse Services / Job requests, search, **Near me**, **Filters**, open a listing,
+   and manage yours in **My listings** (edit, pause, resume, close).
 
 To use a deployed API instead, copy `.env.example` to `.env` and set `EXPO_PUBLIC_API_URL`.
 
@@ -46,8 +49,9 @@ To use a deployed API instead, copy `.env.example` to `.env` and set `EXPO_PUBLI
 | `src/app/_layout.tsx` | Root providers (TanStack Query, theme) + session restore + protected route groups |
 | `src/app/reconnect.tsx` | Shown when a saved session could not be restored because the server was unreachable |
 | `src/app/(auth)/` | Signed-out screens: `welcome`, `sign-in`, `sign-up`, `forgot-password`, `reset-password` (+ `_layout` stack) |
-| `src/app/(app)/` | Signed-in screens: `index` (home: greeting, verify-email + complete-profile prompts, sign out), `verify-email`, `profile` (my profile + portfolio), `profile/edit`, `profile/student`, `profile/add-work`, `profile/delete-account`, `users/[id]` (public profile) (+ `_layout` stack) |
-| `src/components/ui/` | Base UI kit — `AppText`, `Avatar`, `Button`, `TextField`, `Checkbox`, `Chip`/`ChipList`, `ImageTile`, `Notice`, `Screen`, `LoadingState` / `ErrorState` / `EmptyState`. Import from `@/components/ui` |
+| `src/app/(app)/` | Signed-in screens: `index` (Browse: search, type tabs, near me, endless list), `search-filters`, `listings/new`, `listings/[id]`, `listings/edit/[id]`, `my-listings`, `verify-email`, `profile` (my profile + portfolio + sign out), `profile/edit`, `profile/student`, `profile/add-work`, `profile/delete-account`, `users/[id]` (public profile) (+ `_layout` stack) |
+| `src/components/listings/` | `listing-card`, `category-picker`, `listing-form` (shared by new/edit; `buildListingBody`, `listingToFormValues`) |
+| `src/components/ui/` | Base UI kit — `AppText`, `Avatar`, `Button`, `TextField`, `Checkbox`, `Chip`/`ChipList`, `ImageTile`, `Notice`, `Screen`, `Segmented`, `LoadingState` / `ErrorState` / `EmptyState`. Import from `@/components/ui` |
 | `src/components/profile/profile-summary.tsx` | Profile header shared by "My profile" and public profiles |
 | `src/components/server-status-card.tsx` | Live `/health` card (development builds) |
 | `src/config/api-url.ts` | Works out the API base URL (env var, or the dev computer automatically) |
@@ -60,6 +64,8 @@ To use a deployed API instead, copy `.env.example` to `.env` and set `EXPO_PUBLI
 | `src/lib/forms/server-errors.ts` | `applyServerErrors()` — puts server validation errors on the matching form fields |
 | `src/lib/api/media-url.ts` | `resolveMediaUrl()` — image URLs from the API (absolute, or "/…" for local dev storage) |
 | `src/lib/uploads/upload-image.ts` | `pickImage()` (photo library + resize to ≤ 1280 px JPEG) and `uploadImage()` (sign → PUT → key) |
+| `src/lib/listings/` | `listings-api.ts` (calls + infinite-query hooks), `search-filters.ts` (filter store → API query), `format.ts` (price/budget/distance labels) |
+| `src/lib/location/current-location.ts` | Phone location with permission ("while using the app") + best-effort city |
 | `src/lib/users/users-api.ts` | Profile/student/portfolio/public-profile/categories calls + query hooks; keeps the session's user in sync |
 | `src/lib/query-client.ts` | TanStack Query setup (retries only network/5xx errors) |
 | `src/tests/screens/` | Screen tests (e.g. sign-in form validation and submit) |

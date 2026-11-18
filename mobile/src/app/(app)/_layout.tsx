@@ -8,6 +8,11 @@ export default function AppLayout() {
   return (
     <Stack screenOptions={{ headerBackTitle: 'Back' }}>
       <Stack.Screen name="index" options={{ title: 'CampusConnect' }} />
+      <Stack.Screen name="search-filters" options={{ title: 'Filters', presentation: 'modal' }} />
+      <Stack.Screen name="listings/new" options={{ title: 'Post' }} />
+      <Stack.Screen name="listings/[id]" options={{ title: 'Listing' }} />
+      <Stack.Screen name="listings/edit/[id]" options={{ title: 'Edit listing' }} />
+      <Stack.Screen name="my-listings" options={{ title: 'My listings' }} />
       <Stack.Screen name="verify-email" options={{ title: 'Verify your email' }} />
       <Stack.Screen name="profile" options={{ title: 'My profile' }} />
       <Stack.Screen name="profile/edit" options={{ title: 'Edit profile' }} />

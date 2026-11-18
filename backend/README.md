@@ -77,7 +77,8 @@ Generate the SQL with `npx prisma migrate diff --from-config-datasource --to-sch
 | uploads | ✅ Phase 2 | [src/modules/uploads/README.md](src/modules/uploads/README.md) |
 | categories | ✅ Phase 2 | [src/modules/categories/README.md](src/modules/categories/README.md) |
 | admin | 🟨 Phase 2: student domains; rest in Phase 8 | [src/modules/admin/README.md](src/modules/admin/README.md) |
-| listings, quotes, … | Planned — see [ROADMAP](../docs/ROADMAP.md) | — |
+| listings | ✅ Phase 3 | [src/modules/listings/README.md](src/modules/listings/README.md) |
+| quotes, conversations, … | Planned — see [ROADMAP](../docs/ROADMAP.md) | — |
 
 ## Conventions
 - ESM: relative imports end in `.js` (even for `.ts` files).

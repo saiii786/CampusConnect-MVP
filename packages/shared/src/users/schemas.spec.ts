@@ -46,7 +46,8 @@ describe('uploads', () => {
   it('upload keys cannot escape their folder', () => {
     expect(uploadKeySchema.safeParse(KEY).success).toBe(true);
     expect(uploadKeySchema.safeParse(`users/${UID}/avatar/../../secret.jpg`).success).toBe(false);
-    expect(uploadKeySchema.safeParse(`users/${UID}/listing/01936b6e-7c3a-7d4e-8f00-0123456789ac.jpg`).success).toBe(false);
+    expect(uploadKeySchema.safeParse(`users/${UID}/secret/01936b6e-7c3a-7d4e-8f00-0123456789ac.jpg`).success).toBe(false);
+    expect(uploadKeySchema.safeParse(`users/${UID}/listing/01936b6e-7c3a-7d4e-8f00-0123456789ac.jpg`).success).toBe(true);
   });
 });
 

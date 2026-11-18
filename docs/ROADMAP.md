@@ -99,11 +99,13 @@
 
 | ID | Task | Refs | Status |
 |---|---|---|---|
-| T3.1 | Create/edit/pause/close service offers and job requests (soft delete) | FR-150…153 | ⬜ |
-| T3.2 | Search: keyword, filters, cursor pagination, indexes | FR-101, 103 | ⬜ |
-| T3.3 | Near-me: bounding-box + distance in SQL, sort by distance | FR-102 | ⬜ |
-| T3.4 | Mobile: home feed, search + filters, listing detail, create/edit listing (with device location + images), my listings | — | ⬜ |
-| T3.5 | Tests (incl. ownership checks, pagination, distance) | NFR-10 | ⬜ |
+| T3.1 | Create/edit/pause/close service offers and job requests (soft delete) | FR-150…153 | ✅ (FR-153 "not your own listing" is enforced where quotes/orders are created, Phases 4–5) |
+| T3.2 | Search: keyword, filters, cursor pagination, indexes | FR-101, 103 | ✅ (ADR-021) |
+| T3.3 | Near-me: bounding-box + distance in SQL, sort by distance | FR-102 | ✅ (bounding box in SQL, exact distance in code) |
+| T3.4 | Mobile: home feed, search + filters, listing detail, create/edit listing (with device location + images), my listings | — | 🟨 built, tests green, bundle builds — not yet tried on a phone (location + photos need a device) |
+| T3.5 | Tests (incl. ownership checks, pagination, distance) | NFR-10 | ✅ |
+
+**Exit status (2026-11-18):** ✅ 14 new integration tests + live run (verified user posts on-site offer → near-me search 4.3 km away finds it → far city does not → close). ⚠ Phone test pending.
 
 **Exit:** users can post both listing types and find them by keyword, category and distance.
 
@@ -227,4 +229,6 @@ FR-300…303: AVAILABLE_NOW / NEED_NOW listings with expiry, nearby push matchin
 - AI-assisted matching and pricing suggestions
 - Re-evaluate `@nestjs/authentication` once it reaches 1.0 (ADR-017)
 - Cleanup job for signed-but-never-used uploads (ADR-019)
+- Search scaling: `pg_trgm` indexes for keywords, PostGIS for near-me (ADR-021) — only when data volume needs it
+- Map view / location pin picker for listings (MVP uses "use my current location")
 - Native date picker for date of birth (MVP uses a typed YYYY-MM-DD field); absolute max session lifetime (refresh tokens currently slide 30 days)

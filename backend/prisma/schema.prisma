@@ -304,6 +304,8 @@ model Listing {
   expiresAt      DateTime?
   status         ListingStatus @default(ACTIVE)
   imageUrls      String[]
+  /// Storage keys of the images, same order as imageUrls (for deletion). Phase 3.
+  imageKeys      String[]
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
   deletedAt      DateTime?

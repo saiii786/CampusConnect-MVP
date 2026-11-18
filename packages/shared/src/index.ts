@@ -6,6 +6,7 @@ export * from './admin/schemas.js';
 export * from './auth/schemas.js';
 export * from './categories/types.js';
 export * from './enums.js';
+export * from './listings/schemas.js';
 export * from './money.js';
 export * from './orders/state-machine.js';
 export * from './uploads/schemas.js';

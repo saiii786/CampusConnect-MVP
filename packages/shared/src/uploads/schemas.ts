@@ -4,7 +4,7 @@
  */
 import { z } from 'zod';
 
-export const UploadPurpose = { AVATAR: 'AVATAR', PORTFOLIO: 'PORTFOLIO' } as const;
+export const UploadPurpose = { AVATAR: 'AVATAR', PORTFOLIO: 'PORTFOLIO', LISTING: 'LISTING' } as const;
 export type UploadPurpose = (typeof UploadPurpose)[keyof typeof UploadPurpose];
 
 /** Accepted image types → file extension used in the storage key. */
@@ -39,7 +39,7 @@ export type SignUploadInput = z.infer<typeof signUploadSchema>;
  * key belongs to the caller and to the right purpose before using it.
  */
 export const UPLOAD_KEY_PATTERN =
-  /^users\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/(avatar|portfolio)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(jpg|png|webp)$/;
+  /^users\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/(avatar|portfolio|listing)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(jpg|png|webp)$/;
 
 export const uploadKeySchema = z.string().regex(UPLOAD_KEY_PATTERN, 'Invalid upload reference');
 
