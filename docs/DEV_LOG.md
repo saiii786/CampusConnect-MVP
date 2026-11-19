@@ -15,6 +15,25 @@ A dated, append-only record of what was done in each working session: what chang
 
 ---
 
+## 2026-11-19 — Bottom tabs; Phase 10 deploy readiness
+**Roadmap tasks:** T9A.3, T10.1–T10.5 · **Founder decision:** "working model first — complete all phases, I test manually and note what is odd; polish later" → T9A.4–T9A.9 wait for the notes.
+
+**Done**
+- Bottom tabs Home · Messages (unread badge) · Post · Orders · Profile (`@expo/vector-icons` via `npx expo install`); tab screens moved into `(tabs)/` without changing any URL; home shortcuts trimmed.
+- Supabase: `media` storage bucket created (public read, 5 MB, jpeg/png/webp); session pooler checked with `prisma migrate status` (IPv4 migrations).
+- Verified database TLS (`DATABASE_CA_CERT_PATH` + Supabase's public CA): direct and pooler connect with full verification; a corrupted CA is refused. Applied to the API, seed, `admin:grant`, `db:check` (all run against Supabase successfully).
+- `render.yaml` (ADR-031): rehearsed on a clean clone with the exact build command (50 s, Expo not installed), then the built API started with `NODE_ENV=production` against Supabase → health OK (database up), 39 public categories (3 sensitive hidden by design), private routes 401. Missing third-party keys were placeholders for that boot only; no data was written.
+- `eas.json` + app id `app.connect.india`.
+- `npm run db:backup`: dump + automatic restore check. First run failed (restore tried to create the existing `public` schema; `pg_trgm` is not in a schema-only dump) → filtered restore list + pre-created extension. Then: Supabase 27 tables/49 rows identical; load database 20,468 rows identical.
+- Work-record honesty (ADR-027 L2): entries labelled "Paid through the app" / "Paid directly"; page colours updated to the brand.
+- `docs/RUNBOOK.md` (deploy, migrations, backups, secrets, incidents) and `docs/TESTING.md` (founder's manual checklist with notes).
+
+**Tests run (all executed this session)** — see the commit gate output for this change.
+
+**Not verified / waiting for the founder**
+- Real deploy on Render, real APK (accounts/keys owned by the founder), real Brevo email, real photo upload (service-role key), Razorpay test keys.
+- `req.ip` behind Render's proxy and the load test against the hosted API (after deploy).
+
 ## 2026-11-19 — Phase 9A start: visual identity; Supabase pooler; test accounts
 **Roadmap tasks:** T9A.1, T10.2 (prep)
 

@@ -130,7 +130,7 @@ describe('verified work record (FR-053)', () => {
 
     const json = (await api().get(`/api/v1/users/${seller.id}/work-record`).expect(200)).body as WorkRecordDto; // no auth needed
     expect(json).toMatchObject({ completedJobs: 1, rating: { average: 4, count: 1 } });
-    expect(json.entries).toEqual([{ orderId: o.id, category: expect.any(String), completedMonth: expect.stringMatching(/^\d{4}-\d{2}$/), rating: 4, comment: 'Great work <b>really</b>' }]);
+    expect(json.entries).toEqual([{ orderId: o.id, category: expect.any(String), completedMonth: expect.stringMatching(/^\d{4}-\d{2}$/), rating: 4, comment: 'Great work <b>really</b>', paidInApp: false }]); // DIRECT order (ADR-027 L2)
     const text = JSON.stringify(json);
     expect(text).not.toContain('Private Buyer Name');
     expect(text).not.toContain(seller.email);
@@ -142,6 +142,7 @@ describe('verified work record (FR-053)', () => {
     expect(html.text).toContain('Asha &lt;script&gt;');
     expect(html.text).not.toContain('<script>');
     expect(html.text).not.toContain('Private Buyer Name');
+    expect(html.text).toContain('Paid directly'); // honest label: this money did not go through the app
 
     await prisma.user.update({ where: { id: seller.id }, data: { status: 'SUSPENDED' } });
     await api().get(`/api/v1/users/${seller.id}/work-record`).expect(404);

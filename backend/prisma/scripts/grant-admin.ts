@@ -9,6 +9,7 @@
 import 'dotenv/config';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../../src/generated/prisma/client.js';
+import { pgOptions } from '../../src/prisma/pg-options.js';
 
 const [email, flag] = process.argv.slice(2);
 const url = process.env.DIRECT_URL ?? process.env.DATABASE_URL;
@@ -17,7 +18,8 @@ if (!email || !url) {
   process.exit(1);
 }
 
-const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: url }) });
+// Same TLS handling as the API: verified when DATABASE_CA_CERT_PATH is set (Supabase, ADR-031).
+const prisma = new PrismaClient({ adapter: new PrismaPg(pgOptions(url, process.env.DATABASE_CA_CERT_PATH)) });
 try {
   const role = flag === '--revoke' ? 'USER' : 'ADMIN';
   const result = await prisma.user.updateMany({ where: { email: email.trim().toLowerCase() }, data: { role } });

@@ -7,8 +7,11 @@
     "icon": "./assets/images/icon.png",
     "scheme": "campusconnect",
     "userInterfaceStyle": "automatic",
-    "ios": {},
+    "ios": {
+      "bundleIdentifier": "app.connect.india"
+    },
     "android": {
+      "package": "app.connect.india",
       "adaptiveIcon": {
         "backgroundColor": "#4338CA",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

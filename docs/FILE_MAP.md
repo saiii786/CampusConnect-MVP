@@ -28,7 +28,11 @@ _Last updated: 2026-11-19 (end of Phase 8)._
 | `docs/PRD.md` | Product requirements: problem, users, three matching modes, requirement IDs (FR/NFR), open questions Q1–Q7 |
 | `docs/ROADMAP.md` | Phased plan, task IDs and status, exit criteria, Definition of Done, parking lot |
 | `docs/ARCHITECTURE.md` | Technical design: stack, modules, data model, order state machine, money design, API & socket contracts, security, config, testing, deployment |
-| `docs/DECISIONS.md` | Decision log ADR-001…030, with reasons; how to change a decision |
+| `docs/DECISIONS.md` | Decision log ADR-001…031, with reasons; how to change a decision |
+| `docs/RUNBOOK.md` | Operating the pilot: deploy (Render, EAS), migrations, backups/restore, secret rotation, incidents |
+| `docs/TESTING.md` | Founder's manual test checklist with a Notes column |
+| `render.yaml` | Render Blueprint for the API (free, Singapore; secrets typed into Render, never in git) |
+| `backups/` | **Not in git.** Database dumps from `npm run db:backup` (contain user data) |
 | `docs/DEV_LOG.md` | Dated record of each work session: done, tests run, gaps, next |
 | `docs/FILE_MAP.md` | This file |
 
@@ -87,6 +91,10 @@ _Last updated: 2026-11-19 (end of Phase 8)._
 | `prisma/scripts/grant-admin.ts` | `npm run admin:grant -- <email> [--revoke]` |
 | `prisma/scripts/load-test.ts` | `npm run load:test` — seeds a `*_load` database and measures p50/p95/p99 per endpoint |
 | `prisma/scripts/db-check.ts` | `npm run db:check` — read-only queries through the app's Prisma client (test a connection string, e.g. Supabase pooler) |
+| `prisma/scripts/db-backup.ts` | `npm run db:backup` — pg_dump + automatic restore check into a throwaway DB |
+| `src/prisma/pg-options.ts` | Database connection options: verified TLS with `DATABASE_CA_CERT_PATH` (ADR-031) |
+| `src/prisma/pg-options.spec.ts` | Tests for the TLS options |
+| `certs/supabase-prod-ca-2021.crt` | Supabase's public CA certificate (not a secret) |
 | `prisma/seed.ts` | Idempotent seed runner (`npm run db:seed`) |
 | `prisma/seed-data/categories.ts` | Category tree (PRD Appendix A); `sensitive` flags gated categories |
 | `prisma/docker-init/01-create-test-db.sql` | Creates `campusconnect_test` when the Docker DB is first created |
@@ -281,6 +289,10 @@ _Last updated: 2026-11-19 (end of Phase 8)._
 | `src/app/legal/[doc].tsx` | Terms / Privacy / Guidelines (always reachable) |
 | `src/content/legal.ts` | Legal texts (drafts — lawyer review before launch) |
 | `src/content/brand.ts` | Brand name + tagline (ADR-029) |
+| `src/app/(app)/(tabs)/_layout.tsx` | Bottom tabs: Home · Messages (unread badge) · Post · Orders · Profile |
+| `src/app/(app)/(tabs)/index.tsx`, `inbox.tsx`, `orders.tsx`, `profile.tsx` | The four tab screens (moved here from `(app)/`; URLs unchanged) |
+| `src/app/(app)/(tabs)/post.tsx` | "Post" tab placeholder → opens `/listings/new` |
+| `eas.json` | EAS build profiles (preview = APK for testers, API URL baked in) |
 | `assets/brand/*.svg` | Logo sources: app icon, rounded mark, Android foreground/background/monochrome, splash mark (ADR-030) |
 | `assets/brand/make-brand.cjs` | Regenerates the SVGs and every PNG icon from geometry |
 | `assets/brand/logo-mark-256.png` | Logo preview for docs |

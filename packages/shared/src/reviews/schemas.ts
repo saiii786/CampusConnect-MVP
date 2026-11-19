@@ -61,6 +61,8 @@ export interface WorkRecordEntryDto {
   rating: number | null;
   /** The buyer's comment, if any. */
   comment: string | null;
+  /** True when the buyer paid through the app (escrow); false for "pay directly" orders (ADR-027 L2). */
+  paidInApp: boolean;
 }
 
 /** GET /users/:id/work-record (public) — FR-053. */

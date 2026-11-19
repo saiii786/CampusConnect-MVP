@@ -10,6 +10,7 @@ import { Injectable } from '@nestjs/common';
 import {
   NotificationType,
   OrderStatus,
+  PaymentMode,
   REVIEW_WINDOW_DAYS,
   UserStatus,
   type CreateReviewInput,
@@ -158,6 +159,7 @@ export class ReviewsService {
         select: {
           id: true,
           completedAt: true,
+          paymentMode: true,
           listing: { select: { category: { select: { name: true } } } },
           reviews: { where: { revieweeId: userId, hiddenAt: null }, select: { rating: true, comment: true } },
         },
@@ -180,6 +182,7 @@ export class ReviewsService {
         completedMonth: (o.completedAt ?? new Date()).toISOString().slice(0, 7),
         rating: o.reviews[0]?.rating ?? null,
         comment: o.reviews[0]?.comment ?? null,
+        paidInApp: o.paymentMode === PaymentMode.ESCROW,
       })),
     };
   }

@@ -292,7 +292,8 @@ Validated in `backend/src/config/env.ts`; the server exits with a clear message 
 | `NODE_ENV` | yes | development / test / production |
 | `PORT` | no | 3000 |
 | `DATABASE_URL` | yes | pooled Supabase URL (runtime) |
-| `DIRECT_URL` | yes | direct Supabase URL (migrations) |
+| `DIRECT_URL` | yes | Supabase session pooler or direct URL (migrations) |
+| `DATABASE_CA_CERT_PATH` | production | `certs/supabase-prod-ca-2021.crt` — verifies the database's TLS certificate (ADR-031) |
 | `JWT_ACCESS_SECRET` | yes | ≥ 32 random chars; production refuses the `.env.example` placeholder |
 | `CODE_HASH_SECRET` | yes | ≥ 32 random chars, different from `JWT_ACCESS_SECRET`; keys the HMAC of email codes (ADR-017). Replaces the planned `JWT_REFRESH_SECRET` — refresh tokens are opaque, not JWTs |
 | `ACCESS_TOKEN_TTL_MINUTES` / `REFRESH_TOKEN_TTL_DAYS` | no | 15 / 30 |
@@ -328,8 +329,8 @@ Rules: a feature is not done until its tests run green **and were actually execu
 
 | Piece | Where | How |
 |---|---|---|
-| API | Render free web service | `render.yaml`; build `npm ci && npm run build -w backend`; start runs `prisma migrate deploy` then the server |
-| DB + storage | Supabase free project | migrations via `DIRECT_URL` |
+| API | Render free web service (Singapore) | `render.yaml`; installs/builds only shared + backend; start = server only — **migrations are run deliberately, not on deploy** (ADR-031, RUNBOOK §4) |
+| DB + storage | Supabase free project (ap-southeast-1) | runtime via transaction pooler, migrations via session pooler, TLS verified with Supabase's CA; bucket `media` |
 | Mobile (dev) | Expo Go | `npx expo start` |
 | Mobile (testers) | EAS Build free tier | Android APK via internal distribution |
 | CI | GitHub Actions | lint, typecheck, unit + integration tests (Postgres service container) on every push |

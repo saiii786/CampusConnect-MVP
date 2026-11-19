@@ -36,6 +36,9 @@ Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 
+# Database backups (contain user data — never commit)
+backups/
+
 # Logs
 *.log
 npm-debug.log*

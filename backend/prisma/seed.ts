@@ -5,6 +5,7 @@
 import 'dotenv/config';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../src/generated/prisma/client.js';
+import { pgOptions } from '../src/prisma/pg-options.js';
 import { CATEGORY_SEED } from './seed-data/categories.js';
 
 const url = process.env.DIRECT_URL ?? process.env.DATABASE_URL;
@@ -13,7 +14,8 @@ if (!url) {
   process.exit(1);
 }
 
-const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: url }) });
+// Verified TLS when DATABASE_CA_CERT_PATH is set (Supabase, ADR-031).
+const prisma = new PrismaClient({ adapter: new PrismaPg(pgOptions(url, process.env.DATABASE_CA_CERT_PATH)) });
 
 async function main(): Promise<void> {
   for (const [position, c] of CATEGORY_SEED.entries()) {

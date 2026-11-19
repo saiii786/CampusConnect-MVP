@@ -24,7 +24,8 @@
     "db:studio": "prisma studio",
     "admin:grant": "tsx prisma/scripts/grant-admin.ts",
     "load:test": "tsx prisma/scripts/load-test.ts",
-    "db:check": "tsx prisma/scripts/db-check.ts"
+    "db:check": "tsx prisma/scripts/db-check.ts",
+    "db:backup": "tsx prisma/scripts/db-backup.ts"
   },
   "dependencies": {
     "@cc/shared": "*",

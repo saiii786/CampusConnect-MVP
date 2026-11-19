@@ -205,8 +205,8 @@
 |---|---|---|---|
 | T9A.1 | Brand identity: name, logo + app icon + splash, colour palette, typography (free fonts via `expo-font`) | PRD Q1 | ✅ name + tagline (ADR-029); logo, app icon, splash, palette, Poppins (ADR-030) — founder review on the brand sheet |
 | T9A.2 | Design system v2: update `theme/tokens.ts`; new components — cards, chips, avatars, skeleton loaders, bottom sheets, toasts | NFR-06 | ⬜ |
-| T9A.3 | Navigation: bottom tabs (Home · Search · Post · Messages · Profile), consistent headers, deep links | NFR-06 | ⬜ |
-| T9A.4 | Screen redesign: home feed, listing cards/detail, profile & work record, chat, order timeline, wallet | NFR-06 | ⬜ |
+| T9A.3 | Navigation: bottom tabs (Home · Search · Post · Messages · Profile), consistent headers, deep links | NFR-06 | ✅ Home · Messages (unread badge) · Post · Orders · Profile; themed headers; existing links unchanged |
+| T9A.4 | Screen redesign: home feed, listing cards/detail, profile & work record, chat, order timeline, wallet | NFR-06 | ⏸ after the founder's manual test notes (`docs/TESTING.md`) — founder decision 2026-11-19: working model first, polish from notes |
 | T9A.5 | Motion & feedback: transitions, press feedback, haptics, pull-to-refresh, optimistic updates | NFR-06 | ⬜ |
 | T9A.6 | Form UX: native date picker, 6-box code input, inline validation, keyboard handling | NFR-06 | ⬜ |
 | T9A.7 | First-run onboarding walkthrough; illustrated empty states | NFR-06 | ⬜ |
@@ -215,18 +215,20 @@
 
 **Exit:** founder signs off the look and feel on a real phone; usability-test issues rated "blocker" are fixed; all tests green.
 
+**Status (2026-11-19):** T9A.1 + T9A.3 done. Founder chose "working model first": T9A.2, T9A.4–T9A.9 wait for the founder's notes from the manual test (`docs/TESTING.md`), then are planned from those notes.
+
 ## Phase 10 — Deploy & pilot readiness
 **Depends on:** Phase 9A. **Needs founder approval** before any deploy.
 
 | ID | Task | Status |
 |---|---|---|
 | T10.0 | Real email provider driver (PRD Q3 → Brevo) | 🟨 driver + tests done (ADR-029); needs the founder's Brevo API key + verified sender, then one real send |
-| T10.1 | Supabase production project + migrations; verify storage bucket MIME/size limits (ADR-027 L5) | 🟨 database ✅ (7 migrations, categories, RLS lock-down — ADR-029); storage bucket + service-role key still to do |
-| T10.2 | Render deploy (`render.yaml`), env secrets, health check; check `req.ip` behind Render's proxy (ADR-027 U1); use Supabase **pooler** URLs (direct host is IPv6-only); configure the Supabase CA certificate instead of `sslmode=no-verify`; re-run `npm run load:test` against it | ⬜ |
-| T10.3 | EAS build profiles, Android APK for testers | ⬜ |
-| T10.4 | Backup/restore procedure documented and tested | ⬜ |
-| T10.5 | Runbook: how to operate, rotate secrets, handle disputes | ⬜ |
-| T10.6 | MVP Definition of Done checklist signed off — incl. ADR-027 L2 (label off-app-paid work) and L3 (per-account login backoff); rotate the Supabase database password (shared in chat during setup, ADR-029) | ⬜ |
+| T10.1 | Supabase production project + migrations; verify storage bucket MIME/size limits (ADR-027 L5) | ✅ database (7 migrations, categories, RLS lock-down) + `media` bucket (5 MB, images only) — service-role key from founder still needed for uploads |
+| T10.2 | Render deploy (`render.yaml`), env secrets, health check; check `req.ip` behind Render's proxy (ADR-027 U1); use Supabase **pooler** URLs (direct host is IPv6-only); configure the Supabase CA certificate instead of `sslmode=no-verify`; re-run `npm run load:test` against it | 🟨 `render.yaml` + poolers + verified TLS done and rehearsed (clean-clone build + production boot against Supabase, ADR-031). Founder: create the Render service and paste keys (RUNBOOK §2); then check `req.ip` and re-run the load test there |
+| T10.3 | EAS build profiles, Android APK for testers | 🟨 `eas.json` + app id ready; founder: `eas login`/`init`/`build` (RUNBOOK §3) |
+| T10.4 | Backup/restore procedure documented and tested | ✅ `npm run db:backup` (dump + automatic restore check); tested on Supabase and on 20,468 rows (RUNBOOK §6) |
+| T10.5 | Runbook: how to operate, rotate secrets, handle disputes | ✅ `docs/RUNBOOK.md` |
+| T10.6 | MVP Definition of Done checklist signed off — incl. ADR-027 L3 (per-account login backoff); rotate the Supabase database password (shared in chat during setup, ADR-029); founder's manual test (`docs/TESTING.md`) done. (L2 work-record labels: ✅ ADR-031) | ⬜ |
 | T10.7 | Lawyer review of Terms / Privacy / Guidelines (`mobile/src/content/legal.ts`) before any public launch | ⬜ |
 
 ## v1.1 — Instant mode (after pilot feedback)
