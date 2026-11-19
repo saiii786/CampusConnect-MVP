@@ -54,10 +54,15 @@ export const envSchema = z.object({
   AUTH_RATE_LIMIT_PER_MINUTE: z.coerce.number().int().min(1).default(10),
   /**
    * How emails are sent. `console` prints them to the server log (development/test only;
-   * refused in production because real users would never receive their codes). Provider
-   * drivers are added when PRD Q3 is decided.
+   * refused in production because real users would never receive their codes). `brevo` sends
+   * real email through Brevo's free plan (ADR-029).
    */
-  MAIL_DRIVER: z.enum(['console']).default('console'),
+  MAIL_DRIVER: z.enum(['console', 'brevo']).default('console'),
+  /** Brevo API key (Brevo → SMTP & API → API keys). Server-side secret. */
+  BREVO_API_KEY: z.string().min(20).optional(),
+  /** Sender address — must be verified in Brevo (Senders). */
+  MAIL_FROM_EMAIL: z.email().optional(),
+  MAIL_FROM_NAME: z.string().min(1).max(60).default('Connect'),
 
   // ── Image storage (Phase 2, ADR-019) ─────────────────────────────────────
   /**
@@ -107,6 +112,11 @@ export const envSchema = z.object({
   }
   if (env.NODE_ENV === 'production' && env.PAYMENT_GATEWAY === 'fake') {
     ctx.addIssue({ code: 'custom', path: ['PAYMENT_GATEWAY'], message: 'the fake gateway is not allowed in production' });
+  }
+  if (env.MAIL_DRIVER === 'brevo') {
+    for (const key of ['BREVO_API_KEY', 'MAIL_FROM_EMAIL'] as const) {
+      if (!env[key]) ctx.addIssue({ code: 'custom', path: [key], message: 'is required when MAIL_DRIVER=brevo' });
+    }
   }
   if (env.STORAGE_DRIVER === 'supabase') {
     for (const key of ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'STORAGE_BUCKET'] as const) {

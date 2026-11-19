@@ -261,9 +261,9 @@ export class AuthService {
 function verificationEmail(to: string, code: string) {
   return {
     to,
-    subject: `${code} is your CampusConnect verification code`,
+    subject: `${code} is your Connect verification code`,
     text:
-      `Your CampusConnect verification code is ${code}.\n\n` +
+      `Your Connect verification code is ${code}.\n\n` +
       `It expires in ${EMAIL_CODE_TTL_MINUTES.VERIFY_EMAIL} minutes. If you did not sign up, ignore this email.`,
   };
 }
@@ -271,9 +271,9 @@ function verificationEmail(to: string, code: string) {
 function resetEmail(to: string, code: string) {
   return {
     to,
-    subject: `${code} is your CampusConnect password reset code`,
+    subject: `${code} is your Connect password reset code`,
     text:
-      `Use code ${code} to reset your CampusConnect password.\n\n` +
+      `Use code ${code} to reset your Connect password.\n\n` +
       `It expires in ${EMAIL_CODE_TTL_MINUTES.RESET_PASSWORD} minutes. If you did not ask for this, ignore this email — ` +
       `your password has not changed.`,
   };

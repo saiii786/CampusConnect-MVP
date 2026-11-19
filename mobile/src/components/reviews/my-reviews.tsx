@@ -48,7 +48,7 @@ export function MyReviews({ userId, displayName }: { userId: string; displayName
 
   const share = () =>
     void Share.share({
-      message: `${displayName}'s verified work record on CampusConnect: ${workRecordUrl(userId)}`,
+      message: `${displayName}'s verified work record on Connect: ${workRecordUrl(userId)}`,
     }).catch(() => undefined);
 
   return (

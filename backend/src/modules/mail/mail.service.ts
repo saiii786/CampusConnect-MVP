@@ -2,8 +2,7 @@
  * Outgoing email (FR-003 verification codes, FR-006 password reset).
  *
  * Feature code depends only on the abstract `MailService`; the concrete driver is chosen by
- * `MAIL_DRIVER` in mail.module.ts. Today the only driver is `console` (dev/test). A real
- * provider (PRD Q3 — must have a free tier) is added as another class implementing `send`.
+ * `MAIL_DRIVER` in mail.module.ts: `console` (dev/test) or `brevo` (production, ADR-029).
  */
 import { Logger } from '@nestjs/common';
 

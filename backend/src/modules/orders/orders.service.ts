@@ -300,7 +300,7 @@ export class OrdersService {
     // Tell the other side (or both, when the system/an admin acted).
     const recipients =
       actor === OrderActor.BUYER ? [order.sellerId] : actor === OrderActor.SELLER ? [order.buyerId] : [order.buyerId, order.sellerId];
-    const who = actor === OrderActor.BUYER ? 'The buyer' : actor === OrderActor.SELLER ? 'The seller' : 'CampusConnect';
+    const who = actor === OrderActor.BUYER ? 'The buyer' : actor === OrderActor.SELLER ? 'The seller' : 'Connect';
     await this.notifyOrder(order.id, recipients, NotificationType.ORDER_STATUS, `${who} ${ACTION_SENTENCE[action] ?? `did "${action}"`}`);
     if (result.moneyEffect === 'RELEASE') {
       await this.notifyOrder(order.id, [order.sellerId], NotificationType.PAYMENT_RECEIVED, `${formatPaise(order.amountPaise)} added to your wallet`);

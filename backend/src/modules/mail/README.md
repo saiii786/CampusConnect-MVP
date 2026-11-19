@@ -1,22 +1,32 @@
 # `mail` module — outgoing email
 
-PRD: FR-003 (verification), FR-006 (password reset), later FR-004 (college email) · Open question: PRD Q3 (provider)
+PRD: FR-003 (verification), FR-006 (password reset), FR-004 (college email) · Provider: PRD Q3 → **Brevo** (ADR-029)
 
 | File | What it does |
 |---|---|
 | `mail.service.ts` | `MailService` (abstract: `send({ to, subject, text })`) and `ConsoleMailService` (prints to the log, keeps the last 50 in `outbox` for tests; `lastTo(email)`) |
+| `brevo-mail.service.ts` | `BrevoMailService` — Brevo transactional API (`POST /v3/smtp/email`), 10 s timeout, never logs the key or message bodies |
+| `brevo-mail.service.spec.ts` | Unit tests (request shape, error handling, nothing secret logged) |
 | `mail.module.ts` | Global module; picks the driver from `MAIL_DRIVER` |
 
 ## Drivers
 | `MAIL_DRIVER` | Use | Status |
 |---|---|---|
 | `console` | development, tests | ✅ — **refused in production** by `config/env.ts` |
-| provider (e.g. Brevo/Resend free tier) | production | ⬜ added when PRD Q3 is decided |
+| `brevo` | production (free: 300 emails/day) | ✅ code + unit tests — ⚠ not yet tried with a real key |
 
-**Development tip:** after signing up in the app, find the code in the API terminal:
-`To: you@example.com | Subject: 123456 is your CampusConnect verification code`.
+## Setting up Brevo (free)
+1. Create an account at brevo.com (free plan).
+2. **Senders, Domains & Dedicated IPs → Senders → Add a sender**: the address emails come from (e.g. a Gmail you own). Click the confirmation link Brevo emails you. No domain needed.
+3. **SMTP & API → API keys → Generate a new API key**.
+4. Set on the server (never in the app, never committed):
+   ```
+   MAIL_DRIVER=brevo
+   BREVO_API_KEY=xkeysib-…
+   MAIL_FROM_EMAIL=<the verified sender>
+   MAIL_FROM_NAME=Connect
+   ```
+5. Sign up in the app with a real inbox and check the code arrives (and is not in spam).
 
-## Adding a provider
-1. Create `<provider>-mail.service.ts` extending `MailService`.
-2. Add the name to `MAIL_DRIVER` in `config/env.ts` (+ its API key variable), `.env.example` and ARCHITECTURE §11.
-3. Add a `case` in `mail.module.ts`; record the choice as an ADR.
+**Development tip:** with `console`, find the code in the API terminal:
+`To: you@example.com | Subject: 123456 is your Connect verification code`.

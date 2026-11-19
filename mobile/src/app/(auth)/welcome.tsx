@@ -6,6 +6,7 @@ import { router } from 'expo-router';
 import { View } from 'react-native';
 import { ServerStatusCard } from '@/components/server-status-card';
 import { AppText, Button, Screen } from '@/components/ui';
+import { BRAND_NAME, BRAND_TAGLINE } from '@/content/brand';
 import { useTheme } from '@/theme/use-theme';
 
 export default function WelcomeScreen() {
@@ -13,7 +14,10 @@ export default function WelcomeScreen() {
   return (
     <Screen>
       <View style={{ gap: spacing.sm, marginTop: spacing.xxl }}>
-        <AppText variant="title">CampusConnect</AppText>
+        <AppText variant="title">{BRAND_NAME}</AppText>
+        <AppText variant="heading" color="primary">
+          {BRAND_TAGLINE}
+        </AppText>
         <AppText color="textMuted">
           Earn from your skills. Hire people near you. Build a verified record of real work.
         </AppText>

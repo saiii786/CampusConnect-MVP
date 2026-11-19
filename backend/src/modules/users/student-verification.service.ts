@@ -94,9 +94,9 @@ export class StudentVerificationService {
 
     await this.mail.send({
       to: collegeEmail,
-      subject: `${code} is your CampusConnect student verification code`,
+      subject: `${code} is your Connect student verification code`,
       text:
-        `Use code ${code} to confirm this is your college email and get the Student badge on CampusConnect.\n\n` +
+        `Use code ${code} to confirm this is your college email and get the Student badge on Connect.\n\n` +
         `It expires in ${STUDENT_CODE_TTL_MINUTES} minutes. If you did not ask for this, ignore this email.`,
     });
     return this.profiles.getMe(userId);

@@ -65,6 +65,16 @@ describe('loadEnv', () => {
     expect(problems).toContain('MAIL_DRIVER');
   });
 
+  it('mail: brevo needs an API key and a sender address; sender name defaults to Connect', () => {
+    const problems = problemsOf({ ...VALID, MAIL_DRIVER: 'brevo' });
+    expect(problems).toContain('BREVO_API_KEY');
+    expect(problems).toContain('MAIL_FROM_EMAIL');
+    const env = loadEnv({ ...VALID, MAIL_DRIVER: 'brevo', BREVO_API_KEY: 'xkeysib-0123456789abcdefghij', MAIL_FROM_EMAIL: 'hello@example.com' });
+    expect(env.MAIL_DRIVER).toBe('brevo');
+    expect(env.MAIL_FROM_NAME).toBe('Connect');
+    expect(problemsOf({ ...VALID, MAIL_DRIVER: 'brevo', BREVO_API_KEY: 'xkeysib-0123456789abcdefghij', MAIL_FROM_EMAIL: 'not-an-email' })).toContain('MAIL_FROM_EMAIL');
+  });
+
   it('storage: local by default; supabase needs its settings; production refuses local', () => {
     expect(loadEnv(VALID).STORAGE_DRIVER).toBe('local');
     const problems = problemsOf({ ...VALID, STORAGE_DRIVER: 'supabase' });

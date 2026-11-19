@@ -48,7 +48,7 @@ export class PaymentsService {
       const session = await this.gateway.createCheckout({
         paymentId: payment.id,
         amountPaise: input.amountPaise,
-        description: 'CampusConnect wallet top-up (TEST MODE)',
+        description: 'Connect wallet top-up (TEST MODE)',
       });
       const checkoutUrl =
         this.gateway.name === 'fake' ? `${session.checkoutUrl}?token=${this.fakeToken(payment.id)}` : session.checkoutUrl;

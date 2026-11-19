@@ -26,7 +26,7 @@ export function PaymentModePicker({ value, onChange }: { value: PaymentMode; onC
       />
       <AppText variant="caption" color="textMuted">
         {value === 'DIRECT'
-          ? 'You pay the seller yourself (cash or UPI) when the work is done. CampusConnect does not hold the money.'
+          ? 'You pay the seller yourself (cash or UPI) when the work is done. Connect does not hold the money.'
           : 'Your money is held safely in the app and released to the seller only when you approve the work.'}
       </AppText>
     </View>

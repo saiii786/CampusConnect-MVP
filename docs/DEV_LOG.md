@@ -15,6 +15,24 @@ A dated, append-only record of what was done in each working session: what chang
 
 ---
 
+## 2026-11-19 — Founder decisions: brand, email, Supabase (start of Phase 10)
+**Roadmap tasks:** T9A.1 (name), T10.0, T10.1 (database)
+
+**Decisions (founder):** name **Connect**, tagline "India's freelance platform for all"; email via **Brevo**; Supabase project created and approved for project changes; standard legal terms for now (lawyer later). Recorded in ADR-029 and PRD Q1/Q3.
+
+**Done**
+- Supabase: connectivity checked (Postgres 17, IPv6-only direct host), 7 migrations applied, 42 categories seeded. Found that Supabase's `anon` role had full privileges on every app table (RLS, auto-enabled by Supabase, blocked rows but not TRUNCATE) → new migration locks the schema (RLS everywhere + privileges revoked); verified on Supabase: anon grants on `User` = none, tables without RLS = 0. New integration test keeps it that way.
+- Seeding failed at first with "self-signed certificate in certificate chain" (node-postgres verifies `sslmode=require`; Supabase uses its own CA) → app URL uses `sslmode=no-verify` for now; proper CA verification is T10.2.
+- Credentials kept in git-ignored `backend/.env.supabase` (checked with `git check-ignore`); dev `.env` untouched.
+- Brevo email driver (`MAIL_DRIVER=brevo`, `BREVO_API_KEY`, `MAIL_FROM_EMAIL`, `MAIL_FROM_NAME`) + unit tests + env validation. Not yet tried with a real key.
+- Brand: user-visible "CampusConnect" → "Connect" in app name, screens, emails, work-record page, legal text (29 strings, via a script limited to a file list; diff reviewed); welcome screen shows the tagline.
+
+**Tests run (all executed this session)** — see the commit gate output for this change: lint, typecheck, unit, integration, mobile, Android bundle.
+
+**Not verified / known gaps**
+- No real email sent yet (needs the Brevo key). App not deployed. Supabase storage bucket not set up.
+- The database password was shared in chat → rotate before real users (T10.6).
+
 ## 2026-11-19 — Phase 9 (part 2): UX + accessibility pass, E2E flows
 **Roadmap tasks:** T9.1, T9.2, T9.5
 

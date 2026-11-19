@@ -17,7 +17,7 @@ const FLOOD = /(.)\1{29,}/;
 export function findContentProblem(text: string): string | null {
   const normalized = text.toLowerCase().replace(/\s+/g, ' ');
   const phrase = BLOCKED_PHRASES.find((p) => normalized.includes(p));
-  if (phrase) return `Asking for "${phrase}" is not allowed on CampusConnect (common scam). Keep all payments in the app.`;
+  if (phrase) return `Asking for "${phrase}" is not allowed on Connect (common scam). Keep all payments in the app.`;
   if ((text.match(LINK) ?? []).length > MAX_LINKS) return `Too many links (max ${MAX_LINKS})`;
   if (FLOOD.test(text)) return 'Please remove the repeated characters';
   return null;

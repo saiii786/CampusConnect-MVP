@@ -228,9 +228,9 @@ Priority: **M** = must have for MVP · **S** = should have for MVP · **L** = la
 ## 12. Open questions (need founder answer — do not guess in code)
 | # | Question | Default used until answered |
 |---|---|---|
-| Q1 | Final product name? | "CampusConnect" |
+| Q1 | Final product name? | ✅ **Connect** — tagline "India's freelance platform for all" (founder, 2026-11-19, ADR-029). Code name `campusconnect` stays internal |
 | Q2 | Pilot city? | Hyderabad |
-| Q3 | Which email provider for verification mails (free tier)? | Dev: emails printed to server log. Proposed: Brevo or Resend free tier |
+| Q3 | Which email provider for verification mails (free tier)? | ✅ **Brevo** free plan (300/day, no own domain needed) — founder, 2026-11-19, ADR-029. Dev/test: printed to the server log |
 | Q4 | Phone OTP provider? (SMS usually costs money) | Not in MVP |
 | Q5 | College email domains accepted for the Student badge? | Any `*.ac.in` / `*.edu` / `*.edu.in` + admin-maintained allow-list |
 | Q6 | Platform fee after pilot? | 0% |

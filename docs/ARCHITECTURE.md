@@ -280,6 +280,7 @@ Terminal states: **COMPLETED, CANCELLED, DECLINED.** A buyer who wants to stop m
 | Money manipulation | Server computes all amounts; positive-integer validation; conditional balance updates; idempotency keys; webhook signature check |
 | Data leaks | Safe response mappers; emails/phones never in public responses; error filter hides internals |
 | Abuse/spam | Rate limits on messages/listings; reports; blocks; admin suspension |
+| Supabase public APIs (anon key) | Every table has Row Level Security and no privileges for `anon`/`authenticated`; only the backend (table owner) touches data — enforced by `test/schema-safety.e2e-spec.ts` (ADR-029) |
 | Misconfiguration | Env validated at startup; helmet headers; CORS restricted to configured origins (mobile apps don't need CORS) |
 
 ## 11. Configuration (environment variables)
@@ -306,7 +307,8 @@ Validated in `backend/src/config/env.ts`; the server exits with a clear message 
 | `STORAGE_DRIVER` | no | `local` (default; refused in production) or `supabase` (ADR-019) |
 | `STORAGE_LOCAL_DIR` | no | `.uploads` (local driver folder, git-ignored) |
 | `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` / `STORAGE_BUCKET` | if `supabase` | server-side only, never in the app; bucket public, 5 MB limit, image types only |
-| `MAIL_DRIVER` | no | `console` (default; dev/test only — refused when `NODE_ENV=production`). Provider driver added when PRD Q3 is decided |
+| `MAIL_DRIVER` | no | `console` (default; dev/test only — refused when `NODE_ENV=production`) or `brevo` (ADR-029) |
+| `BREVO_API_KEY` / `MAIL_FROM_EMAIL` / `MAIL_FROM_NAME` | if `brevo` | server-side secret · Brevo-verified sender · default `Connect` |
 | ~~`PUBLIC_WEB_BASE_URL`~~ | — | Not used: the public work-record page is served by the API itself (`GET /work-record/:id`, ADR-025) |
 
 Mobile: `EXPO_PUBLIC_API_URL` (required for builds). In development it may be left empty: the app derives `http://<dev-computer>:3000/api/v1` from the Expo dev server address (ADR-015). No hard-coded IPs anywhere.

@@ -19,21 +19,21 @@ export const LEGAL_DOCS: Record<LegalDocId, LegalDoc> = {
       {
         heading: 'Pilot and test mode',
         body:
-          'CampusConnect is in a pilot phase. All wallet money is TEST MODE money: it has no real value, cannot be cashed out and no real payment is ever taken or sent through the app. If you choose "Pay directly", you and the other person arrange payment yourselves and CampusConnect is not part of that payment.',
+          'Connect is in a pilot phase. All wallet money is TEST MODE money: it has no real value, cannot be cashed out and no real payment is ever taken or sent through the app. If you choose "Pay directly", you and the other person arrange payment yourselves and Connect is not part of that payment.',
       },
       {
-        heading: 'Who can use CampusConnect',
+        heading: 'Who can use Connect',
         body: 'You must be at least 18 years old and give true information about yourself. One person, one account. You are responsible for keeping your password safe.',
       },
       {
-        heading: 'What CampusConnect does',
+        heading: 'What Connect does',
         body:
           'We help people find each other to do work: you can offer services, post jobs, send quotes, chat and record orders. We are not the employer or the customer of anyone, and we do not guarantee the quality, safety or legality of any work. Check people and listings carefully, and use the reviews and the start/finish codes for on-site jobs.',
       },
       {
         heading: 'Your content',
         body:
-          'You own what you post (text and photos). You allow CampusConnect to show it in the app and on your public work record. Do not post anything you do not have the right to share, or anything that breaks the Community Guidelines.',
+          'You own what you post (text and photos). You allow Connect to show it in the app and on your public work record. Do not post anything you do not have the right to share, or anything that breaks the Community Guidelines.',
       },
       {
         heading: 'Orders, reviews and disputes',

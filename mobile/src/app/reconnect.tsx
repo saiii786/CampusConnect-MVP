@@ -24,7 +24,7 @@ export default function ReconnectScreen() {
   return (
     <Screen scroll={false}>
       <View style={{ flex: 1, justifyContent: 'center', gap: spacing.lg }}>
-        <AppText variant="title">Can&apos;t reach CampusConnect</AppText>
+        <AppText variant="title">Can&apos;t reach Connect</AppText>
         <AppText color="textMuted">
           Check your internet connection. If the server was asleep it can take up to a minute to wake up.
         </AppText>

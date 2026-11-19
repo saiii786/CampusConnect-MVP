@@ -33,7 +33,7 @@ export async function registerForPush(): Promise<void> {
       handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: false, shouldSetBadge: false }),
     });
     if (Platform.OS === 'android') {
-      await Notifications.setNotificationChannelAsync('default', { name: 'CampusConnect', importance: Notifications.AndroidImportance.DEFAULT });
+      await Notifications.setNotificationChannelAsync('default', { name: 'Connect', importance: Notifications.AndroidImportance.DEFAULT });
     }
     let { status } = await Notifications.getPermissionsAsync();
     if (status !== 'granted') status = (await Notifications.requestPermissionsAsync()).status;

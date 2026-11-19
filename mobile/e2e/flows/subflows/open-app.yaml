@@ -5,5 +5,5 @@ appId: host.exp.exponent
     clearState: false
 - openLink: ${EXPO_URL}
 - extendedWaitUntil:
-    visible: "CampusConnect"
+    visible: "Connect"
     timeout: 60000

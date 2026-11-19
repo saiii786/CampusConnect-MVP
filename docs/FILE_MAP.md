@@ -28,7 +28,7 @@ _Last updated: 2026-11-19 (end of Phase 8)._
 | `docs/PRD.md` | Product requirements: problem, users, three matching modes, requirement IDs (FR/NFR), open questions Q1–Q7 |
 | `docs/ROADMAP.md` | Phased plan, task IDs and status, exit criteria, Definition of Done, parking lot |
 | `docs/ARCHITECTURE.md` | Technical design: stack, modules, data model, order state machine, money design, API & socket contracts, security, config, testing, deployment |
-| `docs/DECISIONS.md` | Decision log ADR-001…028, with reasons; how to change a decision |
+| `docs/DECISIONS.md` | Decision log ADR-001…029, with reasons; how to change a decision |
 | `docs/DEV_LOG.md` | Dated record of each work session: done, tests run, gaps, next |
 | `docs/FILE_MAP.md` | This file |
 
@@ -78,7 +78,12 @@ _Last updated: 2026-11-19 (end of Phase 8)._
 | `prisma/migrations/20261119000000_phase8_moderation_hidden/migration.sql` | Phase 8 (additive): `Message.hiddenAt`, `Review.hiddenAt` |
 | `prisma/migrations/20261119100000_phase9_listing_trgm/migration.sql` | Phase 9 (additive): pg_trgm + trigram indexes on listing title/description |
 | `prisma/migrations/20261119110000_phase9_order_code_attempts/migration.sql` | Phase 9 (additive): `Order.codeAttempts` |
+| `prisma/migrations/20261119120000_phase10_lock_public_schema/migration.sql` | RLS on every table + no privileges for Supabase `anon`/`authenticated` (ADR-029) |
 | `prisma/migrations/migration_lock.toml` | Prisma's provider lock (do not edit) |
+| `.env.supabase` | **Not in git.** Supabase connection strings (production database) — local file only |
+| `src/modules/mail/brevo-mail.service.ts` | Brevo email driver (ADR-029) |
+| `src/modules/mail/brevo-mail.service.spec.ts` | Brevo driver unit tests |
+| `test/schema-safety.e2e-spec.ts` | Fails if any table lacks Row Level Security |
 | `prisma/scripts/grant-admin.ts` | `npm run admin:grant -- <email> [--revoke]` |
 | `prisma/scripts/load-test.ts` | `npm run load:test` — seeds a `*_load` database and measures p50/p95/p99 per endpoint |
 | `prisma/seed.ts` | Idempotent seed runner (`npm run db:seed`) |
@@ -274,6 +279,7 @@ _Last updated: 2026-11-19 (end of Phase 8)._
 | `src/app/(app)/report.tsx` | Report screen (reason + details) |
 | `src/app/legal/[doc].tsx` | Terms / Privacy / Guidelines (always reachable) |
 | `src/content/legal.ts` | Legal texts (drafts — lawyer review before launch) |
+| `src/content/brand.ts` | Brand name + tagline (ADR-029) |
 | `src/components/ui/offline-banner.tsx` | "You're offline" banner + `useIsOnline()` (ADR-028) |
 | `src/components/ui/page-footer.tsx` | Endless-list footer: loading more / error with Try again |
 | `src/theme/tokens.test.ts` | Contrast tests: every text pair ≥ 4.5:1, control outlines ≥ 3:1, light + dark |

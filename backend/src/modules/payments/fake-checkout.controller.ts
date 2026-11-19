@@ -39,7 +39,7 @@ export class FakeCheckoutController {
     const q = `?token=${encodeURIComponent(token)}`;
     return page(
       'Fake checkout',
-      `<h1>Add ${formatPaise(p.amountPaise)}</h1><p>This is the development checkout. Pressing Pay adds test money to your CampusConnect wallet.</p>
+      `<h1>Add ${formatPaise(p.amountPaise)}</h1><p>This is the development checkout. Pressing Pay adds test money to your Connect wallet.</p>
 <form method="post" action="/api/v1/payments/fake/${id}/pay${q}"><button class="pay" type="submit">Pay ${formatPaise(p.amountPaise)} (test)</button></form>
 <form method="post" action="/api/v1/payments/fake/${id}/cancel${q}"><button class="cancel" type="submit">Cancel</button></form>`,
     );
@@ -64,6 +64,6 @@ export class FakeCheckoutController {
   @Get('return')
   @Header('Content-Type', 'text/html; charset=utf-8')
   done(): string {
-    return page('Done', '<h1>Payment finished</h1><p>Go back to the CampusConnect app — your wallet updates in a few seconds.</p>');
+    return page('Done', '<h1>Payment finished</h1><p>Go back to the Connect app — your wallet updates in a few seconds.</p>');
   }
 }

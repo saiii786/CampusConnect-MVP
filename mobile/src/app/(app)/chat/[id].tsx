@@ -150,7 +150,7 @@ export default function ChatScreen() {
             <PageFooter query={messages} />
             <Notice
               tone="warning"
-              message="For your safety, keep payments inside CampusConnect. Never share OTPs or bank passwords."
+              message="For your safety, keep payments inside Connect. Never share OTPs or bank passwords."
             />
           </View>
         }
