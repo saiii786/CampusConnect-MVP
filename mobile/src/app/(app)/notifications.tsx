@@ -11,6 +11,7 @@ import { AppText, Button, EmptyState, ErrorState, LoadingState, PageFooter, Scre
 import { describeError } from '@/lib/api/api-error';
 import { formatShortTime } from '@/lib/chat/format';
 import { hrefForLink, notificationKeys, notificationsApi, useNotifications } from '@/lib/notifications/notifications-api';
+import { fonts } from '@/theme/tokens';
 import { useTheme } from '@/theme/use-theme';
 
 export default function NotificationsScreen() {
@@ -61,7 +62,7 @@ export default function NotificationsScreen() {
             })}
           >
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: spacing.sm }}>
-              <AppText variant="label" style={{ flex: 1, fontWeight: n.read ? '500' : '700' }}>
+              <AppText variant="label" style={{ flex: 1, fontFamily: n.read ? fonts.medium : fonts.bold }}>
                 {n.title}
               </AppText>
               <AppText variant="caption" color="textMuted">

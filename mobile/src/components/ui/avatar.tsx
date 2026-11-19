@@ -6,6 +6,7 @@ import { Image } from 'expo-image';
 import { useState } from 'react';
 import { View } from 'react-native';
 import { resolveMediaUrl } from '@/lib/api/media-url';
+import { fonts } from '@/theme/tokens';
 import { useTheme } from '@/theme/use-theme';
 import { AppText } from './app-text';
 
@@ -44,7 +45,7 @@ export function Avatar({ name, url, size = 72 }: AvatarProps) {
       accessibilityLabel={`${name} (no profile photo)`}
       style={[style, { backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center' }]}
     >
-      <AppText style={{ color: colors.primary, fontSize: size * 0.38, fontWeight: '700' }}>{initialsOf(name)}</AppText>
+      <AppText style={{ color: colors.primary, fontSize: size * 0.38, fontFamily: fonts.bold }}>{initialsOf(name)}</AppText>
     </View>
   );
 }

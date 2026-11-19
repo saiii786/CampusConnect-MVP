@@ -15,6 +15,17 @@ A dated, append-only record of what was done in each working session: what chang
 
 ---
 
+## 2026-11-19 — Phase 9A start: visual identity; Supabase pooler; test accounts
+**Roadmap tasks:** T9A.1, T10.2 (prep)
+
+**Done**
+- Visual identity v1 (ADR-030), shown to the founder on a brand sheet artifact: linked-rings logo generated from geometry (SVG sources + all PNG icons), indigo + marigold palette (light + navy dark mode; contrast tests extended to 38 pairs), Poppins font (loaded behind the splash; `fontFamily` per weight), navigation headers themed. Removed unused Expo template images and the iOS `expo.icon` that would have shown the Expo logo on iPhones.
+- Supabase transaction pooler (IPv4, ap-southeast-1) added to the git-ignored `.env.supabase` and checked with the new read-only `npm run db:check` (repeated + parallel queries through the app's Prisma client: OK, so transaction mode works with our driver).
+- Founder's 6 real test inboxes stored only in git-ignored `mobile/e2e/.env.test-accounts` with suggested roles (admin, 2 sellers, 2 buyers, college email for the Student badge).
+
+**Not verified**
+- Logo, colours and fonts were seen as rendered images and in the brand sheet, not yet on a phone (fonts on Android especially).
+
 ## 2026-11-19 — Founder decisions: brand, email, Supabase (start of Phase 10)
 **Roadmap tasks:** T9A.1 (name), T10.0, T10.1 (database)
 

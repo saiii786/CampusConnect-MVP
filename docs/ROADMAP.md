@@ -203,7 +203,7 @@
 
 | ID | Task | Refs | Status |
 |---|---|---|---|
-| T9A.1 | Brand identity: name, logo + app icon + splash, colour palette, typography (free fonts via `expo-font`) | PRD Q1 | 🟨 name + tagline done ("Connect — India's freelance platform for all", ADR-029); logo, icon, palette, fonts to do |
+| T9A.1 | Brand identity: name, logo + app icon + splash, colour palette, typography (free fonts via `expo-font`) | PRD Q1 | ✅ name + tagline (ADR-029); logo, app icon, splash, palette, Poppins (ADR-030) — founder review on the brand sheet |
 | T9A.2 | Design system v2: update `theme/tokens.ts`; new components — cards, chips, avatars, skeleton loaders, bottom sheets, toasts | NFR-06 | ⬜ |
 | T9A.3 | Navigation: bottom tabs (Home · Search · Post · Messages · Profile), consistent headers, deep links | NFR-06 | ⬜ |
 | T9A.4 | Screen redesign: home feed, listing cards/detail, profile & work record, chat, order timeline, wallet | NFR-06 | ⬜ |

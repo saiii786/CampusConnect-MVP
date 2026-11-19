@@ -8,6 +8,7 @@ import { AppText, Avatar, Chip, EmptyState, ErrorState, LoadingState, PageFooter
 import { useSession } from '@/lib/auth/session';
 import { useConversations } from '@/lib/chat/chat-api';
 import { formatShortTime } from '@/lib/chat/format';
+import { fonts } from '@/theme/tokens';
 import { useTheme } from '@/theme/use-theme';
 
 export default function InboxScreen() {
@@ -51,7 +52,7 @@ export default function InboxScreen() {
                 {c.listing.title}
               </AppText>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
-                <AppText numberOfLines={1} style={{ flex: 1, fontWeight: c.unreadCount ? '700' : '400' }}>
+                <AppText numberOfLines={1} style={{ flex: 1, fontFamily: c.unreadCount ? fonts.bold : fonts.regular }}>
                   {c.lastMessage ? `${c.lastMessage.senderId === me ? 'You: ' : ''}${c.lastMessage.body}` : 'No messages yet'}
                 </AppText>
                 {c.unreadCount ? <Chip label={String(c.unreadCount)} tone="primary" /> : null}

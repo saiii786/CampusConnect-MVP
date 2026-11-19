@@ -28,7 +28,7 @@ _Last updated: 2026-11-19 (end of Phase 8)._
 | `docs/PRD.md` | Product requirements: problem, users, three matching modes, requirement IDs (FR/NFR), open questions Q1–Q7 |
 | `docs/ROADMAP.md` | Phased plan, task IDs and status, exit criteria, Definition of Done, parking lot |
 | `docs/ARCHITECTURE.md` | Technical design: stack, modules, data model, order state machine, money design, API & socket contracts, security, config, testing, deployment |
-| `docs/DECISIONS.md` | Decision log ADR-001…029, with reasons; how to change a decision |
+| `docs/DECISIONS.md` | Decision log ADR-001…030, with reasons; how to change a decision |
 | `docs/DEV_LOG.md` | Dated record of each work session: done, tests run, gaps, next |
 | `docs/FILE_MAP.md` | This file |
 
@@ -86,6 +86,7 @@ _Last updated: 2026-11-19 (end of Phase 8)._
 | `test/schema-safety.e2e-spec.ts` | Fails if any table lacks Row Level Security |
 | `prisma/scripts/grant-admin.ts` | `npm run admin:grant -- <email> [--revoke]` |
 | `prisma/scripts/load-test.ts` | `npm run load:test` — seeds a `*_load` database and measures p50/p95/p99 per endpoint |
+| `prisma/scripts/db-check.ts` | `npm run db:check` — read-only queries through the app's Prisma client (test a connection string, e.g. Supabase pooler) |
 | `prisma/seed.ts` | Idempotent seed runner (`npm run db:seed`) |
 | `prisma/seed-data/categories.ts` | Category tree (PRD Appendix A); `sensitive` flags gated categories |
 | `prisma/docker-init/01-create-test-db.sql` | Creates `campusconnect_test` when the Docker DB is first created |
@@ -280,6 +281,11 @@ _Last updated: 2026-11-19 (end of Phase 8)._
 | `src/app/legal/[doc].tsx` | Terms / Privacy / Guidelines (always reachable) |
 | `src/content/legal.ts` | Legal texts (drafts — lawyer review before launch) |
 | `src/content/brand.ts` | Brand name + tagline (ADR-029) |
+| `assets/brand/*.svg` | Logo sources: app icon, rounded mark, Android foreground/background/monochrome, splash mark (ADR-030) |
+| `assets/brand/make-brand.cjs` | Regenerates the SVGs and every PNG icon from geometry |
+| `assets/brand/logo-mark-256.png` | Logo preview for docs |
+| `assets/images/*.png` | Generated app icons (icon, adaptive foreground/background/monochrome, splash, favicon) |
+| `e2e/.env.test-accounts` | **Not in git.** Real test inboxes, local only |
 | `src/components/ui/offline-banner.tsx` | "You're offline" banner + `useIsOnline()` (ADR-028) |
 | `src/components/ui/page-footer.tsx` | Endless-list footer: loading more / error with Try again |
 | `src/theme/tokens.test.ts` | Contrast tests: every text pair ≥ 4.5:1, control outlines ≥ 3:1, light + dark |

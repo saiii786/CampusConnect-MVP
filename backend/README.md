@@ -78,6 +78,7 @@ Exit code 1 if any endpoint's p95 ≥ 300 ms or returns errors. Results of the l
 | `prisma/seed.ts`, `prisma/seed-data/` | Idempotent reference data (categories) |
 | `prisma/scripts/grant-admin.ts` | `npm run admin:grant` |
 | `prisma/scripts/load-test.ts` | `npm run load:test` (Phase 9, ADR-027) |
+| `prisma/scripts/db-check.ts` | `npm run db:check` — read-only check of `DATABASE_URL` through the app's own Prisma client |
 | `prisma/docker-init/` | SQL run once when the local Docker DB is created (creates the test DB) |
 | `prisma.config.ts` | Prisma 7 CLI config (schema path, migrations, seed, `DIRECT_URL`) |
 | `test/setup/` | Integration-test helpers: test env, global setup (runs migrations), `createTestApp()`, `resetUserData()`, `seedCategories()`, `createUser()`, `uploadImage()` |

@@ -3,7 +3,7 @@
  * Announced as a checkbox with its checked state; shows an error message underneath.
  */
 import { Pressable, View } from 'react-native';
-import { MIN_TOUCH_SIZE } from '@/theme/tokens';
+import { fonts, MIN_TOUCH_SIZE } from '@/theme/tokens';
 import { useTheme } from '@/theme/use-theme';
 import { AppText } from './app-text';
 
@@ -38,7 +38,7 @@ export function Checkbox({ checked, onChange, label, error }: CheckboxProps) {
             justifyContent: 'center',
           }}
         >
-          {checked ? <AppText style={{ color: colors.onPrimary, fontWeight: '700' }}>✓</AppText> : null}
+          {checked ? <AppText style={{ color: colors.onPrimary, fontFamily: fonts.bold }}>✓</AppText> : null}
         </View>
         <AppText style={{ flex: 1 }}>{label}</AppText>
       </Pressable>

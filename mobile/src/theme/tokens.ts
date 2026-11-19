@@ -5,19 +5,27 @@
  * Accessibility (NFR-07): text/background pairs below meet WCAG AA contrast (≥ 4.5:1 for
  * body text). If you change a colour, re-check contrast (e.g. webaim.org/resources/contrastchecker).
  */
+/**
+ * Brand "Connect" (ADR-030): indigo = trust, marigold = warmth / India. Logo colours: indigo #4338CA,
+ * deep indigo #272379, marigold #F5B301 (mobile/assets/brand). Marigold is too light for text on white —
+ * use `accent` only as a fill with `onAccent` text, or on dark backgrounds.
+ */
 export const palette = {
   light: {
     background: '#FFFFFF',
-    surface: '#F5F3FA',
+    surface: '#F4F5FB',
     surfaceRaised: '#FFFFFF',
-    border: '#DDD8E8',
+    border: '#DFE1EE',
     /** Outlines of controls (inputs, checkboxes, unselected pills, empty stars): ≥ 3:1 (WCAG 1.4.11). */
-    borderStrong: '#857F95',
-    text: '#17141F',
-    textMuted: '#5B5668',
-    primary: '#6D28D9',
+    borderStrong: '#7E8299',
+    text: '#12142B',
+    textMuted: '#565A72',
+    primary: '#4338CA',
     onPrimary: '#FFFFFF',
-    primarySoft: '#EDE7FB',
+    primarySoft: '#ECEEFF',
+    accent: '#F5B301',
+    onAccent: '#2B1D00',
+    accentSoft: '#FFF4D1',
     danger: '#B42318',
     onDanger: '#FFFFFF',
     dangerSoft: '#FEE4E2',
@@ -27,16 +35,19 @@ export const palette = {
     warningSoft: '#FEF0C7',
   },
   dark: {
-    background: '#0F0E13',
-    surface: '#1C1A23',
-    surfaceRaised: '#25222E',
-    border: '#34303F',
-    borderStrong: '#7D7790',
-    text: '#F4F2F8',
-    textMuted: '#B3AEC0',
-    primary: '#C4B5FD',
-    onPrimary: '#1E0F45',
-    primarySoft: '#2A2140',
+    background: '#0D0F1E',
+    surface: '#171A2E',
+    surfaceRaised: '#20243B',
+    border: '#2F3450',
+    borderStrong: '#7A80A0',
+    text: '#F2F3FA',
+    textMuted: '#AEB2CA',
+    primary: '#A9B4FF',
+    onPrimary: '#1A1650',
+    primarySoft: '#252A55',
+    accent: '#F5B301',
+    onAccent: '#2B1D00',
+    accentSoft: '#33280A',
     danger: '#F97066',
     onDanger: '#3A1513',
     dangerSoft: '#3A1513',
@@ -55,15 +66,27 @@ export const spacing = { xxs: 2, xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32 }
 
 export const radius = { sm: 6, md: 10, lg: 16, pill: 999 } as const;
 
+/**
+ * Poppins (free, Google Fonts; also covers Devanagari for future Hindi) — loaded in app/_layout.tsx.
+ * Each weight is its own font file: set `fontFamily: fonts.bold`, never `fontWeight` (Android would
+ * fall back to the system font).
+ */
+export const fonts = {
+  regular: 'Poppins_400Regular',
+  medium: 'Poppins_500Medium',
+  semibold: 'Poppins_600SemiBold',
+  bold: 'Poppins_700Bold',
+} as const;
+
 /** Minimum touch target (NFR-07). */
 export const MIN_TOUCH_SIZE = 48;
 
 export const typography = {
-  title: { fontSize: 28, lineHeight: 34, fontWeight: '700' },
-  heading: { fontSize: 20, lineHeight: 26, fontWeight: '600' },
-  body: { fontSize: 16, lineHeight: 22, fontWeight: '400' },
-  label: { fontSize: 14, lineHeight: 20, fontWeight: '600' },
-  caption: { fontSize: 13, lineHeight: 18, fontWeight: '400' },
+  title: { fontSize: 28, lineHeight: 36, fontFamily: fonts.bold },
+  heading: { fontSize: 20, lineHeight: 28, fontFamily: fonts.semibold },
+  body: { fontSize: 16, lineHeight: 24, fontFamily: fonts.regular },
+  label: { fontSize: 14, lineHeight: 20, fontFamily: fonts.semibold },
+  caption: { fontSize: 13, lineHeight: 18, fontFamily: fonts.regular },
 } as const;
 
 export type TypographyVariant = keyof typeof typography;

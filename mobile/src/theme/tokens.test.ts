@@ -28,6 +28,8 @@ const TEXT_PAIRS: [ColorName, ColorName][] = [
   ['primary', 'primarySoft'],
   ['onPrimary', 'primary'],
   ['onDanger', 'danger'],
+  ['onAccent', 'accent'],
+  ['text', 'accentSoft'],
   ['danger', 'background'],
   ['danger', 'dangerSoft'],
   ['success', 'successSoft'],
