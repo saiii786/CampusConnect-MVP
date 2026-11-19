@@ -9,13 +9,14 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { APP_ENV } from '../config/config.module.js';
 import type { AppEnv } from '../config/env.js';
 import { PrismaClient } from '../generated/prisma/client.js';
+import { pgOptions } from './pg-options.js';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleDestroy {
   private readonly logger = new Logger(PrismaService.name);
 
   constructor(@Inject(APP_ENV) env: AppEnv) {
-    super({ adapter: new PrismaPg({ connectionString: env.DATABASE_URL }) });
+    super({ adapter: new PrismaPg(pgOptions(env.DATABASE_URL, env.DATABASE_CA_CERT_PATH)) });
   }
 
   /** True if the database answers a trivial query (used by /health). */

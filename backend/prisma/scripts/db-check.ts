@@ -9,13 +9,16 @@
 import 'dotenv/config';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../../src/generated/prisma/client.js';
+import { pgOptions } from '../../src/prisma/pg-options.js';
 
 const url = process.env.DATABASE_URL;
 if (!url) {
   console.error('DATABASE_URL is not set');
   process.exit(1);
 }
-const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: url }) });
+// Same connection options as the API (verifies TLS when DATABASE_CA_CERT_PATH is set).
+const prisma = new PrismaClient({ adapter: new PrismaPg(pgOptions(url, process.env.DATABASE_CA_CERT_PATH)) });
+console.log(`TLS certificate check: ${process.env.DATABASE_CA_CERT_PATH ? 'ON (verified against CA)' : 'off (URL decides)'}`);
 try {
   const started = Date.now();
   // Repeated and parallel queries: catches poolers that break prepared statements (transaction mode).

@@ -1,7 +1,6 @@
 /**
  * Home = Browse (T3.4): search box, Services | Job requests, "Near me", filters, endless list.
- * Also shows the verify-email / complete-profile prompts and quick links (post, my listings, profile).
- * Phase 9A replaces the link row with bottom tabs.
+ * Also shows the verify-email prompt and shortcuts that are not tabs (notifications, wallet, my listings, my quotes).
  */
 import { router } from 'expo-router';
 import { useState } from 'react';
@@ -10,7 +9,6 @@ import { ListingCard } from '@/components/listings/listing-card';
 import { AppText, Button, EmptyState, ErrorState, LoadingState, Notice, PageFooter, Screen, Segmented, TextField } from '@/components/ui';
 import { describeError } from '@/lib/api/api-error';
 import { useSession } from '@/lib/auth/session';
-import { useUnread } from '@/lib/chat/chat-api';
 import { useNotificationCount } from '@/lib/notifications/notifications-api';
 import { useListingSearch } from '@/lib/listings/listings-api';
 import { activeFilterCount, toSearchQuery, useSearchFilters } from '@/lib/listings/search-filters';
@@ -25,7 +23,6 @@ export default function BrowseScreen() {
   const [locating, setLocating] = useState(false);
   const query = toSearchQuery(filters);
   const results = useListingSearch(query);
-  const unread = useUnread();
   const notificationCount = useNotificationCount();
   const items = results.data?.pages.flatMap((p) => p.items) ?? [];
   const filterCount = activeFilterCount(filters);
@@ -52,8 +49,8 @@ export default function BrowseScreen() {
 
   const header = (
     <View style={{ gap: spacing.md, paddingBottom: spacing.md }}>
+      {/* Shortcuts that are not tabs (Home · Messages · Post · Orders · Profile are). */}
       <View style={{ flexDirection: 'row', gap: spacing.sm, flexWrap: 'wrap' }}>
-        <Button label="+ Post" fullWidth={false} onPress={() => router.push('/listings/new')} />
         <Button
           label={notificationCount.data?.unreadCount ? `🔔 ${notificationCount.data.unreadCount}` : '🔔'}
           accessibilityLabel={`Notifications${notificationCount.data?.unreadCount ? `, ${notificationCount.data.unreadCount} unread` : ''}`}
@@ -61,17 +58,9 @@ export default function BrowseScreen() {
           fullWidth={false}
           onPress={() => router.push('/notifications')}
         />
-        <Button
-          label={unread.data?.unreadMessages ? `Messages (${unread.data.unreadMessages})` : 'Messages'}
-          variant={unread.data?.unreadMessages ? 'primary' : 'secondary'}
-          fullWidth={false}
-          onPress={() => router.push('/inbox')}
-        />
-        <Button label="Orders" variant="secondary" fullWidth={false} onPress={() => router.push('/orders')} />
         <Button label="Wallet" variant="secondary" fullWidth={false} onPress={() => router.push('/wallet')} />
         <Button label="My listings" variant="secondary" fullWidth={false} onPress={() => router.push('/my-listings')} />
         <Button label="My quotes" variant="secondary" fullWidth={false} onPress={() => router.push('/my-quotes')} />
-        <Button label="Profile" variant="secondary" fullWidth={false} onPress={() => router.push('/profile')} />
       </View>
 
       {user && !user.emailVerified ? (

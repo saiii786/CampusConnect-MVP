@@ -27,6 +27,11 @@ export const envSchema = z.object({
   DATABASE_URL: z.url({ protocol: /^postgres(ql)?$/ }),
   /** Direct (non-pooled) connection used by Prisma migrations. */
   DIRECT_URL: z.url({ protocol: /^postgres(ql)?$/ }),
+  /**
+   * CA certificate (PEM file path) to VERIFY the database's TLS certificate. Production on Supabase:
+   * `certs/supabase-prod-ca-2021.crt` (ADR-031). Unset = the URL decides (local Docker: no TLS).
+   */
+  DATABASE_CA_CERT_PATH: z.string().min(1).optional(),
   /** Comma-separated list of allowed browser origins. Mobile apps do not need CORS. */
   CORS_ORIGINS: z
     .string()
