@@ -33,7 +33,8 @@ export default function TabsLayout() {
         tabBarBadgeStyle: { backgroundColor: colors.accent, color: colors.onAccent, fontFamily: fonts.semibold },
       }}
     >
-      <Tabs.Screen name="index" options={{ title: 'Connect', tabBarLabel: 'Home', tabBarIcon: icon('home-outline', 'home') }} />
+      {/* Home and Profile draw their own header (greeting / profile card), like most apps. */}
+      <Tabs.Screen name="index" options={{ title: 'Connect', headerShown: false, tabBarLabel: 'Home', tabBarIcon: icon('home-outline', 'home') }} />
       <Tabs.Screen
         name="inbox"
         options={{
@@ -54,7 +55,7 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen name="orders" options={{ title: 'Orders', tabBarIcon: icon('receipt-outline', 'receipt') }} />
-      <Tabs.Screen name="profile" options={{ title: 'My profile', tabBarLabel: 'Profile', tabBarIcon: icon('person-circle-outline', 'person-circle') }} />
+      <Tabs.Screen name="profile" options={{ title: 'My profile', headerShown: false, tabBarLabel: 'Profile', tabBarIcon: icon('person-circle-outline', 'person-circle') }} />
     </Tabs>
   );
 }

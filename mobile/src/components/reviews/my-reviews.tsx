@@ -1,12 +1,12 @@
 /**
- * "Reviews about me" on My profile: each review with a one-time public reply box (FR-502),
- * and "Share my work record" (FR-053) which shares the public link.
+ * "Reviews about me" on My profile: each review with a one-time public reply box (FR-502).
+ * `shareWorkRecord()` shares the public work-record link (FR-053).
  */
 import type { ReviewDto } from '@cc/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Alert, Share, View } from 'react-native';
-import { AppText, Button, EmptyState, ErrorState, LoadingState, TextField } from '@/components/ui';
+import { Button, EmptyState, ErrorState, LoadingState, SectionHeader, TextField } from '@/components/ui';
 import { describeError } from '@/lib/api/api-error';
 import { reviewKeys, reviewsApi, useUserReviews, workRecordUrl } from '@/lib/reviews/reviews-api';
 import { useTheme } from '@/theme/use-theme';
@@ -41,29 +41,27 @@ function ReplyBox({ review, userId }: { review: ReviewDto; userId: string }) {
   );
 }
 
-export function MyReviews({ userId, displayName }: { userId: string; displayName: string }) {
+/** Share the public "verified work record" link (FR-053) — used from My profile. */
+export function shareWorkRecord(userId: string, displayName: string): void {
+  void Share.share({
+    message: `${displayName}'s verified work record on Connect: ${workRecordUrl(userId)}`,
+  }).catch(() => undefined);
+}
+
+export function MyReviews({ userId }: { userId: string }) {
   const { spacing } = useTheme();
   const reviews = useUserReviews(userId);
   const items = reviews.data?.items ?? [];
 
-  const share = () =>
-    void Share.share({
-      message: `${displayName}'s verified work record on Connect: ${workRecordUrl(userId)}`,
-    }).catch(() => undefined);
-
   return (
     <View style={{ gap: spacing.md }}>
-      <AppText variant="heading">Reviews about me</AppText>
-      <Button label="Share my work record" variant="secondary" onPress={share} />
-      <AppText variant="caption" color="textMuted">
-        A public page listing the jobs you completed here, with ratings — useful for your CV.
-      </AppText>
+      <SectionHeader title="Reviews about me" />
       {reviews.isPending ? (
         <LoadingState />
       ) : reviews.isError ? (
         <ErrorState error={reviews.error} onRetry={() => void reviews.refetch()} />
       ) : items.length === 0 ? (
-        <EmptyState title="No reviews yet" message="Complete orders to collect reviews." />
+        <EmptyState icon="star-outline" title="No reviews yet" message="Finish orders and buyers can rate your work here." />
       ) : (
         items.map((r) => (
           <ReviewCard key={r.id} review={r}>

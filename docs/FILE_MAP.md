@@ -338,7 +338,11 @@ _Last updated: 2026-11-19 (end of Phase 8)._
 | `src/app/(app)/profile/add-work.tsx` | Add a portfolio item (photo + title + description) |
 | `src/app/(app)/profile/delete-account.tsx` | Delete account with password confirmation |
 | `src/app/(app)/users/[id].tsx` | Another user's public profile |
-| `src/components/server-status-card.tsx` | Live `/health` status card |
+| `src/components/ui/icon.tsx`, `icon-button.tsx` | Ionicons wrapper; round icon button with count badge (Phase 9A) |
+| `src/components/ui/search-bar.tsx` | Search field with magnifier + clear |
+| `src/components/ui/filter-chip.tsx` | Compact toggle pill for filters and categories |
+| `src/components/ui/list-group.tsx` | Settings-style grouped rows (icon, title, subtitle/value, chevron) |
+| `src/components/ui/section-header.tsx` | Section title with optional action |
 | `src/components/profile/profile-summary.tsx` | Shared profile header (photo, name, badges, stats, bio, skills, languages) |
 | `src/components/ui/index.ts` | UI kit exports |
 | `src/components/ui/avatar.tsx` | Round photo with initials fallback; `initialsOf()` |

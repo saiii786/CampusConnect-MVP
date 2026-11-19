@@ -14,7 +14,8 @@ Studio / Xcode needed. Design: [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md).
      (your computer's address, port 3000) — no IP to edit.
    - Windows: allow Node.js through the firewall (private networks) the first time, or the
      phone can't reach port 3000.
-4. The welcome screen shows **Server status: ● Connected** (development builds only).
+4. If the phone cannot reach the API, the welcome screen shows a yellow "server not reachable" note (development
+   builds only). The live server status is under **Profile → Developer**.
 5. Try the account flow: **Create an account** → you land on Home with "Verify your email" →
    the 6-digit code is printed in the **API terminal** (no real emails yet, PRD Q3) → enter it.
    Close and reopen the app: you stay signed in. **Sign out** returns to the welcome screen.
@@ -72,7 +73,7 @@ End-to-end flows (Maestro, run on a device/emulator): see [e2e/README.md](e2e/RE
 | `src/components/listings/` | `listing-card`, `category-picker`, `listing-form` (shared by new/edit; `buildListingBody`, `listingToFormValues`) |
 | `src/components/ui/` | Base UI kit — `AppText`, `Avatar`, `Button`, `TextField`, `Checkbox`, `Chip`/`ChipList`, `ImageTile`, `Notice`, `Screen`, `Segmented`, `LoadingState` / `ErrorState` / `EmptyState`. Import from `@/components/ui` |
 | `src/components/profile/profile-summary.tsx` | Profile header shared by "My profile" and public profiles |
-| `src/components/server-status-card.tsx` | Live `/health` card (development builds) |
+| `src/components/ui/` (Phase 9A) | `Icon`, `IconButton` (badge), `SearchBar`, `FilterChip`, `ListGroup`/`ListRow` (settings-style menus), `SectionHeader` — use these instead of stacks of full-width buttons |
 | `src/config/api-url.ts` | Works out the API base URL (env var, or the dev computer automatically) |
 | `src/lib/api/client.ts` | `api.get/post/patch/delete` — JSON, timeouts, bearer token + one refresh-and-retry on 401, failures → `ApiError`. `auth: false` for public endpoints |
 | `src/lib/api/api-error.ts` | `ApiError` (status, code, details, requestId) + `describeError()` for friendly messages |

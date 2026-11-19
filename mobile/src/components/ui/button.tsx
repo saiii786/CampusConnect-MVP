@@ -25,9 +25,10 @@ export function Button({
   const { colors, radius, spacing } = useTheme();
   const isDisabled = disabled || loading;
 
+  // Secondary = outlined (lighter than a second filled block; Phase 9A, after the founder's phone test).
   const background = {
     primary: colors.primary,
-    secondary: colors.primarySoft,
+    secondary: 'transparent',
     danger: colors.danger,
     ghost: 'transparent',
   }[variant];
@@ -47,8 +48,10 @@ export function Button({
       style={({ pressed }) => [
         styles.base,
         {
-          backgroundColor: background,
-          borderRadius: radius.md,
+          backgroundColor: pressed && variant !== 'primary' && variant !== 'danger' ? colors.primarySoft : background,
+          borderWidth: variant === 'secondary' ? 1.5 : 0,
+          borderColor: colors.primary,
+          borderRadius: radius.md + 2,
           paddingHorizontal: spacing.lg,
           alignSelf: fullWidth ? 'stretch' : 'flex-start',
           opacity: isDisabled ? 0.5 : pressed ? 0.85 : 1,

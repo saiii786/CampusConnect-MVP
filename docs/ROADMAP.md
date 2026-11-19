@@ -204,9 +204,9 @@
 | ID | Task | Refs | Status |
 |---|---|---|---|
 | T9A.1 | Brand identity: name, logo + app icon + splash, colour palette, typography (free fonts via `expo-font`) | PRD Q1 | ✅ name + tagline (ADR-029); logo, app icon, splash, palette, Poppins (ADR-030) — founder review on the brand sheet |
-| T9A.2 | Design system v2: update `theme/tokens.ts`; new components — cards, chips, avatars, skeleton loaders, bottom sheets, toasts | NFR-06 | ⬜ |
+| T9A.2 | Design system v2: update `theme/tokens.ts`; new components — cards, chips, avatars, skeleton loaders, bottom sheets, toasts | NFR-06 | 🟨 icons, icon button, search bar, filter chips, grouped list rows, section header, outlined secondary button done; skeletons/bottom sheets/toasts to do |
 | T9A.3 | Navigation: bottom tabs (Home · Search · Post · Messages · Profile), consistent headers, deep links | NFR-06 | ✅ Home · Messages (unread badge) · Post · Orders · Profile; themed headers; existing links unchanged |
-| T9A.4 | Screen redesign: home feed, listing cards/detail, profile & work record, chat, order timeline, wallet | NFR-06 | ⏸ after the founder's manual test notes (`docs/TESTING.md`) — founder decision 2026-11-19: working model first, polish from notes |
+| T9A.4 | Screen redesign: home feed, listing cards/detail, profile & work record, chat, order timeline, wallet | NFR-06 | 🟨 Welcome, Home, listing cards, Profile redone after the founder's phone screenshots; other screens follow the founder's test notes (`docs/TESTING.md`) |
 | T9A.5 | Motion & feedback: transitions, press feedback, haptics, pull-to-refresh, optimistic updates | NFR-06 | ⬜ |
 | T9A.6 | Form UX: native date picker, 6-box code input, inline validation, keyboard handling | NFR-06 | ⬜ |
 | T9A.7 | First-run onboarding walkthrough; illustrated empty states | NFR-06 | ⬜ |

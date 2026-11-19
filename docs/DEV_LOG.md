@@ -15,6 +15,21 @@ A dated, append-only record of what was done in each working session: what chang
 
 ---
 
+## 2026-11-19 — Real-app look for Welcome, Home, Profile (founder phone feedback)
+**Roadmap tasks:** T9A.2 (part), T9A.4 (part)
+
+**Founder feedback (screenshots from the phone):** colours and fonts applied, but the app did not feel like a real app — every action was a full-width button block, a "Server status" developer card showed on Welcome and Profile, no logo, Home had no header.
+
+**Done**
+- New components: `Icon` (Ionicons), `IconButton` (with badge), `SearchBar`, `FilterChip`, `ListGroup`/`ListRow` (settings-style menus), `SectionHeader`; `EmptyState` takes an icon. Secondary buttons are now outlined instead of filled blocks.
+- Welcome: logo, name, tagline, three reasons with icons, buttons at the bottom, Terms/Privacy line; server card removed (dev builds show a warning only when the API is unreachable).
+- Home: greeting + notifications bell with badge, search bar, Services/Job requests, sideways chips (Near me, Filters, every category), section title with Clear, friendlier empty states with a "Post" action. Wallet / My listings / My quotes moved to Profile.
+- Listing cards: bordered cards, every card has a thumbnail (photo or tinted icon tile), bold price, location icon, owner + Student badge.
+- Profile: profile card with edit button, Student badge prompt card, grouped menus (My activity with wallet balance and unread count, My profile, Help & legal, Account with confirm-before-sign-out), sideways portfolio strip, reviews; developer server status only in development builds.
+- The round ⚙ button in the screenshots is **Expo Go's own developer menu**, not part of the app; it does not exist in the installed app (APK).
+
+**Tests run** — mobile 95/95, lint + typecheck clean; Android bundle in the commit gate below. **Not verified:** how it looks on the phone — needs the founder's next look.
+
 ## 2026-11-19 — Bottom tabs; Phase 10 deploy readiness
 **Roadmap tasks:** T9A.3, T10.1–T10.5 · **Founder decision:** "working model first — complete all phases, I test manually and note what is odd; polish later" → T9A.4–T9A.9 wait for the notes.
 

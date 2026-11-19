@@ -1,19 +1,40 @@
 /**
- * Home = Browse (T3.4): search box, Services | Job requests, "Near me", filters, endless list.
- * Also shows the verify-email prompt and shortcuts that are not tabs (notifications, wallet, my listings, my quotes).
+ * Home = Browse (T3.4, redesigned in Phase 9A): greeting + notifications bell, search bar,
+ * Services | Job requests, filter chips (near me, filters) and category chips, then the listing feed.
+ * Wallet / My listings / My quotes live under the Profile tab.
  */
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Alert, FlatList, RefreshControl, View } from 'react-native';
+import { Alert, FlatList, RefreshControl, ScrollView, View } from 'react-native';
 import { ListingCard } from '@/components/listings/listing-card';
-import { AppText, Button, EmptyState, ErrorState, LoadingState, Notice, PageFooter, Screen, Segmented, TextField } from '@/components/ui';
+import {
+  AppText,
+  Button,
+  EmptyState,
+  ErrorState,
+  FilterChip,
+  IconButton,
+  LoadingState,
+  Notice,
+  PageFooter,
+  Screen,
+  SearchBar,
+  SectionHeader,
+  Segmented,
+} from '@/components/ui';
 import { describeError } from '@/lib/api/api-error';
 import { useSession } from '@/lib/auth/session';
 import { useNotificationCount } from '@/lib/notifications/notifications-api';
 import { useListingSearch } from '@/lib/listings/listings-api';
 import { activeFilterCount, toSearchQuery, useSearchFilters } from '@/lib/listings/search-filters';
 import { getCurrentLocation } from '@/lib/location/current-location';
+import { useCategories } from '@/lib/users/users-api';
 import { useTheme } from '@/theme/use-theme';
+
+function greeting(now = new Date()): string {
+  const h = now.getHours();
+  return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+}
 
 export default function BrowseScreen() {
   const { spacing } = useTheme();
@@ -24,8 +45,12 @@ export default function BrowseScreen() {
   const query = toSearchQuery(filters);
   const results = useListingSearch(query);
   const notificationCount = useNotificationCount();
+  const categories = useCategories();
   const items = results.data?.pages.flatMap((p) => p.items) ?? [];
-  const filterCount = activeFilterCount(filters);
+  const filterCount = activeFilterCount(filters) - (filters.nearMe ? 1 : 0) - (filters.categoryId ? 1 : 0);
+  const firstName = user?.profile.displayName.split(' ')[0] ?? '';
+  const allCategories = categories.data?.groups.flatMap((g) => g.categories) ?? [];
+  const isServices = filters.type === 'SERVICE_OFFER';
 
   const toggleNearMe = async () => {
     if (filters.nearMe) {
@@ -48,37 +73,35 @@ export default function BrowseScreen() {
   };
 
   const header = (
-    <View style={{ gap: spacing.md, paddingBottom: spacing.md }}>
-      {/* Shortcuts that are not tabs (Home · Messages · Post · Orders · Profile are). */}
-      <View style={{ flexDirection: 'row', gap: spacing.sm, flexWrap: 'wrap' }}>
-        <Button
-          label={notificationCount.data?.unreadCount ? `🔔 ${notificationCount.data.unreadCount}` : '🔔'}
-          accessibilityLabel={`Notifications${notificationCount.data?.unreadCount ? `, ${notificationCount.data.unreadCount} unread` : ''}`}
-          variant={notificationCount.data?.unreadCount ? 'primary' : 'secondary'}
-          fullWidth={false}
+    <View style={{ gap: spacing.lg, paddingBottom: spacing.md }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingTop: spacing.sm }}>
+        <View style={{ flex: 1 }}>
+          <AppText color="textMuted">{greeting()}{firstName ? ',' : ''}</AppText>
+          <AppText variant="title" numberOfLines={1}>
+            {firstName || 'Welcome'} 👋
+          </AppText>
+        </View>
+        <IconButton
+          icon="notifications-outline"
+          label="Notifications"
+          badge={notificationCount.data?.unreadCount}
           onPress={() => router.push('/notifications')}
         />
-        <Button label="Wallet" variant="secondary" fullWidth={false} onPress={() => router.push('/wallet')} />
-        <Button label="My listings" variant="secondary" fullWidth={false} onPress={() => router.push('/my-listings')} />
-        <Button label="My quotes" variant="secondary" fullWidth={false} onPress={() => router.push('/my-quotes')} />
       </View>
 
       {user && !user.emailVerified ? (
-        <Notice tone="warning" title="Verify your email" message="You need to verify your email before you can post.">
+        <Notice tone="warning" title="Verify your email" message="You need to verify your email before you can post or message.">
           <Button label="Enter code" fullWidth={false} onPress={() => router.push('/verify-email')} />
         </Notice>
       ) : null}
 
-      <TextField
-        label="Search"
-        placeholder="e.g. painting, tuition, cake, website"
+      <SearchBar
         value={text}
         onChangeText={setText}
-        onSubmitEditing={() => filters.set({ q: text })}
-        onBlur={() => filters.set({ q: text })}
-        returnKeyType="search"
-        autoCapitalize="none"
+        onSubmit={(q) => filters.set({ q })}
+        placeholder={isServices ? 'Search services: tuition, logo, cake…' : 'Search jobs: painting, website, event…'}
       />
+
       <Segmented
         options={[
           { value: 'SERVICE_OFFER', label: 'Services' },
@@ -87,26 +110,48 @@ export default function BrowseScreen() {
         value={filters.type}
         onChange={(type) => filters.set({ type })}
       />
-      <View style={{ flexDirection: 'row', gap: spacing.sm }}>
-        <Button
-          label={filters.nearMe ? `Near me · ${filters.radiusKm} km ✓` : 'Near me'}
-          variant={filters.nearMe ? 'primary' : 'secondary'}
-          fullWidth={false}
+
+      {/* Filters, then one chip per category — scroll sideways. */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={{ marginHorizontal: -spacing.lg }}
+        contentContainerStyle={{ paddingHorizontal: spacing.lg, gap: spacing.sm, paddingVertical: spacing.xs }}
+      >
+        <FilterChip
+          icon="location-outline"
+          label={filters.nearMe ? `Near me · ${filters.radiusKm} km` : 'Near me'}
+          selected={filters.nearMe}
           loading={locating}
           onPress={() => void toggleNearMe()}
         />
-        <Button
-          label={filterCount ? `Filters (${filterCount})` : 'Filters'}
-          variant="secondary"
-          fullWidth={false}
+        <FilterChip
+          icon="options-outline"
+          label={filterCount > 0 ? `Filters · ${filterCount}` : 'Filters'}
+          selected={filterCount > 0}
           onPress={() => router.push('/search-filters')}
         />
-      </View>
-      {filters.categoryName ? (
-        <AppText variant="caption" color="textMuted">
-          Category: {filters.categoryName}
-        </AppText>
-      ) : null}
+        {allCategories.map((c) => {
+          const selected = filters.categoryId === c.id;
+          return (
+            <FilterChip
+              key={c.id}
+              label={c.name}
+              selected={selected}
+              onPress={() => filters.set(selected ? { categoryId: null, categoryName: null } : { categoryId: c.id, categoryName: c.name })}
+            />
+          );
+        })}
+      </ScrollView>
+
+      <SectionHeader
+        title={filters.categoryName ?? (filters.nearMe ? 'Near you' : isServices ? 'Latest services' : 'Latest job requests')}
+        action={filters.q || filters.categoryId || filterCount > 0 ? 'Clear' : undefined}
+        onAction={() => {
+          setText('');
+          filters.reset();
+        }}
+      />
     </View>
   );
 
@@ -117,7 +162,7 @@ export default function BrowseScreen() {
         keyExtractor={(l) => l.id}
         ListHeaderComponent={header}
         renderItem={({ item }) => (
-          <View style={{ marginBottom: spacing.sm }}>
+          <View style={{ marginBottom: spacing.md }}>
             <ListingCard listing={item} onPress={() => router.push({ pathname: '/listings/[id]', params: { id: item.id } })} />
           </View>
         )}
@@ -128,8 +173,20 @@ export default function BrowseScreen() {
             <ErrorState error={results.error} onRetry={() => results.refetch()} />
           ) : (
             <EmptyState
-              title="Nothing found"
-              message={filters.nearMe ? 'Try a bigger distance in Filters, or turn off "Near me".' : 'Try other words or fewer filters.'}
+              icon={isServices ? 'briefcase-outline' : 'clipboard-outline'}
+              title={filters.q || filters.categoryId || filters.nearMe ? 'Nothing found' : isServices ? 'No services yet' : 'No job requests yet'}
+              message={
+                filters.nearMe
+                  ? 'Try a bigger distance in Filters, or turn off "Near me".'
+                  : filters.q || filters.categoryId
+                    ? 'Try other words or another category.'
+                    : 'Be the first — tap Post to offer what you are good at.'
+              }
+              action={
+                !filters.q && !filters.categoryId && !filters.nearMe ? (
+                  <Button label={isServices ? 'Offer a service' : 'Post a job'} fullWidth={false} onPress={() => router.push('/listings/new')} />
+                ) : undefined
+              }
             />
           )
         }
@@ -140,6 +197,7 @@ export default function BrowseScreen() {
         ListFooterComponent={<PageFooter query={results} />}
         refreshControl={<RefreshControl refreshing={results.isRefetching} onRefresh={() => void results.refetch()} />}
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       />
     </Screen>
   );

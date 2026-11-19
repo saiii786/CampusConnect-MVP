@@ -59,5 +59,7 @@ render(files['android-background.svg'], 1024, 'android-icon-background.png');
 render(files['android-monochrome.svg'], 1024, 'android-icon-monochrome.png');
 render(files['splash-mark.svg'], 512, 'splash-icon.png');
 render(files['logo-mark.svg'], 48, 'favicon.png');
+// Logo shown inside the app (welcome screen) — 512 px so it is sharp at ~110 pt on 3x screens.
+render(files['logo-mark.svg'], 512, 'logo-mark.png');
 // Preview for the brand sheet / README.
 render(files['logo-mark.svg'], 256, '../brand/logo-mark-256.png');
